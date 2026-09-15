@@ -13,6 +13,7 @@ type Screen =
   | "ranking"
   | "profile"
   | "missions"
+  | "shop"
   | "result";
 
 type Answer = {
@@ -1171,6 +1172,20 @@ function App() {
 
       <button
         className={`nav-item ${
+          screen === "shop"
+            ? "active"
+            : ""
+        }`}
+        onClick={() =>
+          setScreen("shop")
+        }
+      >
+        <span>⭐</span>
+        <small>Shop</small>
+      </button>
+
+      <button
+        className={`nav-item ${
           screen === "ranking"
             ? "active"
             : ""
@@ -1371,6 +1386,24 @@ function App() {
             <button
               className="quick-card"
               onClick={() =>
+                setScreen("shop")
+              }
+            >
+              <div className="quick-icon" style={{ background: "linear-gradient(135deg, rgba(255,199,92,0.2), rgba(255,120,70,0.16))" }}>
+                ⭐
+              </div>
+
+              <div>
+                <strong>SHOP</strong>
+                <span>Avatars, frames & passes</span>
+              </div>
+
+              <b>→</b>
+            </button>
+
+            <button
+              className="quick-card"
+              onClick={() =>
                 setScreen("missions")
               }
             >
@@ -1449,6 +1482,89 @@ function App() {
             </button>
           </section>
         </main>
+
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ==========================================
+  // SHOP
+  // ==========================================
+
+  if (screen === "shop") {
+    const shopProducts = [
+      { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", text: "Use your own profile picture", price: 50, category: "PROFILE", featured: true },
+      { id: "neon_frame", icon: "🟣", title: "Neon Frame", text: "Stand out in the ranking", price: 25, category: "PROFILE" },
+      { id: "fire_frame", icon: "🔥", title: "Fire Frame", text: "Bring the heat to your profile", price: 50, category: "PROFILE" },
+      { id: "legendary_frame", icon: "👑", title: "Legendary Frame", text: "Premium profile frame", price: 100, category: "PROFILE" },
+      { id: "second_chance", icon: "❤️", title: "Second Chance", text: "One extra life in a battle", price: 15, category: "BATTLE" },
+      { id: "combo_shield", icon: "🛡️", title: "Combo Shield", text: "Protect your combo from one mistake", price: 30, category: "BATTLE" },
+      { id: "xp_boost", icon: "⚡", title: "XP Boost", text: "Boost your battle progression", price: 25, category: "BATTLE" },
+      { id: "battle_pass", icon: "🎟️", title: "Battle Pass", text: "Unlock exclusive season rewards", price: 299, category: "PASS", featured: true },
+    ];
+
+    const buyProduct = (product: typeof shopProducts[number]) => {
+      getTelegramWebApp()?.HapticFeedback?.impactOccurred("medium");
+      setChallengeNotice(`⭐ ${product.title} — Telegram Stars payment will be connected next.`);
+      window.setTimeout(() => setChallengeNotice(""), 3200);
+    };
+
+    const categories = ["PROFILE", "BATTLE", "PASS"];
+
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+
+        <main className="content">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18 }}>
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
+              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop</h1>
+            </div>
+            <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
+          </div>
+
+          <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 24 }}>
+            <div style={{ position: "absolute", width: 150, height: 150, right: -55, top: -65, borderRadius: "50%", background: "rgba(124,77,255,0.18)", filter: "blur(8px)" }} />
+            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>PREMIUM ITEMS</div>
+            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Make your profile yours.</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 290, marginTop: 6 }}>Avatars, frames, battle boosts and the season pass. Buy exactly what you want with Telegram Stars.</div>
+          </section>
+
+          {categories.map((category) => (
+            <section key={category} style={{ marginBottom: 24 }}>
+              <div className="section-title" style={{ marginBottom: 11 }}>
+                <h2>{category === "PROFILE" ? "👤 Profile" : category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"}</h2>
+                <span>⭐ Stars</span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+                {shopProducts.filter((p) => p.category === category).map((product) => (
+                  <div key={product.id} style={{ position: "relative", padding: 14, minHeight: 170, borderRadius: 20, background: product.featured ? "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.045))" : "rgba(255,255,255,0.045)", border: product.featured ? "1px solid rgba(145,110,255,0.28)" : "1px solid rgba(255,255,255,0.07)", boxSizing: "border-box" }}>
+                    {product.featured && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(124,77,255,0.28)", color: "#cfc1ff" }}>FEATURED</div>}
+                    <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 15, background: "rgba(255,255,255,0.07)", fontSize: 25, marginBottom: 12 }}>{product.icon}</div>
+                    <div style={{ fontWeight: 900, fontSize: 14 }}>{product.title}</div>
+                    <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.text}</div>
+                    <button type="button" onClick={() => buyProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>BUY · {product.price} ⭐</button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <div style={{ padding: "13px 14px", borderRadius: 15, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 10.5, lineHeight: 1.5, opacity: 0.52, textAlign: "center", marginBottom: 12 }}>
+            Purchases will use official Telegram Stars. No random boxes — you buy the exact item shown.
+          </div>
+        </main>
+
+        {challengeNotice && (
+          <div style={{ position: "fixed", left: 16, right: 16, bottom: 78, zIndex: 30, padding: "13px 15px", borderRadius: 15, background: "rgba(22,19,32,0.96)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 14px 40px rgba(0,0,0,0.35)", fontSize: 12, fontWeight: 800, textAlign: "center" }}>
+            {challengeNotice}
+          </div>
+        )}
 
         <BottomNav />
       </div>
