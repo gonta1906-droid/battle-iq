@@ -263,6 +263,12 @@ function App() {
   const [rankingTab, setRankingTab] =
     useState<"world" | "friends">("world");
 
+  const [rankingSearch, setRankingSearch] =
+    useState("");
+
+  const [challengeNotice, setChallengeNotice] =
+    useState("");
+
   const [player, setPlayer] =
     useState<PlayerData>(() =>
       loadPlayer()
@@ -1002,15 +1008,16 @@ function App() {
       "Sergio";
 
     const worldPlayers = [
-      ["Alex", "12,840", "🥇"],
-      ["Max", "11,920", "🥈"],
-      ["Daniel", "11,540", "🥉"],
-      ["Vlad", "10,880", ""],
-      ["Nikita", "10,210", ""],
+      ["Alex", "12,840", "🥇", "+3"],
+      ["Max", "11,920", "🥈", "−1"],
+      ["Daniel", "11,540", "🥉", "+7"],
+      ["Vlad", "10,880", "", "+12"],
+      ["Nikita", "10,210", "", "−4"],
       [
         currentName,
         player.xp.toLocaleString(),
         "",
+        "+18",
       ],
     ];
 
@@ -1019,16 +1026,47 @@ function App() {
         currentName,
         player.xp.toLocaleString(),
         "",
+        "—",
       ],
-      ["Alex", "4,820", ""],
-      ["Max", "3,950", ""],
-      ["Daniel", "2,740", ""],
+      ["Alex", "4,820", "", "+2"],
+      ["Max", "3,950", "", "−1"],
+      ["Daniel", "2,740", "", "+4"],
     ];
 
-    const players =
+    const sourcePlayers =
       rankingTab === "world"
         ? worldPlayers
         : friendPlayers;
+
+    const filteredPlayers =
+      rankingSearch.trim().length === 0
+        ? sourcePlayers
+        : sourcePlayers.filter(
+            ([name]) =>
+              name
+                .toLowerCase()
+                .includes(
+                  rankingSearch
+                    .trim()
+                    .toLowerCase()
+                )
+          );
+
+    const handleChallenge = (name: string) => {
+      const webApp = getTelegramWebApp();
+
+      webApp?.HapticFeedback?.impactOccurred(
+        "medium"
+      );
+
+      setChallengeNotice(
+        `⚔️ Challenge prepared for ${name}. PvP will be connected next.`
+      );
+
+      window.setTimeout(() => {
+        setChallengeNotice("");
+      }, 3000);
+    };
 
     return (
       <div className="app">
@@ -1062,9 +1100,11 @@ function App() {
                   ? "active"
                   : ""
               }`}
-              onClick={() =>
-                setRankingTab("world")
-              }
+              onClick={() => {
+                setRankingTab("world");
+                setRankingSearch("");
+                setChallengeNotice("");
+              }}
             >
               🌍 World
             </button>
@@ -1075,19 +1115,74 @@ function App() {
                   ? "active"
                   : ""
               }`}
-              onClick={() =>
-                setRankingTab("friends")
-              }
+              onClick={() => {
+                setRankingTab("friends");
+                setRankingSearch("");
+                setChallengeNotice("");
+              }}
             >
               👥 Friends
             </button>
           </div>
 
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              margin: "14px 0",
+            }}
+          >
+            <input
+              value={rankingSearch}
+              onChange={(event) =>
+                setRankingSearch(
+                  event.target.value
+                )
+              }
+              placeholder="🔎 Search player..."
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "12px 14px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.06)",
+                color: "inherit",
+                outline: "none",
+                fontSize: "14px",
+              }}
+            />
+          </div>
+
+          {challengeNotice && (
+            <div
+              style={{
+                marginBottom: "12px",
+                padding: "11px 13px",
+                borderRadius: "12px",
+                background:
+                  "rgba(124, 77, 255, 0.16)",
+                border:
+                  "1px solid rgba(124, 77, 255, 0.30)",
+                fontSize: "12px",
+                lineHeight: 1.4,
+              }}
+            >
+              {challengeNotice}
+            </div>
+          )}
+
           <section className="leaderboard">
-            {players.map(
-              ([name, xp, medal], index) => {
+            {filteredPlayers.map(
+              ([name, xp, medal, movement], index) => {
                 const isCurrentPlayer =
                   name === currentName;
+
+                const isTopThree =
+                  rankingTab === "world" &&
+                  index < 3 &&
+                  rankingSearch.trim().length === 0;
 
                 return (
                   <div
@@ -1097,11 +1192,13 @@ function App() {
                         : ""
                     }`}
                     key={`${name}-${index}`}
+                    style={{
+                      position: "relative",
+                    }}
                   >
                     <div className="leader-position">
-                      {rankingTab === "world"
-                        ? medal ||
-                          `#${index + 1}`
+                      {isTopThree
+                        ? medal
                         : `#${index + 1}`}
                     </div>
 
@@ -1118,7 +1215,13 @@ function App() {
                           "👤"}
                     </div>
 
-                    <div className="leader-info">
+                    <div
+                      className="leader-info"
+                      style={{
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
                       <strong>
                         {name}
 
@@ -1140,16 +1243,72 @@ function App() {
                       </span>
                     </div>
 
-                    <div className="leader-xp">
-                      {xp}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          opacity:
+                            movement === "—"
+                              ? 0.5
+                              : 0.8,
+                        }}
+                      >
+                        {movement}
+                      </span>
 
-                      <small>
-                        XP
-                      </small>
+                      <div className="leader-xp">
+                        {xp}
+
+                        <small>
+                          XP
+                        </small>
+                      </div>
                     </div>
+
+                    {rankingTab === "friends" &&
+                      !isCurrentPlayer && (
+                        <button
+                          onClick={() =>
+                            handleChallenge(name)
+                          }
+                          style={{
+                            marginLeft: "8px",
+                            border: "0",
+                            borderRadius: "9px",
+                            padding: "7px 9px",
+                            background:
+                              "rgba(124, 77, 255, 0.20)",
+                            color: "inherit",
+                            fontSize: "10px",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ⚔️
+                        </button>
+                      )}
                   </div>
                 );
               }
+            )}
+
+            {filteredPlayers.length === 0 && (
+              <div
+                style={{
+                  padding: "30px 12px",
+                  textAlign: "center",
+                  opacity: 0.65,
+                }}
+              >
+                No players found.
+              </div>
             )}
           </section>
 
