@@ -2390,89 +2390,172 @@ function App() {
       }, 3000);
     };
 
+    const topThree =
+      rankingTab === "world" &&
+      rankingSearch.trim().length === 0
+        ? worldPlayers.slice(0, 3)
+        : [];
+
     return (
       <div className="app">
         <div className="glow glow-one" />
 
         <Header />
 
-        <main className="ranking-page">
-          <div className="ranking-heading">
-            <span>🏆</span>
-
+        <main className="ranking-page" style={{ paddingBottom: "96px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              marginBottom: "18px",
+            }}
+          >
             <div>
-              <h1>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  padding: "6px 10px",
+                  borderRadius: "999px",
+                  background: "rgba(168,85,247,0.12)",
+                  border: "1px solid rgba(168,85,247,0.22)",
+                  color: "#d8b4fe",
+                  fontSize: "10px",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  marginBottom: "10px",
+                }}
+              >
+                🏆 LEADERBOARD
+              </div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "27px",
+                  lineHeight: 1.05,
+                  letterSpacing: "-0.02em",
+                }}
+              >
                 {rankingTab === "world"
-                  ? "GLOBAL RANKING"
-                  : "FRIENDS RANKING"}
+                  ? "Global Ranking"
+                  : "Friends Ranking"}
               </h1>
-
-              <p>
+              <p
+                style={{
+                  margin: "7px 0 0",
+                  opacity: 0.58,
+                  fontSize: "12px",
+                }}
+              >
                 {rankingTab === "world"
                   ? "Compete with players worldwide"
-                  : "Compete with your friends"}
+                  : "See how you compare with your friends"}
               </p>
             </div>
-          </div>
 
-          <div className="ranking-tabs">
-            <button
-              className={`ranking-tab ${
-                rankingTab === "world"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() => {
-                setRankingTab("world");
-                setRankingSearch("");
-                setChallengeNotice("");
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "16px",
+                display: "grid",
+                placeItems: "center",
+                background:
+                  "linear-gradient(145deg, rgba(168,85,247,0.28), rgba(88,28,135,0.18))",
+                border: "1px solid rgba(192,132,252,0.28)",
+                boxShadow: "0 10px 30px rgba(76,29,149,0.22)",
+                fontSize: "23px",
+                flexShrink: 0,
               }}
             >
-              🌍 World
-            </button>
-
-            <button
-              className={`ranking-tab ${
-                rankingTab === "friends"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() => {
-                setRankingTab("friends");
-                setRankingSearch("");
-                setChallengeNotice("");
-              }}
-            >
-              👥 Friends
-            </button>
+              👑
+            </div>
           </div>
 
           <div
             style={{
-              display: "flex",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
               gap: "8px",
-              margin: "14px 0",
+              padding: "5px",
+              borderRadius: "15px",
+              background: "rgba(255,255,255,0.045)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              marginBottom: "12px",
             }}
           >
+            {[
+              ["world", "🌍", "World"],
+              ["friends", "👥", "Friends"],
+            ].map(([tab, icon, label]) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setRankingTab(tab as "world" | "friends");
+                  setRankingSearch("");
+                  setChallengeNotice("");
+                }}
+                style={{
+                  border: "0",
+                  borderRadius: "11px",
+                  padding: "10px 8px",
+                  background:
+                    rankingTab === tab
+                      ? "linear-gradient(135deg, rgba(124,77,255,0.42), rgba(168,85,247,0.24))"
+                      : "transparent",
+                  color: "inherit",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  boxShadow:
+                    rankingTab === tab
+                      ? "inset 0 0 0 1px rgba(192,132,252,0.18)"
+                      : "none",
+                }}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              marginBottom: "14px",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                left: "13px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                opacity: 0.55,
+                fontSize: "15px",
+              }}
+            >
+              🔎
+            </span>
             <input
               value={rankingSearch}
               onChange={(event) =>
-                setRankingSearch(
-                  event.target.value
-                )
+                setRankingSearch(event.target.value)
               }
-              placeholder="🔎 Search player..."
+              placeholder="Search player..."
               style={{
                 width: "100%",
                 boxSizing: "border-box",
-                padding: "12px 14px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255,255,255,0.10)",
-                background:
-                  "rgba(255,255,255,0.06)",
+                padding: "12px 14px 12px 38px",
+                borderRadius: "13px",
+                border: "1px solid rgba(255,255,255,0.09)",
+                background: "rgba(13,10,27,0.72)",
                 color: "inherit",
                 outline: "none",
-                fontSize: "14px",
+                fontSize: "13px",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
               }}
             />
           </div>
@@ -2482,12 +2565,10 @@ function App() {
               style={{
                 marginBottom: "12px",
                 padding: "11px 13px",
-                borderRadius: "12px",
-                background:
-                  "rgba(124, 77, 255, 0.16)",
-                border:
-                  "1px solid rgba(124, 77, 255, 0.30)",
-                fontSize: "12px",
+                borderRadius: "13px",
+                background: "rgba(124,77,255,0.14)",
+                border: "1px solid rgba(168,85,247,0.25)",
+                fontSize: "11px",
                 lineHeight: 1.4,
               }}
             >
@@ -2495,9 +2576,118 @@ function App() {
             </div>
           )}
 
-          <section className="leaderboard">
+          {topThree.length === 3 && (
+            <section
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1.12fr 1fr",
+                alignItems: "end",
+                gap: "7px",
+                margin: "10px 0 14px",
+              }}
+            >
+              {topThree.map(
+                ([name, xp, medal], index) => {
+                  const heights = ["126px", "150px", "114px"];
+                  const isCurrentPlayer =
+                    name === currentName;
+
+                  return (
+                    <div
+                      key={`podium-${name}`}
+                      style={{
+                        minWidth: 0,
+                        height: heights[index],
+                        borderRadius: "17px 17px 12px 12px",
+                        padding: "12px 7px 9px",
+                        boxSizing: "border-box",
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        background:
+                          index === 1
+                            ? "linear-gradient(180deg, rgba(168,85,247,0.27), rgba(124,77,255,0.08))"
+                            : "linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.035))",
+                        border:
+                          index === 1
+                            ? "1px solid rgba(192,132,252,0.38)"
+                            : "1px solid rgba(255,255,255,0.09)",
+                        boxShadow:
+                          index === 1
+                            ? "0 14px 35px rgba(124,77,255,0.18)"
+                            : "0 10px 25px rgba(0,0,0,0.18)",
+                      }}
+                    >
+                      <div style={{ fontSize: index === 1 ? "25px" : "21px", marginBottom: "5px" }}>
+                        {medal}
+                      </div>
+                      <div
+                        style={{
+                          width: index === 1 ? "48px" : "42px",
+                          height: index === 1 ? "48px" : "42px",
+                          borderRadius: "50%",
+                          display: "grid",
+                          placeItems: "center",
+                          background: "rgba(8,8,18,0.72)",
+                          border: "2px solid rgba(192,132,252,0.28)",
+                          fontSize: index === 1 ? "22px" : "19px",
+                          marginBottom: "7px",
+                        }}
+                      >
+                        {isCurrentPlayer ? "😎" : ["🧑", "👨", "👽"][index]}
+                      </div>
+                      <strong
+                        style={{
+                          fontSize: "11px",
+                          maxWidth: "100%",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {name}
+                      </strong>
+                      <span
+                        style={{
+                          marginTop: "3px",
+                          fontSize: "10px",
+                          fontWeight: 800,
+                          opacity: 0.78,
+                        }}
+                      >
+                        {xp} XP
+                      </span>
+                      {index === 1 && (
+                        <span
+                          style={{
+                            marginTop: "5px",
+                            fontSize: "8px",
+                            letterSpacing: "0.08em",
+                            color: "#d8b4fe",
+                            fontWeight: 900,
+                          }}
+                        >
+                          #2
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+              )}
+            </section>
+          )}
+
+          <section
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "7px",
+            }}
+          >
             {filteredPlayers.map(
-              ([name, xp, medal, movement], index) => {
+              ([name, xp, _medal, movement], index) => {
                 const isCurrentPlayer =
                   name === currentName;
 
@@ -2506,111 +2696,172 @@ function App() {
                   index < 3 &&
                   rankingSearch.trim().length === 0;
 
+                if (isTopThree) return null;
+
                 return (
                   <div
-                    className={`leader-row ${
-                      isCurrentPlayer
-                        ? "current-player"
-                        : ""
-                    }`}
                     key={`${name}-${index}`}
                     style={{
-                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      minWidth: 0,
+                      padding: "10px 10px",
+                      borderRadius: "15px",
+                      background: isCurrentPlayer
+                        ? "linear-gradient(90deg, rgba(124,77,255,0.22), rgba(168,85,247,0.08))"
+                        : "rgba(255,255,255,0.045)",
+                      border: isCurrentPlayer
+                        ? "1px solid rgba(168,85,247,0.34)"
+                        : "1px solid rgba(255,255,255,0.065)",
+                      boxShadow: isCurrentPlayer
+                        ? "0 8px 25px rgba(76,29,149,0.16)"
+                        : "none",
                     }}
                   >
-                    <div className="leader-position">
-                      {isTopThree
-                        ? medal
-                        : `#${index + 1}`}
-                    </div>
-
-                    <div className="leader-avatar">
-                      {isCurrentPlayer
-                        ? "😎"
-                        : [
-                            "🧑",
-                            "👨",
-                            "👽",
-                            "🤠",
-                            "🦊",
-                          ][index] ||
-                          "👤"}
+                    <div
+                      style={{
+                        width: "27px",
+                        textAlign: "center",
+                        fontSize: "10px",
+                        fontWeight: 900,
+                        opacity: 0.6,
+                        flexShrink: 0,
+                      }}
+                    >
+                      #{index + 1}
                     </div>
 
                     <div
-                      className="leader-info"
+                      style={{
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "12px",
+                        display: "grid",
+                        placeItems: "center",
+                        background: "rgba(8,8,18,0.7)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        fontSize: "18px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {isCurrentPlayer
+                        ? "😎"
+                        : ["🧑", "👨", "👽", "🤠", "🦊"][index] || "👤"}
+                    </div>
+
+                    <div
                       style={{
                         minWidth: 0,
                         flex: 1,
                       }}
                     >
-                      <strong>
-                        {name}
-
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          minWidth: 0,
+                        }}
+                      >
+                        <strong
+                          style={{
+                            fontSize: "12px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {name}
+                        </strong>
                         {isCurrentPlayer && (
-                          <span className="you-badge">
+                          <span
+                            style={{
+                              padding: "3px 6px",
+                              borderRadius: "999px",
+                              background: "rgba(168,85,247,0.18)",
+                              color: "#d8b4fe",
+                              fontSize: "7px",
+                              fontWeight: 900,
+                              letterSpacing: "0.07em",
+                              flexShrink: 0,
+                            }}
+                          >
                             YOU
                           </span>
                         )}
-                      </strong>
-
-                      <span>
-                        LEVEL{" "}
-                        {isCurrentPlayer
-                          ? levelInfo.level
-                          : Math.max(
-                              1,
-                              20 - index
-                            )}
+                      </div>
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: "3px",
+                          fontSize: "9px",
+                          opacity: 0.45,
+                          fontWeight: 700,
+                        }}
+                      >
+                        LEVEL {isCurrentPlayer ? levelInfo.level : Math.max(1, 20 - index)}
                       </span>
                     </div>
 
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
+                        textAlign: "right",
+                        flexShrink: 0,
                       }}
                     >
-                      <span
+                      <strong
                         style={{
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          opacity:
-                            movement === "—"
-                              ? 0.5
-                              : 0.8,
+                          display: "block",
+                          fontSize: "12px",
+                          letterSpacing: "-0.01em",
                         }}
                       >
-                        {movement}
-                      </span>
-
-                      <div className="leader-xp">
                         {xp}
-
-                        <small>
-                          XP
-                        </small>
-                      </div>
+                      </strong>
+                      <span
+                        style={{
+                          fontSize: "8px",
+                          opacity: 0.45,
+                          fontWeight: 800,
+                        }}
+                      >
+                        XP
+                      </span>
                     </div>
+
+                    <span
+                      style={{
+                        minWidth: "25px",
+                        textAlign: "center",
+                        fontSize: "9px",
+                        fontWeight: 900,
+                        color:
+                          movement.startsWith("+")
+                            ? "#86efac"
+                            : movement.startsWith("−")
+                            ? "#fca5a5"
+                            : "inherit",
+                        opacity: movement === "—" ? 0.35 : 1,
+                      }}
+                    >
+                      {movement}
+                    </span>
 
                     {rankingTab === "friends" &&
                       !isCurrentPlayer && (
                         <button
-                          onClick={() =>
-                            handleChallenge(name)
-                          }
+                          onClick={() => handleChallenge(name)}
                           style={{
-                            marginLeft: "8px",
-                            border: "0",
-                            borderRadius: "9px",
-                            padding: "7px 9px",
-                            background:
-                              "rgba(124, 77, 255, 0.20)",
+                            width: "31px",
+                            height: "31px",
+                            border: "1px solid rgba(168,85,247,0.22)",
+                            borderRadius: "10px",
+                            background: "rgba(124,77,255,0.14)",
                             color: "inherit",
-                            fontSize: "10px",
-                            fontWeight: 800,
+                            fontSize: "13px",
                             cursor: "pointer",
+                            flexShrink: 0,
                           }}
                         >
                           ⚔️
@@ -2624,9 +2875,13 @@ function App() {
             {filteredPlayers.length === 0 && (
               <div
                 style={{
-                  padding: "30px 12px",
+                  padding: "34px 12px",
                   textAlign: "center",
+                  borderRadius: "15px",
+                  background: "rgba(255,255,255,0.035)",
+                  border: "1px solid rgba(255,255,255,0.06)",
                   opacity: 0.65,
+                  fontSize: "12px",
                 }}
               >
                 No players found.
@@ -2634,25 +2889,69 @@ function App() {
             )}
           </section>
 
-          <div className="your-rank-card">
-            <span>
-              {rankingTab === "world"
-                ? "YOUR GLOBAL RANK"
-                : "YOUR FRIEND RANK"}
-            </span>
-
-            <strong>
-              #
-              {rankingTab === "world"
-                ? "1,842"
-                : "1"}
-            </strong>
-
-            <small>
+          <div
+            style={{
+              marginTop: "14px",
+              padding: "14px",
+              borderRadius: "17px",
+              background:
+                "linear-gradient(135deg, rgba(124,77,255,0.18), rgba(168,85,247,0.06))",
+              border: "1px solid rgba(168,85,247,0.22)",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                width: "42px",
+                height: "42px",
+                borderRadius: "13px",
+                display: "grid",
+                placeItems: "center",
+                background: "rgba(8,8,18,0.45)",
+                fontSize: "19px",
+                flexShrink: 0,
+              }}
+            >
+              📈
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "8px",
+                  fontWeight: 900,
+                  letterSpacing: "0.1em",
+                  opacity: 0.5,
+                }}
+              >
+                {rankingTab === "world" ? "YOUR GLOBAL RANK" : "YOUR FRIEND RANK"}
+              </span>
+              <strong
+                style={{
+                  display: "block",
+                  marginTop: "2px",
+                  fontSize: "23px",
+                  lineHeight: 1,
+                }}
+              >
+                #{rankingTab === "world" ? "1,842" : "1"}
+              </strong>
+            </div>
+            <span
+              style={{
+                fontSize: "9px",
+                lineHeight: 1.35,
+                opacity: 0.58,
+                maxWidth: "105px",
+                textAlign: "right",
+              }}
+            >
               {rankingTab === "world"
                 ? "Keep playing to climb higher ⚡"
                 : "Challenge your friends ⚔️"}
-            </small>
+            </span>
           </div>
         </main>
 
