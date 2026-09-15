@@ -1203,6 +1203,41 @@ function App() {
   // HOME
   // ==========================================
 
+  const handleChallenge = async (name: string) => {
+    const webApp = getTelegramWebApp();
+
+    webApp?.HapticFeedback?.impactOccurred(
+      "medium"
+    );
+
+    const inviteText =
+      name === "friend"
+        ? "⚔️ Приєднуйся до BATTLE IQ! Перевіримо, у кого IQ вищий 😎"
+        : `⚔️ ${name}, викликаю тебе на BATTLE IQ!`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "BATTLE IQ",
+          text: inviteText,
+        });
+        setChallengeNotice("✅ Invite shared!");
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteText);
+        setChallengeNotice("✅ Invite text copied!");
+      } else {
+        setChallengeNotice(inviteText);
+      }
+    } catch {
+      setChallengeNotice("⚔️ Invite cancelled.");
+    }
+
+    window.setTimeout(() => {
+      setChallengeNotice("");
+    }, 3000);
+  };
+
+
   if (screen === "home") {
     return (
       <div className="app">
@@ -1400,12 +1435,16 @@ function App() {
                 </strong>
 
                 <span>
-                  Coming soon
+                  Invite a friend
                 </span>
               </div>
             </div>
 
-            <button className="challenge-button">
+            <button
+              className="challenge-button"
+              onClick={() => handleChallenge("friend")}
+              type="button"
+            >
               INVITE
             </button>
           </section>
@@ -2373,22 +2412,6 @@ function App() {
                     .toLowerCase()
                 )
           );
-
-    const handleChallenge = (name: string) => {
-      const webApp = getTelegramWebApp();
-
-      webApp?.HapticFeedback?.impactOccurred(
-        "medium"
-      );
-
-      setChallengeNotice(
-        `⚔️ Challenge prepared for ${name}. PvP will be connected next.`
-      );
-
-      window.setTimeout(() => {
-        setChallengeNotice("");
-      }, 3000);
-    };
 
     const topThree =
       rankingTab === "world" &&
