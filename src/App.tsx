@@ -269,6 +269,12 @@ function App() {
   const [challengeNotice, setChallengeNotice] =
     useState("");
 
+  const [notificationsOpen, setNotificationsOpen] =
+    useState(false);
+
+  const [settingsOpen, setSettingsOpen] =
+    useState(false);
+
   const [player, setPlayer] =
     useState<PlayerData>(() =>
       loadPlayer()
@@ -503,27 +509,212 @@ function App() {
   // ==========================================
 
   const Header = () => (
-    <header className="topbar">
-      <div className="logo">
-        <span className="logo-icon">
-          ⚡
-        </span>
+    <>
+      <header className="topbar">
+        <div className="logo">
+          <span className="logo-icon">
+            ⚡
+          </span>
 
-        <span>
-          BATTLE <b>IQ</b>
-        </span>
-      </div>
+          <span>
+            BATTLE <b>IQ</b>
+          </span>
+        </div>
 
-      <div className="top-actions">
-        <button className="icon-btn">
-          🔔
-        </button>
+        <div className="top-actions">
+          <button
+            className="icon-btn"
+            onClick={() => {
+              setNotificationsOpen(
+                (value) => !value
+              );
+              setSettingsOpen(false);
 
-        <button className="icon-btn">
-          ⚙️
-        </button>
-      </div>
-    </header>
+              getTelegramWebApp()
+                ?.HapticFeedback?.selectionChanged();
+            }}
+            aria-label="Notifications"
+          >
+            🔔
+          </button>
+
+          <button
+            className="icon-btn"
+            onClick={() => {
+              setSettingsOpen(
+                (value) => !value
+              );
+              setNotificationsOpen(false);
+
+              getTelegramWebApp()
+                ?.HapticFeedback?.selectionChanged();
+            }}
+            aria-label="Settings"
+          >
+            ⚙️
+          </button>
+        </div>
+      </header>
+
+      {notificationsOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: "68px",
+            right: "14px",
+            width: "min(310px, calc(100vw - 28px))",
+            zIndex: 1000,
+            padding: "16px",
+            borderRadius: "16px",
+            background:
+              "rgba(18, 15, 35, 0.98)",
+            border:
+              "1px solid rgba(255,255,255,0.10)",
+            boxShadow:
+              "0 18px 50px rgba(0,0,0,0.45)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+            }}
+          >
+            <strong>
+              🔔 Notifications
+            </strong>
+
+            <button
+              onClick={() =>
+                setNotificationsOpen(false)
+              }
+              style={{
+                border: 0,
+                background: "transparent",
+                color: "inherit",
+                fontSize: "18px",
+                cursor: "pointer",
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          <div
+            style={{
+              padding: "12px",
+              borderRadius: "12px",
+              background:
+                "rgba(124, 77, 255, 0.12)",
+              fontSize: "13px",
+              lineHeight: 1.45,
+            }}
+          >
+            🎮 Your next BATTLE IQ challenge
+            is waiting.
+            <br />
+            <span style={{ opacity: 0.65 }}>
+              Complete a battle to earn XP.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {settingsOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: "68px",
+            right: "14px",
+            width: "min(310px, calc(100vw - 28px))",
+            zIndex: 1000,
+            padding: "16px",
+            borderRadius: "16px",
+            background:
+              "rgba(18, 15, 35, 0.98)",
+            border:
+              "1px solid rgba(255,255,255,0.10)",
+            boxShadow:
+              "0 18px 50px rgba(0,0,0,0.45)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+            }}
+          >
+            <strong>
+              ⚙️ Settings
+            </strong>
+
+            <button
+              onClick={() =>
+                setSettingsOpen(false)
+              }
+              style={{
+                border: 0,
+                background: "transparent",
+                color: "inherit",
+                fontSize: "18px",
+                cursor: "pointer",
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          <div
+            style={{
+              padding: "12px",
+              borderRadius: "12px",
+              background:
+                "rgba(255,255,255,0.05)",
+              fontSize: "13px",
+              lineHeight: 1.5,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "9px",
+              }}
+            >
+              <span>Telegram Mini App</span>
+              <strong>ON</strong>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "9px",
+              }}
+            >
+              <span>Haptic feedback</span>
+              <strong>ON</strong>
+            </div>
+
+            <div
+              style={{
+                opacity: 0.55,
+                fontSize: "11px",
+              }}
+            >
+              More settings will be added
+              soon.
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 
   // ==========================================
