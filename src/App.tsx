@@ -260,6 +260,9 @@ function App() {
   const [screen, setScreen] =
     useState<Screen>("home");
 
+  const [rankingTab, setRankingTab] =
+    useState<"world" | "friends">("world");
+
   const [player, setPlayer] =
     useState<PlayerData>(() =>
       loadPlayer()
@@ -994,39 +997,38 @@ function App() {
   // ==========================================
 
   if (screen === "ranking") {
-    const players = [
+    const currentName =
+      telegramUser?.first_name ||
+      "Sergio";
+
+    const worldPlayers = [
+      ["Alex", "12,840", "🥇"],
+      ["Max", "11,920", "🥈"],
+      ["Daniel", "11,540", "🥉"],
+      ["Vlad", "10,880", ""],
+      ["Nikita", "10,210", ""],
       [
-        "Alex",
-        "12,840",
-        "🥇",
-      ],
-      [
-        "Max",
-        "11,920",
-        "🥈",
-      ],
-      [
-        "Daniel",
-        "11,540",
-        "🥉",
-      ],
-      [
-        "Vlad",
-        "10,880",
-        "",
-      ],
-      [
-        "Nikita",
-        "10,210",
-        "",
-      ],
-      [
-        telegramUser?.first_name ||
-          "Sergio",
+        currentName,
         player.xp.toLocaleString(),
         "",
       ],
     ];
+
+    const friendPlayers = [
+      [
+        currentName,
+        player.xp.toLocaleString(),
+        "",
+      ],
+      ["Alex", "4,820", ""],
+      ["Max", "3,950", ""],
+      ["Daniel", "2,740", ""],
+    ];
+
+    const players =
+      rankingTab === "world"
+        ? worldPlayers
+        : friendPlayers;
 
     return (
       <div className="app">
@@ -1040,35 +1042,52 @@ function App() {
 
             <div>
               <h1>
-                GLOBAL RANKING
+                {rankingTab === "world"
+                  ? "GLOBAL RANKING"
+                  : "FRIENDS RANKING"}
               </h1>
 
               <p>
-                Compete with players
-                worldwide
+                {rankingTab === "world"
+                  ? "Compete with players worldwide"
+                  : "Compete with your friends"}
               </p>
             </div>
           </div>
 
           <div className="ranking-tabs">
-            <button className="ranking-tab active">
+            <button
+              className={`ranking-tab ${
+                rankingTab === "world"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setRankingTab("world")
+              }
+            >
               🌍 World
             </button>
 
-            <button className="ranking-tab">
+            <button
+              className={`ranking-tab ${
+                rankingTab === "friends"
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                setRankingTab("friends")
+              }
+            >
               👥 Friends
             </button>
           </div>
 
           <section className="leaderboard">
             {players.map(
-              (
-                [name, xp, medal],
-                index
-              ) => {
+              ([name, xp, medal], index) => {
                 const isCurrentPlayer =
-                  index ===
-                  players.length - 1;
+                  name === currentName;
 
                 return (
                   <div
@@ -1080,8 +1099,10 @@ function App() {
                     key={`${name}-${index}`}
                   >
                     <div className="leader-position">
-                      {medal ||
-                        `#${index + 1}`}
+                      {rankingTab === "world"
+                        ? medal ||
+                          `#${index + 1}`
+                        : `#${index + 1}`}
                     </div>
 
                     <div className="leader-avatar">
@@ -1112,8 +1133,10 @@ function App() {
                         LEVEL{" "}
                         {isCurrentPlayer
                           ? levelInfo.level
-                          : 20 -
-                            index}
+                          : Math.max(
+                              1,
+                              20 - index
+                            )}
                       </span>
                     </div>
 
@@ -1132,16 +1155,22 @@ function App() {
 
           <div className="your-rank-card">
             <span>
-              YOUR CURRENT RANK
+              {rankingTab === "world"
+                ? "YOUR GLOBAL RANK"
+                : "YOUR FRIEND RANK"}
             </span>
 
             <strong>
-              #1,842
+              #
+              {rankingTab === "world"
+                ? "1,842"
+                : "1"}
             </strong>
 
             <small>
-              Keep playing to climb
-              higher ⚡
+              {rankingTab === "world"
+                ? "Keep playing to climb higher ⚡"
+                : "Challenge your friends ⚔️"}
             </small>
           </div>
         </main>
