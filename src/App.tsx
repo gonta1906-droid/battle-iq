@@ -1738,126 +1738,405 @@ function App() {
       }
     );
 
+    const unlockedAchievements =
+      achievements.filter(
+        (item) => item.unlocked
+      ).length;
+
+    const displayName =
+      telegramUser?.first_name ||
+      "Sergio";
+
+    const displayUsername =
+      telegramUser?.username
+        ? `@${telegramUser.username}`
+        : "BATTLE IQ PLAYER";
+
     return (
       <div className="app">
         <div className="glow glow-one" />
+        <div className="glow glow-two" />
 
         <Header />
 
-        <main className="profile-page">
-          <section className="profile-hero">
-            <div className="profile-big-avatar">
+        <main
+          className="profile-page"
+          style={{
+            paddingBottom: "100px",
+            overflowX: "hidden",
+          }}
+        >
+          {/* PROFILE HERO */}
+          <section
+            className="profile-hero"
+            style={{
+              padding: "24px 16px 20px",
+              textAlign: "center",
+              borderRadius: "20px",
+              background:
+                "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.035))",
+              border:
+                "1px solid rgba(255,255,255,0.08)",
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              className="profile-big-avatar"
+              style={{
+                width: "76px",
+                height: "76px",
+                margin: "0 auto 12px",
+                borderRadius: "22px",
+                display: "grid",
+                placeItems: "center",
+                fontSize: "36px",
+                background:
+                  "linear-gradient(145deg, rgba(124,77,255,0.35), rgba(168,85,247,0.18))",
+                border:
+                  "1px solid rgba(168,85,247,0.30)",
+                boxShadow:
+                  "0 12px 35px rgba(124,77,255,0.18)",
+              }}
+            >
               😎
             </div>
 
-            <h1>
-              {telegramUser?.first_name ||
-                "SERGIO"}
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "27px",
+                lineHeight: 1.15,
+                fontWeight: 900,
+                wordBreak: "break-word",
+              }}
+            >
+              {displayName}
             </h1>
 
-            <div className="profile-level">
-              LEVEL{" "}
-              {levelInfo.level}
+            <div
+              style={{
+                marginTop: "5px",
+                fontSize: "12px",
+                opacity: 0.55,
+                wordBreak: "break-word",
+              }}
+            >
+              {displayUsername}
             </div>
 
-            <div className="profile-xp">
-              <div className="profile-xp-top">
-                <span>
+            <div
+              className="profile-level"
+              style={{
+                display: "inline-flex",
+                marginTop: "13px",
+                padding: "7px 12px",
+                borderRadius: "999px",
+                background:
+                  "rgba(124,77,255,0.18)",
+                border:
+                  "1px solid rgba(124,77,255,0.28)",
+                fontSize: "11px",
+                fontWeight: 900,
+                letterSpacing: "0.06em",
+              }}
+            >
+              LEVEL {levelInfo.level}
+            </div>
+
+            <div
+              className="profile-xp"
+              style={{
+                marginTop: "18px",
+                textAlign: "left",
+              }}
+            >
+              <div
+                className="profile-xp-top"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                  marginBottom: "7px",
+                  fontSize: "11px",
+                  fontWeight: 800,
+                }}
+              >
+                <span
+                  style={{
+                    opacity: 0.6,
+                  }}
+                >
                   XP PROGRESS
                 </span>
 
-                <span>
-                  {
-                    levelInfo.currentXp.toLocaleString()
-                  }{" "}
-                  /{" "}
-                  {
-                    levelInfo.requiredXp.toLocaleString()
-                  }
+                <span
+                  style={{
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {levelInfo.currentXp.toLocaleString()}
+                  {" / "}
+                  {levelInfo.requiredXp.toLocaleString()}
                 </span>
               </div>
 
-              <div className="xp-bar">
+              <div
+                className="xp-bar"
+                style={{
+                  height: "8px",
+                  borderRadius: "999px",
+                  overflow: "hidden",
+                  background:
+                    "rgba(255,255,255,0.08)",
+                }}
+              >
                 <div
                   className="xp-progress"
                   style={{
                     width: `${levelProgress}%`,
+                    height: "100%",
+                    borderRadius: "999px",
+                    background:
+                      "linear-gradient(90deg, #7c4dff, #a855f7)",
+                    transition:
+                      "width 0.3s ease",
                   }}
                 />
+              </div>
+
+              <div
+                style={{
+                  marginTop: "7px",
+                  textAlign: "right",
+                  fontSize: "10px",
+                  opacity: 0.45,
+                }}
+              >
+                {Math.round(levelProgress)}% to next level
               </div>
             </div>
           </section>
 
-          <section className="stats-grid">
-            <div className="stat-card">
-              <span>⚔️</span>
+          {/* STATS */}
+          <section
+            className="stats-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "10px",
+              marginTop: "14px",
+            }}
+          >
+            {[
+              [
+                "⚔️",
+                player.battles.toLocaleString(),
+                "BATTLES",
+              ],
+              [
+                "🔥",
+                player.streak.toLocaleString(),
+                "STREAK",
+              ],
+              [
+                "⚡",
+                player.xp.toLocaleString(),
+                "TOTAL XP",
+              ],
+              [
+                "🏆",
+                "#1,842",
+                "GLOBAL RANK",
+              ],
+            ].map(
+              ([icon, value, label]) => (
+                <div
+                  className="stat-card"
+                  key={label}
+                  style={{
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                    padding: "15px 12px",
+                    borderRadius: "15px",
+                    background:
+                      "rgba(255,255,255,0.045)",
+                    border:
+                      "1px solid rgba(255,255,255,0.07)",
+                    textAlign: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "20px",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    {icon}
+                  </span>
 
-              <strong>
-                {player.battles}
+                  <strong
+                    style={{
+                      display: "block",
+                      fontSize: "18px",
+                      lineHeight: 1.1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {value}
+                  </strong>
+
+                  <small
+                    style={{
+                      display: "block",
+                      marginTop: "5px",
+                      fontSize: "9px",
+                      letterSpacing: "0.05em",
+                      opacity: 0.5,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {label}
+                  </small>
+                </div>
+              )
+            )}
+          </section>
+
+          {/* EXTRA STATS */}
+          <section
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "10px",
+              marginTop: "10px",
+            }}
+          >
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "14px",
+                background:
+                  "rgba(255,255,255,0.035)",
+                border:
+                  "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "10px",
+                  opacity: 0.5,
+                }}
+              >
+                BEST COMBO
+              </span>
+
+              <strong
+                style={{
+                  display: "block",
+                  marginTop: "4px",
+                  fontSize: "16px",
+                }}
+              >
+                🔥 {player.bestCombo}
               </strong>
-
-              <small>
-                BATTLES
-              </small>
             </div>
 
-            <div className="stat-card">
-              <span>🔥</span>
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "14px",
+                background:
+                  "rgba(255,255,255,0.035)",
+                border:
+                  "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "10px",
+                  opacity: 0.5,
+                }}
+              >
+                BEST BATTLE XP
+              </span>
 
-              <strong>
-                {player.streak}
+              <strong
+                style={{
+                  display: "block",
+                  marginTop: "4px",
+                  fontSize: "16px",
+                }}
+              >
+                ⚡ {player.bestBattleXp}
               </strong>
-
-              <small>
-                STREAK
-              </small>
-            </div>
-
-            <div className="stat-card">
-              <span>⚡</span>
-
-              <strong>
-                {player.xp.toLocaleString()}
-              </strong>
-
-              <small>
-                TOTAL XP
-              </small>
-            </div>
-
-            <div className="stat-card">
-              <span>🏆</span>
-
-              <strong>
-                #1,842
-              </strong>
-
-              <small>
-                RANK
-              </small>
             </div>
           </section>
 
-          <div className="profile-section-title">
-            <h2>
-              Achievements
-            </h2>
+          {/* ACHIEVEMENTS HEADER */}
+          <div
+            className="profile-section-title"
+            style={{
+              display: "flex",
+              alignItems: "end",
+              justifyContent: "space-between",
+              gap: "10px",
+              marginTop: "22px",
+              marginBottom: "11px",
+            }}
+          >
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "19px",
+                  fontWeight: 900,
+                }}
+              >
+                🏅 Achievements
+              </h2>
 
-            <span>
-              {
-                achievements.filter(
-                  (item) =>
-                    item.unlocked
-                ).length
-              }
-              /
-              {
-                achievements.length
-              }
-            </span>
+              <span
+                style={{
+                  display: "block",
+                  marginTop: "3px",
+                  fontSize: "10px",
+                  opacity: 0.45,
+                }}
+              >
+                Complete challenges to unlock badges
+              </span>
+            </div>
+
+            <strong
+              style={{
+                padding: "5px 9px",
+                borderRadius: "999px",
+                background:
+                  "rgba(124,77,255,0.14)",
+                fontSize: "11px",
+              }}
+            >
+              {unlockedAchievements}/
+              {achievements.length}
+            </strong>
           </div>
 
-          <section className="achievements">
+          {/* ACHIEVEMENTS */}
+          <section
+            className="achievements"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "9px",
+            }}
+          >
             {achievements.map(
               (achievement) => {
                 const progressPercent =
@@ -1876,8 +2155,44 @@ function App() {
                         : "locked"
                     }`}
                     key={achievement.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "11px",
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "12px",
+                      borderRadius: "15px",
+                      background:
+                        achievement.unlocked
+                          ? "rgba(124,77,255,0.12)"
+                          : "rgba(255,255,255,0.035)",
+                      border:
+                        achievement.unlocked
+                          ? "1px solid rgba(124,77,255,0.24)"
+                          : "1px solid rgba(255,255,255,0.06)",
+                      opacity:
+                        achievement.unlocked
+                          ? 1
+                          : 0.78,
+                    }}
                   >
-                    <div className="achievement-icon">
+                    <div
+                      className="achievement-icon"
+                      style={{
+                        width: "43px",
+                        height: "43px",
+                        flex: "0 0 43px",
+                        display: "grid",
+                        placeItems: "center",
+                        borderRadius: "12px",
+                        background:
+                          achievement.unlocked
+                            ? "rgba(124,77,255,0.18)"
+                            : "rgba(255,255,255,0.06)",
+                        fontSize: "20px",
+                      }}
+                    >
                       {achievement.unlocked
                         ? achievement.icon
                         : "🔒"}
@@ -1889,55 +2204,96 @@ function App() {
                         minWidth: 0,
                       }}
                     >
-                      <strong>
-                        {achievement.title}
-                      </strong>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "7px",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {achievement.title}
+                        </strong>
 
-                      <span>
+                        {achievement.unlocked && (
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 900,
+                              color: "#c4b5fd",
+                            }}
+                          >
+                            ✓ UNLOCKED
+                          </span>
+                        )}
+                      </div>
+
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: "4px",
+                          fontSize: "11px",
+                          lineHeight: 1.35,
+                          opacity: 0.58,
+                          wordBreak: "break-word",
+                        }}
+                      >
                         {achievement.text}
                       </span>
 
                       {!achievement.unlocked && (
-                        <div
-                          style={{
-                            marginTop: "7px",
-                            height: "5px",
-                            borderRadius: "999px",
-                            overflow: "hidden",
-                            background:
-                              "rgba(255,255,255,0.08)",
-                          }}
-                        >
+                        <>
                           <div
                             style={{
-                              width: `${progressPercent}%`,
-                              height: "100%",
+                              marginTop: "8px",
+                              height: "5px",
                               borderRadius: "999px",
+                              overflow: "hidden",
                               background:
-                                "linear-gradient(90deg, #7c4dff, #a855f7)",
+                                "rgba(255,255,255,0.08)",
                             }}
-                          />
-                        </div>
-                      )}
+                          >
+                            <div
+                              style={{
+                                width: `${progressPercent}%`,
+                                height: "100%",
+                                borderRadius: "999px",
+                                background:
+                                  "linear-gradient(90deg, #7c4dff, #a855f7)",
+                              }}
+                            />
+                          </div>
 
-                      {!achievement.unlocked && (
-                        <small
-                          style={{
-                            display: "block",
-                            marginTop: "5px",
-                            opacity: 0.5,
-                            fontSize: "10px",
-                          }}
-                        >
-                          {achievement.value.toLocaleString()}
-                          /
-                          {achievement.target.toLocaleString()}
-                        </small>
+                          <small
+                            style={{
+                              display: "block",
+                              marginTop: "4px",
+                              fontSize: "9px",
+                              opacity: 0.42,
+                            }}
+                          >
+                            {achievement.value.toLocaleString()}
+                            {" / "}
+                            {achievement.target.toLocaleString()}
+                          </small>
+                        </>
                       )}
                     </div>
 
                     {achievement.unlocked && (
-                      <b>✓</b>
+                      <div
+                        style={{
+                          flex: "0 0 auto",
+                          fontSize: "18px",
+                        }}
+                      >
+                        ✓
+                      </div>
                     )}
                   </div>
                 );
