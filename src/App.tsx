@@ -31,7 +31,110 @@ type PlayerData = {
   battles: number;
   totalCorrect: number;
   bestCombo: number;
+  bestBattleXp: number;
 };
+
+const ACHIEVEMENTS = [
+  {
+    id: "first_battle",
+    icon: "🎯",
+    title: "First Battle",
+    text: "Complete your first battle",
+    getProgress: (
+      player: PlayerData,
+      _missions: DailyMissionStats,
+      _level: number
+    ) => ({
+      value: Math.min(player.battles, 1),
+      target: 1,
+      unlocked: player.battles >= 1,
+    }),
+  },
+  {
+    id: "combo_5",
+    icon: "🔥",
+    title: "On Fire",
+    text: "Reach a 5-answer combo",
+    getProgress: (
+      player: PlayerData,
+      _missions: DailyMissionStats,
+      _level: number
+    ) => ({
+      value: Math.min(player.bestCombo, 5),
+      target: 5,
+      unlocked: player.bestCombo >= 5,
+    }),
+  },
+  {
+    id: "level_5",
+    icon: "⭐",
+    title: "Rising Star",
+    text: "Reach Level 5",
+    getProgress: (
+      _player: PlayerData,
+      _missions: DailyMissionStats,
+      level: number
+    ) => ({
+      value: Math.min(level, 5),
+      target: 5,
+      unlocked: level >= 5,
+    }),
+  },
+  {
+    id: "mission_master",
+    icon: "🎯",
+    title: "Mission Master",
+    text: "Claim all daily missions",
+    getProgress: (
+      _player: PlayerData,
+      missions: DailyMissionStats,
+      _level: number
+    ) => ({
+      value: Math.min(
+        missions.claimed.length,
+        DAILY_MISSIONS.length
+      ),
+      target: DAILY_MISSIONS.length,
+      unlocked:
+        missions.claimed.length >=
+        DAILY_MISSIONS.length,
+    }),
+  },
+  {
+    id: "speed_demon",
+    icon: "⚡",
+    title: "Speed Demon",
+    text: "Earn 300 XP in a single battle",
+    getProgress: (
+      player: PlayerData,
+      _missions: DailyMissionStats,
+      _level: number
+    ) => ({
+      value: Math.min(
+        player.bestBattleXp,
+        300
+      ),
+      target: 300,
+      unlocked:
+        player.bestBattleXp >= 300,
+    }),
+  },
+  {
+    id: "iq_legend",
+    icon: "👑",
+    title: "IQ Legend",
+    text: "Earn 5,000 total XP",
+    getProgress: (
+      player: PlayerData,
+      _missions: DailyMissionStats,
+      _level: number
+    ) => ({
+      value: Math.min(player.xp, 5000),
+      target: 5000,
+      unlocked: player.xp >= 5000,
+    }),
+  },
+];
 
 const QUESTIONS: Question[] = [
   {
@@ -315,6 +418,8 @@ function loadPlayer(): PlayerData {
           Number(parsed.totalCorrect) || 0,
         bestCombo:
           Number(parsed.bestCombo) || 0,
+        bestBattleXp:
+          Number(parsed.bestBattleXp) || 0,
       };
     }
   } catch {}
@@ -325,6 +430,7 @@ function loadPlayer(): PlayerData {
     battles: 0,
     totalCorrect: 0,
     bestCombo: 0,
+    bestBattleXp: 0,
   };
 }
 
@@ -391,6 +497,12 @@ function App() {
     useState<DailyMissionStats>(() =>
       loadDailyMissionStats()
     );
+
+  const [achievementToast, setAchievementToast] =
+    useState<{
+      icon: string;
+      title: string;
+    } | null>(null);
 
   const [battleCombo, setBattleCombo] =
     useState(0);
@@ -459,6 +571,65 @@ function App() {
       JSON.stringify(dailyMissions)
     );
   }, [dailyMissions]);
+
+  useEffect(() => {
+    const unlocked = ACHIEVEMENTS.filter(
+      (achievement) =>
+        achievement.getProgress(
+          player,
+          dailyMissions,
+          levelInfo.level
+        ).unlocked
+    );
+
+    let seen: string[] = [];
+
+    try {
+      const saved = localStorage.getItem(
+        "battle_iq_seen_achievements"
+      );
+
+      if (saved) {
+        seen = JSON.parse(saved);
+      }
+    } catch {}
+
+    const newlyUnlocked =
+      unlocked.find(
+        (achievement) =>
+          !seen.includes(achievement.id)
+      );
+
+    if (newlyUnlocked) {
+      const updatedSeen = [
+        ...seen,
+        newlyUnlocked.id,
+      ];
+
+      localStorage.setItem(
+        "battle_iq_seen_achievements",
+        JSON.stringify(updatedSeen)
+      );
+
+      setAchievementToast({
+        icon: newlyUnlocked.icon,
+        title: newlyUnlocked.title,
+      });
+
+      getTelegramWebApp()
+        ?.HapticFeedback?.notificationOccurred(
+          "success"
+        );
+
+      window.setTimeout(() => {
+        setAchievementToast(null);
+      }, 3500);
+    }
+  }, [
+    player,
+    dailyMissions,
+    levelInfo.level,
+  ]);
 
   // ==========================================
   // TIMER
@@ -559,6 +730,11 @@ function App() {
         Math.max(
           current.bestCombo,
           battleCombo
+        ),
+      bestBattleXp:
+        Math.max(
+          current.bestBattleXp,
+          battleXp
         ),
     }));
 
@@ -663,6 +839,84 @@ function App() {
 
   const Header = () => (
     <>
+      {achievementToast && (
+        <div
+          style={{
+            position: "fixed",
+            left: "50%",
+            top: "18px",
+            transform: "translateX(-50%)",
+            zIndex: 2000,
+            width: "min(330px, calc(100vw - 32px))",
+            padding: "13px 15px",
+            borderRadius: "15px",
+            background:
+              "rgba(31, 20, 63, 0.98)",
+            border:
+              "1px solid rgba(168,85,247,0.55)",
+            boxShadow:
+              "0 16px 45px rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            gap: "11px",
+            animation:
+              "battleIqAchievementPop 0.28s ease-out",
+          }}
+        >
+          <div
+            style={{
+              width: "38px",
+              height: "38px",
+              borderRadius: "11px",
+              display: "grid",
+              placeItems: "center",
+              background:
+                "rgba(124,77,255,0.22)",
+              fontSize: "20px",
+              flexShrink: 0,
+            }}
+          >
+            {achievementToast.icon}
+          </div>
+
+          <div>
+            <strong
+              style={{
+                display: "block",
+                fontSize: "12px",
+                letterSpacing: "0.04em",
+              }}
+            >
+              🏅 ACHIEVEMENT UNLOCKED
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "2px",
+                fontSize: "14px",
+                fontWeight: 800,
+              }}
+            >
+              {achievementToast.title}
+            </span>
+          </div>
+        </div>
+      )}
+
+      <style>
+        {`@keyframes battleIqAchievementPop {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -14px) scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+        }`}
+      </style>
+
       <header className="topbar">
         <div className="logo">
           <span className="logo-icon">
@@ -1468,38 +1722,21 @@ function App() {
   // ==========================================
 
   if (screen === "profile") {
-    const achievements = [
-      {
-        icon: "🎯",
-        title: "First Battle",
-        text: "Complete your first battle",
-        unlocked:
-          player.battles >= 1,
-      },
+    const achievements = ACHIEVEMENTS.map(
+      (achievement) => {
+        const progress =
+          achievement.getProgress(
+            player,
+            dailyMissions,
+            levelInfo.level
+          );
 
-      {
-        icon: "🔥",
-        title: "First Streak",
-        text: "Reach a 3 day streak",
-        unlocked:
-          player.streak >= 3,
-      },
-
-      {
-        icon: "🧠",
-        title: "Brain Master",
-        text: "Earn 5,000 XP",
-        unlocked:
-          player.xp >= 5000,
-      },
-
-      {
-        icon: "🏆",
-        title: "Top 1000",
-        text: "Reach the top 1000",
-        unlocked: false,
-      },
-    ];
+        return {
+          ...achievement,
+          ...progress,
+        };
+      }
+    );
 
     return (
       <div className="app">
@@ -1622,42 +1859,89 @@ function App() {
 
           <section className="achievements">
             {achievements.map(
-              (achievement) => (
-                <div
-                  className={`achievement ${
-                    achievement.unlocked
-                      ? "unlocked"
-                      : "locked"
-                  }`}
-                  key={
-                    achievement.title
-                  }
-                >
-                  <div className="achievement-icon">
-                    {achievement.unlocked
-                      ? achievement.icon
-                      : "🔒"}
+              (achievement) => {
+                const progressPercent =
+                  Math.min(
+                    100,
+                    (achievement.value /
+                      achievement.target) *
+                      100
+                  );
+
+                return (
+                  <div
+                    className={`achievement ${
+                      achievement.unlocked
+                        ? "unlocked"
+                        : "locked"
+                    }`}
+                    key={achievement.id}
+                  >
+                    <div className="achievement-icon">
+                      {achievement.unlocked
+                        ? achievement.icon
+                        : "🔒"}
+                    </div>
+
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      <strong>
+                        {achievement.title}
+                      </strong>
+
+                      <span>
+                        {achievement.text}
+                      </span>
+
+                      {!achievement.unlocked && (
+                        <div
+                          style={{
+                            marginTop: "7px",
+                            height: "5px",
+                            borderRadius: "999px",
+                            overflow: "hidden",
+                            background:
+                              "rgba(255,255,255,0.08)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${progressPercent}%`,
+                              height: "100%",
+                              borderRadius: "999px",
+                              background:
+                                "linear-gradient(90deg, #7c4dff, #a855f7)",
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {!achievement.unlocked && (
+                        <small
+                          style={{
+                            display: "block",
+                            marginTop: "5px",
+                            opacity: 0.5,
+                            fontSize: "10px",
+                          }}
+                        >
+                          {achievement.value.toLocaleString()}
+                          /
+                          {achievement.target.toLocaleString()}
+                        </small>
+                      )}
+                    </div>
+
+                    {achievement.unlocked && (
+                      <b>✓</b>
+                    )}
                   </div>
-
-                  <div>
-                    <strong>
-                      {
-                        achievement.title
-                      }
-                    </strong>
-
-                    <span>
-                      {
-                        achievement.text
-                      }
-                    </span>
-                  </div>
-
-                  {achievement.unlocked && (
-                    <b>✓</b>
-                  )}
-                </div>
-              )
+                );
+              }
             )}
           </section>
         </main>
