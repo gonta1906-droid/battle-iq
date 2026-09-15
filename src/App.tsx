@@ -12,6 +12,7 @@ type Screen =
   | "battle"
   | "ranking"
   | "profile"
+  | "missions"
   | "result";
 
 type Answer = {
@@ -28,6 +29,8 @@ type PlayerData = {
   xp: number;
   streak: number;
   battles: number;
+  totalCorrect: number;
+  bestCombo: number;
 };
 
 const QUESTIONS: Question[] = [
@@ -198,6 +201,103 @@ function getLevelInfo(totalXp: number) {
   };
 }
 
+type DailyMissionStats = {
+  date: string;
+  battles: number;
+  correct: number;
+  bestCombo: number;
+  xpEarned: number;
+  claimed: string[];
+};
+
+function getTodayKey() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(
+    now.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    now.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function loadDailyMissionStats(): DailyMissionStats {
+  const today = getTodayKey();
+
+  try {
+    const saved = localStorage.getItem(
+      "battle_iq_daily_missions"
+    );
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+
+      if (parsed.date === today) {
+        return parsed;
+      }
+    }
+  } catch {}
+
+  return {
+    date: today,
+    battles: 0,
+    correct: 0,
+    bestCombo: 0,
+    xpEarned: 0,
+    claimed: [],
+  };
+}
+
+const DAILY_MISSIONS = [
+  {
+    id: "battle_3",
+    icon: "⚔️",
+    title: "Warm Up",
+    description: "Complete 3 battles today",
+    target: 3,
+    reward: 150,
+    getProgress: (
+      stats: DailyMissionStats
+    ) => stats.battles,
+  },
+  {
+    id: "correct_20",
+    icon: "🧠",
+    title: "Sharp Mind",
+    description: "Answer 20 questions correctly",
+    target: 20,
+    reward: 200,
+    getProgress: (
+      stats: DailyMissionStats
+    ) => stats.correct,
+  },
+  {
+    id: "combo_5",
+    icon: "🔥",
+    title: "On Fire",
+    description: "Reach a 5-answer combo",
+    target: 5,
+    reward: 250,
+    getProgress: (
+      stats: DailyMissionStats
+    ) => stats.bestCombo,
+  },
+  {
+    id: "xp_500",
+    icon: "⚡",
+    title: "XP Hunter",
+    description: "Earn 500 XP from battles",
+    target: 500,
+    reward: 300,
+    getProgress: (
+      stats: DailyMissionStats
+    ) => stats.xpEarned,
+  },
+];
+
 function loadPlayer(): PlayerData {
   try {
     const saved = localStorage.getItem(
@@ -205,7 +305,17 @@ function loadPlayer(): PlayerData {
     );
 
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+
+      return {
+        xp: Number(parsed.xp) || 0,
+        streak: Number(parsed.streak) || 0,
+        battles: Number(parsed.battles) || 0,
+        totalCorrect:
+          Number(parsed.totalCorrect) || 0,
+        bestCombo:
+          Number(parsed.bestCombo) || 0,
+      };
     }
   } catch {}
 
@@ -213,6 +323,8 @@ function loadPlayer(): PlayerData {
     xp: 0,
     streak: 0,
     battles: 0,
+    totalCorrect: 0,
+    bestCombo: 0,
   };
 }
 
@@ -275,6 +387,14 @@ function App() {
   const [settingsOpen, setSettingsOpen] =
     useState(false);
 
+  const [dailyMissions, setDailyMissions] =
+    useState<DailyMissionStats>(() =>
+      loadDailyMissionStats()
+    );
+
+  const [battleCombo, setBattleCombo] =
+    useState(0);
+
   const [player, setPlayer] =
     useState<PlayerData>(() =>
       loadPlayer()
@@ -332,6 +452,13 @@ function App() {
       JSON.stringify(player)
     );
   }, [player]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "battle_iq_daily_missions",
+      JSON.stringify(dailyMissions)
+    );
+  }, [dailyMissions]);
 
   // ==========================================
   // TIMER
@@ -393,6 +520,7 @@ function App() {
     setQuestionIndex(0);
     setScore(0);
     setBattleXp(0);
+    setBattleCombo(0);
     setSelectedAnswer(null);
     setTimeLeft(60);
     setBattleFinished(false);
@@ -425,6 +553,25 @@ function App() {
         current.streak + 1,
       battles:
         current.battles + 1,
+      totalCorrect:
+        current.totalCorrect + score,
+      bestCombo:
+        Math.max(
+          current.bestCombo,
+          battleCombo
+        ),
+    }));
+
+    setDailyMissions((current) => ({
+      ...current,
+      battles: current.battles + 1,
+      correct: current.correct + score,
+      bestCombo: Math.max(
+        current.bestCombo,
+        battleCombo
+      ),
+      xpEarned:
+        current.xpEarned + battleXp,
     }));
 
     setScreen("result");
@@ -483,6 +630,10 @@ function App() {
         (value) => value + 1
       );
 
+      setBattleCombo(
+        (value) => value + 1
+      );
+
       const speedBonus =
         Math.floor(timeLeft / 3);
 
@@ -497,6 +648,8 @@ function App() {
       webApp?.HapticFeedback?.notificationOccurred(
         "error"
       );
+
+      setBattleCombo(0);
     }
 
     window.setTimeout(() => {
@@ -913,7 +1066,12 @@ function App() {
           </div>
 
           <section className="quick-grid">
-            <button className="quick-card">
+            <button
+              className="quick-card"
+              onClick={() =>
+                setScreen("missions")
+              }
+            >
               <div className="quick-icon purple">
                 🎯
               </div>
@@ -924,7 +1082,13 @@ function App() {
                 </strong>
 
                 <span>
-                  Coming soon
+                  {DAILY_MISSIONS.filter(
+                    (mission) =>
+                      mission.getProgress(
+                        dailyMissions
+                      ) >= mission.target
+                  ).length}
+                  /{DAILY_MISSIONS.length} complete
                 </span>
               </div>
 
@@ -977,6 +1141,320 @@ function App() {
             <button className="challenge-button">
               INVITE
             </button>
+          </section>
+        </main>
+
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ==========================================
+  // MISSIONS
+  // ==========================================
+
+  if (screen === "missions") {
+    const claimMission = (
+      missionId: string,
+      reward: number
+    ) => {
+      const mission =
+        DAILY_MISSIONS.find(
+          (item) => item.id === missionId
+        );
+
+      if (!mission) return;
+
+      const progress =
+        mission.getProgress(
+          dailyMissions
+        );
+
+      const alreadyClaimed =
+        dailyMissions.claimed.includes(
+          missionId
+        );
+
+      if (
+        progress < mission.target ||
+        alreadyClaimed
+      ) {
+        return;
+      }
+
+      getTelegramWebApp()
+        ?.HapticFeedback?.notificationOccurred(
+          "success"
+        );
+
+      setPlayer((current) => ({
+        ...current,
+        xp: current.xp + reward,
+      }));
+
+      setDailyMissions((current) => ({
+        ...current,
+        claimed: [
+          ...current.claimed,
+          missionId,
+        ],
+      }));
+    };
+
+    const completedCount =
+      DAILY_MISSIONS.filter(
+        (mission) =>
+          mission.getProgress(
+            dailyMissions
+          ) >= mission.target
+      ).length;
+
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+
+        <Header />
+
+        <main className="profile-page">
+          <section className="profile-hero">
+            <div
+              className="profile-big-avatar"
+            >
+              🎯
+            </div>
+
+            <h1>
+              DAILY MISSIONS
+            </h1>
+
+            <div className="profile-level">
+              {completedCount}/
+              {DAILY_MISSIONS.length} COMPLETE
+            </div>
+
+            <p
+              style={{
+                marginTop: "8px",
+                opacity: 0.65,
+                fontSize: "13px",
+              }}
+            >
+              Complete missions every day
+              and earn bonus XP.
+            </p>
+          </section>
+
+          <section
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            {DAILY_MISSIONS.map(
+              (mission) => {
+                const progress = Math.min(
+                  mission.getProgress(
+                    dailyMissions
+                  ),
+                  mission.target
+                );
+
+                const completed =
+                  progress >= mission.target;
+
+                const claimed =
+                  dailyMissions.claimed.includes(
+                    mission.id
+                  );
+
+                const percent =
+                  (progress /
+                    mission.target) *
+                  100;
+
+                return (
+                  <div
+                    key={mission.id}
+                    style={{
+                      padding: "16px",
+                      borderRadius: "16px",
+                      background:
+                        completed
+                          ? "rgba(124,77,255,0.16)"
+                          : "rgba(255,255,255,0.05)",
+                      border:
+                        completed
+                          ? "1px solid rgba(124,77,255,0.35)"
+                          : "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "12px",
+                          display: "grid",
+                          placeItems: "center",
+                          background:
+                            "rgba(124,77,255,0.14)",
+                          fontSize: "22px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {mission.icon}
+                      </div>
+
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <strong
+                          style={{
+                            display: "block",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {mission.title}
+                        </strong>
+
+                        <span
+                          style={{
+                            display: "block",
+                            marginTop: "3px",
+                            fontSize: "12px",
+                            opacity: 0.65,
+                          }}
+                        >
+                          {mission.description}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          textAlign: "right",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <strong
+                          style={{
+                            display: "block",
+                            fontSize: "13px",
+                          }}
+                        >
+                          +{mission.reward}
+                        </strong>
+
+                        <small
+                          style={{
+                            opacity: 0.55,
+                          }}
+                        >
+                          XP
+                        </small>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: "14px",
+                        height: "7px",
+                        borderRadius: "999px",
+                        overflow: "hidden",
+                        background:
+                          "rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${percent}%`,
+                          height: "100%",
+                          borderRadius: "999px",
+                          background:
+                            "linear-gradient(90deg, #7c4dff, #a855f7)",
+                          transition:
+                            "width 0.25s ease",
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "10px",
+                        marginTop: "9px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          opacity: 0.6,
+                        }}
+                      >
+                        {progress}/
+                        {mission.target}
+                      </span>
+
+                      <button
+                        disabled={
+                          !completed ||
+                          claimed
+                        }
+                        onClick={() =>
+                          claimMission(
+                            mission.id,
+                            mission.reward
+                          )
+                        }
+                        style={{
+                          border: 0,
+                          borderRadius: "10px",
+                          padding:
+                            "8px 12px",
+                          background:
+                            claimed
+                              ? "rgba(255,255,255,0.08)"
+                              : completed
+                              ? "#7c4dff"
+                              : "rgba(255,255,255,0.06)",
+                          color: "inherit",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                          cursor:
+                            completed &&
+                            !claimed
+                              ? "pointer"
+                              : "default",
+                          opacity:
+                            !completed ||
+                            claimed
+                              ? 0.55
+                              : 1,
+                        }}
+                      >
+                        {claimed
+                          ? "✓ CLAIMED"
+                          : completed
+                          ? "CLAIM XP"
+                          : "LOCKED"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+            )}
           </section>
         </main>
 
