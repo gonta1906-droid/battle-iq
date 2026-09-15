@@ -813,8 +813,21 @@ function App() {
       const speedBonus =
         Math.floor(timeLeft / 3);
 
+      const nextCombo =
+        battleCombo + 1;
+
+      const comboMultiplier =
+        Math.min(
+          3,
+          1 +
+            Math.floor(
+              nextCombo / 3
+            )
+        );
+
       const earnedXp =
-        50 + speedBonus;
+        (50 + speedBonus) *
+        comboMultiplier;
 
       setBattleXp(
         (value) =>
@@ -2708,6 +2721,19 @@ function App() {
             <div>
               <strong>
                 🔥{" "}
+                {Math.max(
+                  player.bestCombo,
+                  battleCombo
+                )}
+              </strong>
+
+              <span>
+                best combo
+              </span>
+            </div>
+
+            <div>
+              <strong>
                 {player.streak}
               </strong>
 
@@ -2803,6 +2829,144 @@ function App() {
           />
         </div>
 
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(3, minmax(0, 1fr))",
+            gap: "8px",
+            margin: "12px 0 14px",
+          }}
+        >
+          <div
+            style={{
+              padding: "9px 7px",
+              borderRadius: "11px",
+              background:
+                "rgba(255,255,255,0.045)",
+              border:
+                "1px solid rgba(255,255,255,0.07)",
+              textAlign: "center",
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                fontSize: "15px",
+              }}
+            >
+              {score}
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "2px",
+                fontSize: "9px",
+                opacity: 0.5,
+              }}
+            >
+              CORRECT
+            </span>
+          </div>
+
+          <div
+            style={{
+              padding: "9px 7px",
+              borderRadius: "11px",
+              background:
+                battleCombo >= 3
+                  ? "rgba(255,153,0,0.12)"
+                  : "rgba(255,255,255,0.045)",
+              border:
+                battleCombo >= 3
+                  ? "1px solid rgba(255,153,0,0.25)"
+                  : "1px solid rgba(255,255,255,0.07)",
+              textAlign: "center",
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                fontSize: "15px",
+              }}
+            >
+              🔥 {battleCombo}
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "2px",
+                fontSize: "9px",
+                opacity: 0.5,
+              }}
+            >
+              COMBO
+            </span>
+          </div>
+
+          <div
+            style={{
+              padding: "9px 7px",
+              borderRadius: "11px",
+              background:
+                "rgba(124,77,255,0.10)",
+              border:
+                "1px solid rgba(124,77,255,0.20)",
+              textAlign: "center",
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                fontSize: "15px",
+              }}
+            >
+              +{battleXp}
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "2px",
+                fontSize: "9px",
+                opacity: 0.5,
+              }}
+            >
+              XP
+            </span>
+          </div>
+        </div>
+
+        {battleCombo >= 3 && (
+          <div
+            style={{
+              marginBottom: "12px",
+              padding: "8px 10px",
+              borderRadius: "10px",
+              textAlign: "center",
+              background:
+                "rgba(255,153,0,0.10)",
+              border:
+                "1px solid rgba(255,153,0,0.18)",
+              fontSize: "11px",
+              fontWeight: 800,
+            }}
+          >
+            🔥 COMBO x
+            {Math.min(
+              3,
+              1 +
+                Math.floor(
+                  battleCombo / 3
+                )
+            )}
+            {" — "}
+            Keep the streak going!
+          </div>
+        )}
+
         <section className="question-card">
           <div className="question-number">
             QUESTION{" "}
@@ -2896,6 +3060,12 @@ function App() {
           <span>
             🔥 {player.streak} day
             streak
+          </span>
+
+          <span>
+            {selectedAnswer !== null
+              ? "Next question..."
+              : "Choose an answer"}
           </span>
 
           <span>
