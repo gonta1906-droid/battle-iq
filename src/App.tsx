@@ -18,7 +18,8 @@ type Screen =
   | "result"
   | "pvp"
   | "pvp_battle"
-  | "pvp_result";
+  | "pvp_result"
+  | "pvp_stats";
 
 type Answer = {
   text: string;
@@ -571,6 +572,11 @@ function App() {
 
   const [pvpWinner, setPvpWinner] =
     useState<number | null | undefined>(undefined);
+
+  const [pvpStats, setPvpStats] = useState<any>(null);
+  const [pvpHistory, setPvpHistory] = useState<any[]>([]);
+  const [pvpLeaderboard, setPvpLeaderboard] = useState<any[]>([]);
+  const [pvpStatsLoading, setPvpStatsLoading] = useState(false);
 
   const [notificationsOpen, setNotificationsOpen] =
     useState(false);
@@ -1857,6 +1863,35 @@ function App() {
     return () => window.clearInterval(poll);
   }, [screen, pvpMatch?.matchId, pvpMatch?.status]);
 
+  const loadPvpStats = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    setPvpStatsLoading(true);
+    try {
+      const headers = { Authorization: `tma ${tg.initData}`, Accept: "application/json" };
+      const [statsRes, historyRes, leaderboardRes] = await Promise.all([
+        fetch(`${API_BASE}/api/pvp/stats`, { headers }),
+        fetch(`${API_BASE}/api/pvp/history?limit=10`, { headers }),
+        fetch(`${API_BASE}/api/pvp/leaderboard?limit=20`, { headers }),
+      ]);
+      const [statsData, historyData, leaderboardData] = await Promise.all([
+        statsRes.json(), historyRes.json(), leaderboardRes.json(),
+      ]);
+      if (statsRes.ok && statsData?.ok) setPvpStats(statsData.stats);
+      if (historyRes.ok && historyData?.ok) setPvpHistory(Array.isArray(historyData.matches) ? historyData.matches : []);
+      if (leaderboardRes.ok && leaderboardData?.ok) setPvpLeaderboard(Array.isArray(leaderboardData.players) ? leaderboardData.players : []);
+    } catch (error) {
+      console.warn("BATTLE IQ: PvP stats load failed", error);
+    } finally {
+      setPvpStatsLoading(false);
+    }
+  };
+
+  const openPvpStats = async () => {
+    setScreen("pvp_stats");
+    await loadPvpStats();
+  };
+
   const handleChallenge = async (name: string) => {
     const webApp = getTelegramWebApp();
 
@@ -2411,6 +2446,63 @@ function App() {
     );
   }
 
+  if (screen === "pvp_stats") {
+    const stats = pvpStats || { played: 0, wins: 0, losses: 0, draws: 0, winRate: 0 };
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <section className="hero-card">
+            <div className="hero-badge">🏆 PVP STATS</div>
+            <h1>Your PvP</h1>
+            <p style={{ opacity: .7 }}>Статистика, останні матчі та таблиця PvP.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 20 }}>
+              {[
+                ["PLAYED", stats.played], ["WINS", stats.wins], ["LOSSES", stats.losses], ["DRAWS", stats.draws],
+              ].map(([label, value]) => (
+                <div className="info-card" key={String(label)} style={{ padding: 10 }}>
+                  <strong style={{ fontSize: 11 }}>{label}</strong>
+                  <span style={{ fontSize: 24 }}>{value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="info-card" style={{ marginTop: 10 }}>
+              <strong>WIN RATE</strong>
+              <span style={{ fontSize: 26 }}>{Number(stats.winRate || 0).toFixed(0)}%</span>
+            </div>
+          </section>
+
+          <section className="hero-card">
+            <div className="hero-badge">⚔️ RECENT MATCHES</div>
+            {pvpStatsLoading && <p>Loading...</p>}
+            {!pvpStatsLoading && pvpHistory.length === 0 && <p style={{ opacity: .65 }}>Ще немає завершених PvP матчів.</p>}
+            {pvpHistory.map((match) => (
+              <div key={match.matchId} className="info-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                <div><strong>{match.result === "win" ? "🏆 WIN" : match.result === "loss" ? "❌ LOSS" : "🤝 DRAW"}</strong><div style={{ opacity: .65, fontSize: 12 }}>vs {match.opponentName || "Opponent"}</div></div>
+                <strong>{match.myScore} : {match.opponentScore}</strong>
+              </div>
+            ))}
+          </section>
+
+          <section className="hero-card">
+            <div className="hero-badge">🏅 PVP LEADERBOARD</div>
+            {pvpLeaderboard.map((player, index) => (
+              <div key={player.userId} className="info-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                <div><strong>#{index + 1} {player.firstName || player.username || "Player"}</strong><div style={{ opacity: .65, fontSize: 12 }}>{player.wins} wins · {player.played} played</div></div>
+                <strong>{player.points} PTS</strong>
+              </div>
+            ))}
+          </section>
+
+          <button className="play-button" onClick={() => setScreen("home")}>BACK HOME</button>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
   if (screen === "pvp_result") {
     const opponent = pvpMatch?.opponent;
     const opponentScore = Number((pvpMatch as any)?.opponent?.score || 0);
@@ -2435,7 +2527,10 @@ function App() {
               <div className="info-card"><strong>OPPONENT</strong><span style={{ fontSize: 28 }}>{opponentScore}</span></div>
             </div>
             {!pvpMyFinished && <p style={{ opacity: .7 }}>Суперник уже завершив матч. Заверши свої 10 питань, щоб отримати фінальний результат.</p>}
-            <button className="play-button" onClick={() => { setPvpMatch(null); setPvpQuestions([]); setPvpMyFinished(false); setPvpWinner(undefined); setScreen("home"); }}>
+            <button className="play-button" onClick={() => { void openPvpStats(); }}>
+              🏆 PVP STATS
+            </button>
+            <button className="play-button" style={{ marginTop: 10 }} onClick={() => { setPvpMatch(null); setPvpQuestions([]); setPvpMyFinished(false); setPvpWinner(undefined); setScreen("home"); }}>
               BACK HOME
             </button>
           </section>
