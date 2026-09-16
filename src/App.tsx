@@ -26,6 +26,8 @@ type Question = {
   answers: Answer[];
 };
 
+type QuestionResult = "correct" | "wrong" | "timeout";
+
 type PlayerData = {
   xp: number;
   streak: number;
@@ -535,6 +537,12 @@ function App() {
   const [secondChanceAvailable, setSecondChanceAvailable] =
     useState(true);
 
+  const [questionResults, setQuestionResults] =
+    useState<QuestionResult[]>([]);
+
+  const [livesLost, setLivesLost] =
+    useState(0);
+
   const [battleFinished, setBattleFinished] =
     useState(false);
 
@@ -888,6 +896,8 @@ function App() {
     setQuestionTimeLeft(8);
     setBattleLives(3);
     setSecondChanceAvailable(true);
+    setQuestionResults([]);
+    setLivesLost(0);
     setBattleFinished(false);
 
     setScreen("battle");
@@ -1003,6 +1013,8 @@ function App() {
     webApp?.HapticFeedback?.notificationOccurred("error");
     setSelectedAnswer(-1);
     setBattleCombo(0);
+    setQuestionResults((current) => [...current, "timeout"]);
+    setLivesLost((current) => current + 1);
 
     const nextLives = battleLives - 1;
 
@@ -1060,6 +1072,11 @@ function App() {
         "success"
       );
 
+      setQuestionResults((current) => [
+        ...current,
+        "correct",
+      ]);
+
       setScore(
         (value) => value + 1
       );
@@ -1096,7 +1113,13 @@ function App() {
         "error"
       );
 
+      setQuestionResults((current) => [
+        ...current,
+        "wrong",
+      ]);
+
       setBattleCombo(0);
+      setLivesLost((current) => current + 1);
 
       const nextLives = battleLives - 1;
 
@@ -3501,21 +3524,56 @@ function App() {
 
   if (screen === "result") {
     const newLevelInfo =
-      getLevelInfo(
-        player.xp
-      );
+      getLevelInfo(player.xp);
 
     const leveledUp =
       newLevelInfo.level >
       previousLevelInfo.level;
 
+    const totalQuestions =
+      gameQuestions.length;
+
+    const accuracy =
+      totalQuestions > 0
+        ? Math.round(
+            (score / totalQuestions) * 100
+          )
+        : 0;
+
+    const correctCount =
+      questionResults.filter(
+        (item) => item === "correct"
+      ).length;
+
+    const wrongCount =
+      questionResults.filter(
+        (item) => item === "wrong"
+      ).length;
+
+    const timeoutCount =
+      questionResults.filter(
+        (item) => item === "timeout"
+      ).length;
+
+    const elapsedSeconds =
+      Math.max(
+        0,
+        Math.min(
+          60,
+          60 - timeLeft
+        )
+      );
+
     return (
       <div className="app">
-        <main className="result-screen">
+        <main
+          className="result-screen"
+          style={{
+            paddingBottom: "34px",
+          }}
+        >
           <div className="result-icon">
-            {leveledUp
-              ? "🆙"
-              : "🏆"}
+            {leveledUp ? "🆙" : "🏆"}
           </div>
 
           <span className="result-label">
@@ -3527,29 +3585,35 @@ function App() {
           <h1>
             {leveledUp
               ? `LEVEL ${newLevelInfo.level}`
-              : "Great job!"}
+              : accuracy >= 80
+              ? "Excellent!"
+              : accuracy >= 50
+              ? "Nice work!"
+              : "Keep practicing!"}
           </h1>
 
           <div className="score-circle">
             <strong>
-              {score}/
-              {gameQuestions.length}
+              {score}/{totalQuestions}
             </strong>
+            <span>correct</span>
+          </div>
 
-            <span>
-              correct
-            </span>
+          <div
+            style={{
+              marginTop: "8px",
+              fontSize: "11px",
+              fontWeight: 800,
+              opacity: 0.58,
+            }}
+          >
+            {accuracy}% accuracy
           </div>
 
           <div className="result-stats">
             <div>
-              <strong>
-                +{battleXp}
-              </strong>
-
-              <span>
-                XP earned
-              </span>
+              <strong>+{battleXp}</strong>
+              <span>XP earned</span>
             </div>
 
             <div>
@@ -3560,39 +3624,199 @@ function App() {
                   battleCombo
                 )}
               </strong>
-
-              <span>
-                best combo
-              </span>
+              <span>best combo</span>
             </div>
 
             <div>
-              <strong>
-                {player.streak}
-              </strong>
-
-              <span>
-                day streak
-              </span>
+              <strong>{player.streak}</strong>
+              <span>day streak</span>
             </div>
           </div>
+
+          <section
+            style={{
+              width: "100%",
+              marginTop: "12px",
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "9px",
+            }}
+          >
+            {[
+              ["⏱️", `${elapsedSeconds}s`, "TIME"],
+              ["❤️", `${livesLost}`, "LIVES LOST"],
+              ["✅", `${correctCount}`, "CORRECT"],
+              ["❌", `${wrongCount}`, "WRONG"],
+              ["⌛", `${timeoutCount}`, "TIMEOUT"],
+              ["🎯", `${totalQuestions}`, "QUESTIONS"],
+            ].map(([icon, value, label]) => (
+              <div
+                key={label}
+                style={{
+                  padding: "12px 10px",
+                  borderRadius: "14px",
+                  background:
+                    "rgba(255,255,255,0.035)",
+                  border:
+                    "1px solid rgba(255,255,255,0.06)",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ fontSize: "17px" }}>
+                  {icon}
+                </div>
+                <strong
+                  style={{
+                    display: "block",
+                    marginTop: "4px",
+                    fontSize: "15px",
+                  }}
+                >
+                  {value}
+                </strong>
+                <span
+                  style={{
+                    display: "block",
+                    marginTop: "3px",
+                    fontSize: "8px",
+                    opacity: 0.48,
+                    fontWeight: 900,
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {label}
+                </span>
+              </div>
+            ))}
+          </section>
+
+          <section
+            style={{
+              width: "100%",
+              marginTop: "14px",
+              padding: "14px",
+              boxSizing: "border-box",
+              borderRadius: "17px",
+              background:
+                "linear-gradient(135deg, rgba(124,77,255,0.12), rgba(168,85,247,0.045))",
+              border:
+                "1px solid rgba(168,85,247,0.18)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "10px",
+              }}
+            >
+              <strong style={{ fontSize: "13px" }}>
+                📊 QUESTION REVIEW
+              </strong>
+              <span
+                style={{
+                  fontSize: "9px",
+                  opacity: 0.5,
+                }}
+              >
+                {questionResults.length}/{totalQuestions}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              {gameQuestions.map((_question, index) => {
+                const outcome =
+                  questionResults[index];
+
+                const isCorrect =
+                  outcome === "correct";
+                const isWrong =
+                  outcome === "wrong";
+
+                return (
+                  <div
+                    key={`review-${index}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "9px",
+                      padding: "8px 9px",
+                      borderRadius: "10px",
+                      background:
+                        isCorrect
+                          ? "rgba(74,222,128,0.07)"
+                          : isWrong
+                          ? "rgba(248,113,113,0.07)"
+                          : "rgba(251,191,36,0.07)",
+                      border:
+                        "1px solid rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "7px",
+                        display: "grid",
+                        placeItems: "center",
+                        background:
+                          "rgba(255,255,255,0.055)",
+                        fontSize: "10px",
+                        fontWeight: 900,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {index + 1}
+                    </span>
+
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: "10px",
+                        fontWeight: 800,
+                        opacity: 0.7,
+                      }}
+                    >
+                      {isCorrect
+                        ? "Correct answer"
+                        : isWrong
+                        ? "Wrong answer"
+                        : "Time's up"}
+                    </span>
+
+                    <span style={{ fontSize: "14px" }}>
+                      {isCorrect
+                        ? "✅"
+                        : isWrong
+                        ? "❌"
+                        : "⌛"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
           <button
             className="play-button"
             onClick={startBattle}
+            style={{ marginTop: "16px" }}
           >
             ⚔️ PLAY AGAIN
-
-            <span className="arrow">
-              →
-            </span>
+            <span className="arrow">→</span>
           </button>
 
           <button
             className="secondary-button"
-            onClick={() =>
-              setScreen("home")
-            }
+            onClick={() => setScreen("home")}
           >
             ← BACK TO HOME
           </button>
