@@ -610,6 +610,11 @@ function App() {
   const [leaderboard, setLeaderboard] =
     useState<any[]>([]);
 
+  // Exact current player returned by D1 /api/ranking.
+  // Needed so a player outside the top 100 is still visible in the UI.
+  const [leaderboardMe, setLeaderboardMe] =
+    useState<any | null>(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -633,6 +638,7 @@ function App() {
         if (!response.ok || !data?.ok || cancelled) return;
 
         setLeaderboard(Array.isArray(data.users) ? data.users : []);
+        setLeaderboardMe(data.me || null);
 
         if (data.me?.globalRank != null) {
           setGlobalRank(Number(data.me.globalRank));
@@ -2636,17 +2642,46 @@ function App() {
       telegramUser?.first_name ||
       "Sergio";
 
-    const worldPlayers = leaderboard.length
-      ? leaderboard.map((user, index) => [
-          user.first_name || user.username || "Player",
-          Number(user.xp || 0).toLocaleString(),
-          index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "",
-          "—",
-          Number(user.level || 1),
-          Number(user.globalRank || index + 1),
-        ])
+    const topPlayers = leaderboard.map((user, index) => [
+      user.first_name || user.username || "Player",
+      Number(user.xp || 0).toLocaleString(),
+      index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "",
+      "—",
+      Number(user.level || 1),
+      Number(user.globalRank || index + 1),
+      String(user.telegram_id ?? user.id ?? ""),
+    ]);
+
+    // If the current player is not in the top 100, append their real D1 row.
+    // Never fabricate a player just to fill the leaderboard.
+    const meId = String(leaderboardMe?.telegram_id ?? "");
+    const alreadyInTop = meId && topPlayers.some((row) => String(row[6]) === meId);
+
+    const worldPlayers = topPlayers.length
+      ? (leaderboardMe && meId && !alreadyInTop
+          ? [
+              ...topPlayers,
+              [
+                leaderboardMe.first_name || leaderboardMe.username || currentName,
+                Number(leaderboardMe.xp || 0).toLocaleString(),
+                "",
+                "—",
+                Number(leaderboardMe.level || 1),
+                Number(leaderboardMe.globalRank || globalRank || topPlayers.length + 1),
+                meId,
+              ],
+            ]
+          : topPlayers)
       : [
-          [currentName, player.xp.toLocaleString(), "", "—", levelInfo.level, globalRank || 1],
+          [
+            leaderboardMe?.first_name || leaderboardMe?.username || currentName,
+            Number(leaderboardMe?.xp ?? player.xp).toLocaleString(),
+            "",
+            "—",
+            Number(leaderboardMe?.level ?? levelInfo.level),
+            Number(leaderboardMe?.globalRank ?? globalRank ?? 1),
+            meId || currentName,
+          ],
         ];
 
     // Friends are intentionally not mocked anymore.
@@ -2998,9 +3033,10 @@ function App() {
             }}
           >
             {filteredPlayers.map(
-              ([name, xp, _medal, movement, level, rank], index) => {
+              ([name, xp, _medal, movement, level, rank, rowId], index) => {
                 const isCurrentPlayer =
-                  name === currentName;
+                  (meId && String(rowId) === meId) ||
+                  (!meId && name === currentName);
 
                 const isTopThree =
                   topThree.length === 3 &&
