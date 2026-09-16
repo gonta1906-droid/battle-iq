@@ -345,39 +345,6 @@ const DAILY_MISSIONS = [
   },
 ];
 
-function loadPlayer(): PlayerData {
-  try {
-    const saved = localStorage.getItem(
-      "battle_iq_player"
-    );
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      return {
-        xp: Number(parsed.xp) || 0,
-        streak: Number(parsed.streak) || 0,
-        battles: Number(parsed.battles) || 0,
-        totalCorrect:
-          Number(parsed.totalCorrect) || 0,
-        bestCombo:
-          Number(parsed.bestCombo) || 0,
-        bestBattleXp:
-          Number(parsed.bestBattleXp) || 0,
-      };
-    }
-  } catch {}
-
-  return {
-    xp: 0,
-    streak: 0,
-    battles: 0,
-    totalCorrect: 0,
-    bestCombo: 0,
-    bestBattleXp: 0,
-  };
-}
-
 function App() {
   // ==========================================
   // TELEGRAM
@@ -519,10 +486,17 @@ function App() {
   const [battleCombo, setBattleCombo] =
     useState(0);
 
+  // D1 is the source of truth for player progression.
+  // localStorage is intentionally not used for XP/level/battles.
   const [player, setPlayer] =
-    useState<PlayerData>(() =>
-      loadPlayer()
-    );
+    useState<PlayerData>({
+      xp: 0,
+      streak: 0,
+      battles: 0,
+      totalCorrect: 0,
+      bestCombo: 0,
+      bestBattleXp: 0,
+    });
 
   const [gameQuestions, setGameQuestions] =
     useState<Question[]>([]);
@@ -670,17 +644,6 @@ function App() {
       cancelled = true;
     };
   }, [player.xp, player.battles]);
-
-  // ==========================================
-  // SAVE PLAYER
-  // ==========================================
-
-  useEffect(() => {
-    localStorage.setItem(
-      "battle_iq_player",
-      JSON.stringify(player)
-    );
-  }, [player]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -900,28 +863,6 @@ function App() {
         }
       })();
     }
-
-    setPlayer((current) => ({
-      ...current,
-      xp:
-        current.xp + battleXp,
-      streak:
-        current.streak + 1,
-      battles:
-        current.battles + 1,
-      totalCorrect:
-        current.totalCorrect + score,
-      bestCombo:
-        Math.max(
-          current.bestCombo,
-          battleCombo
-        ),
-      bestBattleXp:
-        Math.max(
-          current.bestBattleXp,
-          battleXp
-        ),
-    }));
 
     setDailyMissions((current) => ({
       ...current,
@@ -1788,6 +1729,8 @@ function App() {
       missionId: string,
       reward: number
     ) => {
+      void reward;
+
       const mission =
         DAILY_MISSIONS.find(
           (item) => item.id === missionId
@@ -1817,11 +1760,8 @@ function App() {
           "success"
         );
 
-      setPlayer((current) => ({
-        ...current,
-        xp: current.xp + reward,
-      }));
-
+      // Progression XP is authoritative in D1. Mission rewards stay out of
+      // local player state until a server-side claim endpoint is connected.
       setDailyMissions((current) => ({
         ...current,
         claimed: [
