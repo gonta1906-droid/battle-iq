@@ -139,11 +139,18 @@ const ACHIEVEMENTS = [
 
 const API_BASE = "https://battle-iq-api.gonta1906.workers.dev";
 
+type ApiAnswer =
+  | string
+  | {
+      text: string;
+      correct: boolean;
+    };
+
 type ApiQuestion = {
   id: number;
   question: string;
-  answers: string[];
-  correctIndex: number;
+  answers: ApiAnswer[];
+  correctIndex?: number;
   category?: string;
   difficulty?: string;
 };
@@ -154,18 +161,54 @@ function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
       (item) =>
         typeof item.question === "string" &&
         Array.isArray(item.answers) &&
-        item.answers.length === 4 &&
-        Number.isInteger(item.correctIndex) &&
-        item.correctIndex >= 0 &&
-        item.correctIndex < item.answers.length
+        item.answers.length === 4
     )
-    .map((item) => ({
-      question: item.question,
-      answers: item.answers.map((text, index) => ({
-        text,
-        correct: index === item.correctIndex,
-      })),
-    }));
+    .map((item) => {
+      const objectAnswers = item.answers.every(
+        (answer) =>
+          typeof answer === "object" &&
+          answer !== null &&
+          typeof answer.text === "string" &&
+          typeof answer.correct === "boolean"
+      );
+
+      if (objectAnswers) {
+        return {
+          question: item.question,
+          answers: (item.answers as {
+            text: string;
+            correct: boolean;
+          }[]).map((answer) => ({
+            text: answer.text,
+            correct: answer.correct,
+          })),
+        };
+      }
+
+      const stringAnswers = item.answers.every(
+        (answer) => typeof answer === "string"
+      );
+
+      if (
+        stringAnswers &&
+        Number.isInteger(item.correctIndex) &&
+        item.correctIndex! >= 0 &&
+        item.correctIndex! < item.answers.length
+      ) {
+        return {
+          question: item.question,
+          answers: (item.answers as string[]).map(
+            (text, index) => ({
+              text,
+              correct: index === item.correctIndex,
+            })
+          ),
+        };
+      }
+
+      return null;
+    })
+    .filter((item): item is Question => item !== null);
 }
 
 function shuffle<T>(array: T[]): T[] {
