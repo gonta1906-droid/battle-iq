@@ -35,62 +35,34 @@ type PlayerData = {
   bestBattleXp: number;
 };
 
-const API_URL = "https://battle-iq-api.gonta1906.workers.dev";
+const BATTLE_IQ_API = "https://battle-iq-api.gonta1906.workers.dev";
 
-function numberOrFallback(value: unknown, fallback: number) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
-async function loadPlayerFromApi(localPlayer: PlayerData): Promise<PlayerData | null> {
+async function recordCompletedBattle(
+  score: number,
+  xp: number,
+  durationSeconds: number
+) {
   const webApp = getTelegramWebApp();
   const initData = webApp?.initData;
 
-  if (!initData) return null;
+  if (!initData) return;
 
   try {
-    const response = await fetch(`${API_URL}/api/me`, {
-      method: "GET",
+    await fetch(`${BATTLE_IQ_API}/api/battles`, {
+      method: "POST",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `tma ${initData}`,
       },
+      body: JSON.stringify({
+        score,
+        correctAnswers: score,
+        xp,
+        durationSeconds,
+      }),
     });
-
-    if (!response.ok) {
-      console.warn("BATTLE IQ API: /api/me returned", response.status);
-      return null;
-    }
-
-    const data = await response.json() as {
-      user?: Record<string, unknown>;
-      [key: string]: unknown;
-    };
-
-    const user = data.user ?? data;
-
-    return {
-      xp: numberOrFallback(user.xp, localPlayer.xp),
-      streak: numberOrFallback(user.streak, localPlayer.streak),
-      battles: numberOrFallback(
-        user.battles ?? user.total_battles,
-        localPlayer.battles
-      ),
-      totalCorrect: numberOrFallback(
-        user.totalCorrect ?? user.total_correct,
-        localPlayer.totalCorrect
-      ),
-      bestCombo: numberOrFallback(
-        user.bestCombo ?? user.best_combo,
-        localPlayer.bestCombo
-      ),
-      bestBattleXp: numberOrFallback(
-        user.bestBattleXp ?? user.best_battle_xp,
-        localPlayer.bestBattleXp
-      ),
-    };
   } catch (error) {
-    console.warn("BATTLE IQ API: failed to load profile", error);
-    return null;
+    console.warn("BATTLE IQ: battle analytics sync failed", error);
   }
 }
 
@@ -529,20 +501,6 @@ function App() {
 
       setTelegramUser(user);
     }
-
-    // Load the real player profile from Cloudflare Worker + D1.
-    // localStorage remains as a fallback when the API is unavailable.
-    void loadPlayerFromApi(loadPlayer()).then((serverPlayer) => {
-      if (serverPlayer) {
-        setPlayer(serverPlayer);
-        setPreviousXp(serverPlayer.xp);
-        localStorage.setItem(
-          "battle_iq_player",
-          JSON.stringify(serverPlayer)
-        );
-        console.log("BATTLE IQ: profile synced with D1");
-      }
-    });
   }, []);
 
   // ==========================================
@@ -788,6 +746,12 @@ function App() {
 
     webApp?.HapticFeedback?.notificationOccurred(
       "success"
+    );
+
+    void recordCompletedBattle(
+      score,
+      battleXp,
+      60 - timeLeft
     );
 
     setPlayer((current) => ({
