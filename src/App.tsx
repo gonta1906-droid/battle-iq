@@ -525,6 +525,16 @@ function App() {
   const [timeLeft, setTimeLeft] =
     useState(60);
 
+  // Battle 3.0: per-question timer + lives.
+  const [questionTimeLeft, setQuestionTimeLeft] =
+    useState(8);
+
+  const [battleLives, setBattleLives] =
+    useState(3);
+
+  const [secondChanceAvailable, setSecondChanceAvailable] =
+    useState(true);
+
   const [battleFinished, setBattleFinished] =
     useState(false);
 
@@ -789,6 +799,34 @@ function App() {
   ]);
 
   // ==========================================
+  // PER-QUESTION TIMER / LIVES
+  // ==========================================
+
+  useEffect(() => {
+    if (screen !== "battle") return;
+    if (battleFinished) return;
+    if (!currentQuestion) return;
+    if (selectedAnswer !== null) return;
+
+    if (questionTimeLeft <= 0) {
+      handleQuestionTimeout();
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setQuestionTimeLeft((value) => value - 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [
+    screen,
+    battleFinished,
+    questionIndex,
+    selectedAnswer,
+    questionTimeLeft,
+  ]);
+
+  // ==========================================
   // START BATTLE
   // ==========================================
 
@@ -847,6 +885,9 @@ function App() {
     setBattleCombo(0);
     setSelectedAnswer(null);
     setTimeLeft(60);
+    setQuestionTimeLeft(8);
+    setBattleLives(3);
+    setSecondChanceAvailable(true);
     setBattleFinished(false);
 
     setScreen("battle");
@@ -946,6 +987,48 @@ function App() {
     );
 
     setSelectedAnswer(null);
+    setQuestionTimeLeft(8);
+  };
+
+  // ==========================================
+  // QUESTION TIMEOUT
+  // ==========================================
+
+  const handleQuestionTimeout = () => {
+    if (!currentQuestion) return;
+    if (selectedAnswer !== null) return;
+
+    const webApp = getTelegramWebApp();
+
+    webApp?.HapticFeedback?.notificationOccurred("error");
+    setSelectedAnswer(-1);
+    setBattleCombo(0);
+
+    const nextLives = battleLives - 1;
+
+    if (nextLives <= 0) {
+      if (secondChanceAvailable) {
+        setSecondChanceAvailable(false);
+        setBattleLives(1);
+        setChallengeNotice("🛡️ SECOND CHANCE! +1 life");
+        window.setTimeout(() => setChallengeNotice(""), 1500);
+
+        window.setTimeout(() => {
+          nextQuestion();
+        }, 700);
+        return;
+      }
+
+      setBattleLives(0);
+      window.setTimeout(() => finishBattle(), 350);
+      return;
+    }
+
+    setBattleLives(nextLives);
+
+    window.setTimeout(() => {
+      nextQuestion();
+    }, 700);
   };
 
   // ==========================================
@@ -1014,6 +1097,23 @@ function App() {
       );
 
       setBattleCombo(0);
+
+      const nextLives = battleLives - 1;
+
+      if (nextLives <= 0) {
+        if (secondChanceAvailable) {
+          setSecondChanceAvailable(false);
+          setBattleLives(1);
+          setChallengeNotice("🛡️ SECOND CHANCE! +1 life");
+          window.setTimeout(() => setChallengeNotice(""), 1500);
+        } else {
+          setBattleLives(0);
+          window.setTimeout(() => finishBattle(), 350);
+          return;
+        }
+      } else {
+        setBattleLives(nextLives);
+      }
     }
 
     window.setTimeout(() => {
@@ -3533,21 +3633,34 @@ function App() {
             </span>
           </div>
 
-          <div
-            className="timer"
-            style={{
-              color:
-                timeLeft <= 10
-                  ? "#ff7187"
-                  : undefined,
+          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+            <div
+              style={{
+                fontSize: "9px",
+                fontWeight: 800,
+                opacity: 0.48,
+                whiteSpace: "nowrap",
+              }}
+            >
+              ⏱ {timeLeft}s
+            </div>
+            <div
+              className="timer"
+              style={{
+                color:
+                  questionTimeLeft <= 3
+                    ? "#ff7187"
+                    : undefined,
 
-              background:
-                timeLeft <= 10
-                  ? "rgba(255,90,115,0.12)"
-                  : undefined,
-            }}
-          >
-            {timeLeft}
+                background:
+                  questionTimeLeft <= 3
+                    ? "rgba(255,90,115,0.12)"
+                    : undefined,
+                minWidth: "42px",
+              }}
+            >
+              {questionTimeLeft}
+            </div>
           </div>
         </div>
 
@@ -3567,8 +3680,8 @@ function App() {
           style={{
             display: "grid",
             gridTemplateColumns:
-              "repeat(3, minmax(0, 1fr))",
-            gap: "8px",
+              "repeat(4, minmax(0, 1fr))",
+            gap: "7px",
             margin: "12px 0 14px",
           }}
         >
@@ -3645,6 +3758,42 @@ function App() {
               padding: "9px 7px",
               borderRadius: "11px",
               background:
+                battleLives <= 1
+                  ? "rgba(255,90,115,0.12)"
+                  : "rgba(255,255,255,0.045)",
+              border:
+                battleLives <= 1
+                  ? "1px solid rgba(255,90,115,0.25)"
+                  : "1px solid rgba(255,255,255,0.07)",
+              textAlign: "center",
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                fontSize: "15px",
+              }}
+            >
+              {"❤️".repeat(battleLives)}
+            </strong>
+
+            <span
+              style={{
+                display: "block",
+                marginTop: "2px",
+                fontSize: "9px",
+                opacity: 0.5,
+              }}
+            >
+              LIVES
+            </span>
+          </div>
+
+          <div
+            style={{
+              padding: "9px 7px",
+              borderRadius: "11px",
+              background:
                 "rgba(124,77,255,0.10)",
               border:
                 "1px solid rgba(124,77,255,0.20)",
@@ -3698,6 +3847,44 @@ function App() {
             )}
             {" — "}
             Keep the streak going!
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            padding: "7px 10px",
+            borderRadius: "10px",
+            background: secondChanceAvailable
+              ? "rgba(124,77,255,0.09)"
+              : "rgba(255,255,255,0.035)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            fontSize: "9px",
+            fontWeight: 800,
+            opacity: 0.75,
+          }}
+        >
+          <span>🛡️ SECOND CHANCE</span>
+          <span>{secondChanceAvailable ? "READY" : "USED"}</span>
+        </div>
+
+        {challengeNotice && (
+          <div
+            style={{
+              marginBottom: "10px",
+              padding: "8px 10px",
+              borderRadius: "10px",
+              textAlign: "center",
+              background: "rgba(124,77,255,0.13)",
+              border: "1px solid rgba(168,85,247,0.22)",
+              fontSize: "10px",
+              fontWeight: 800,
+            }}
+          >
+            {challengeNotice}
           </div>
         )}
 
@@ -3797,7 +3984,9 @@ function App() {
           </span>
 
           <span>
-            {selectedAnswer !== null
+            {selectedAnswer === -1
+              ? "⏱ Time's up!"
+              : selectedAnswer !== null
               ? "Next question..."
               : "Choose an answer"}
           </span>
