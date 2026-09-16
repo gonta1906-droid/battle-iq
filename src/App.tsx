@@ -596,7 +596,13 @@ function App() {
     useState(3);
 
   const [secondChanceAvailable, setSecondChanceAvailable] =
-    useState(true);
+    useState(false);
+
+  const [comboShieldAvailable, setComboShieldAvailable] =
+    useState(false);
+
+  const [xpBoostActive, setXpBoostActive] =
+    useState(false);
 
   const [questionResults, setQuestionResults] =
     useState<QuestionResult[]>([]);
@@ -939,10 +945,47 @@ function App() {
   ]);
 
   // ==========================================
+  // INVENTORY CONSUMPTION
+  // ==========================================
+
+  const consumeInventoryItem = async (productId: string) => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return false;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/inventory/consume`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ productId }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) return false;
+
+      setInventory((items) =>
+        items
+          .map((item) =>
+            item.product_id === productId
+              ? { ...item, quantity: Number(data.quantity ?? Math.max(0, Number(item.quantity) - 1)) }
+              : item
+          )
+          .filter((item) => Number(item.quantity) > 0)
+      );
+      return true;
+    } catch (error) {
+      console.warn(`BATTLE IQ: failed to consume ${productId}`, error);
+      return false;
+    }
+  };
+
+  // ==========================================
   // START BATTLE
   // ==========================================
 
-  const startBattle = () => {
+  const startBattle = async () => {
     const webApp =
       getTelegramWebApp();
 
@@ -987,6 +1030,24 @@ function App() {
         })
       );
 
+    // Activate boosters from the server-backed inventory.
+    const secondChanceOwned = Number(inventory.find((item) => item.product_id === "second_chance")?.quantity || 0) > 0;
+    const comboShieldOwned = Number(inventory.find((item) => item.product_id === "combo_shield")?.quantity || 0) > 0;
+    const xpBoostOwned = Number(inventory.find((item) => item.product_id === "xp_boost")?.quantity || 0) > 0;
+
+    setSecondChanceAvailable(secondChanceOwned);
+    setComboShieldAvailable(comboShieldOwned);
+    setXpBoostActive(false);
+
+    if (xpBoostOwned) {
+      const consumed = await consumeInventoryItem("xp_boost");
+      if (consumed) {
+        setXpBoostActive(true);
+        setChallengeNotice("⚡ XP BOOST активовано: +50% XP");
+        window.setTimeout(() => setChallengeNotice(""), 1800);
+      }
+    }
+
     setGameQuestions(
       preparedQuestions
     );
@@ -999,7 +1060,6 @@ function App() {
     setTimeLeft(60);
     setQuestionTimeLeft(8);
     setBattleLives(3);
-    setSecondChanceAvailable(true);
     setQuestionResults([]);
     setLivesLost(0);
     setBattleFinished(false);
@@ -1108,7 +1168,7 @@ function App() {
   // QUESTION TIMEOUT
   // ==========================================
 
-  const handleQuestionTimeout = () => {
+  const handleQuestionTimeout = async () => {
     if (!currentQuestion) return;
     if (selectedAnswer !== null) return;
 
@@ -1124,15 +1184,19 @@ function App() {
 
     if (nextLives <= 0) {
       if (secondChanceAvailable) {
-        setSecondChanceAvailable(false);
-        setBattleLives(1);
-        setChallengeNotice("🛡️ SECOND CHANCE! +1 life");
-        window.setTimeout(() => setChallengeNotice(""), 1500);
+        const restored = await consumeInventoryItem("second_chance");
+        if (restored) {
+          setSecondChanceAvailable(false);
+          setBattleLives(1);
+          setChallengeNotice("❤️ SECOND CHANCE! +1 life");
+          window.setTimeout(() => setChallengeNotice(""), 1500);
 
-        window.setTimeout(() => {
-          nextQuestion();
-        }, 700);
-        return;
+          window.setTimeout(() => {
+            nextQuestion();
+          }, 700);
+          return;
+        }
+        setSecondChanceAvailable(false);
       }
 
       setBattleLives(0);
@@ -1151,7 +1215,7 @@ function App() {
   // ANSWER
   // ==========================================
 
-  const answerQuestion = (
+  const answerQuestion = async (
     answerIndex: number
   ) => {
     if (!currentQuestion) return;
@@ -1204,9 +1268,13 @@ function App() {
             )
         );
 
-      const earnedXp =
+      const baseEarnedXp =
         (50 + speedBonus) *
         comboMultiplier;
+
+      const earnedXp = xpBoostActive
+        ? Math.ceil(baseEarnedXp * 1.5)
+        : baseEarnedXp;
 
       setBattleXp(
         (value) =>
@@ -1222,17 +1290,38 @@ function App() {
         "wrong",
       ]);
 
-      setBattleCombo(0);
+      // Combo Shield is consumed only when a real mistake happens.
+      if (comboShieldAvailable) {
+        const protectedCombo = await consumeInventoryItem("combo_shield");
+        if (protectedCombo) {
+          setComboShieldAvailable(false);
+          setChallengeNotice("🛡️ COMBO SHIELD! Комбо збережено");
+          window.setTimeout(() => setChallengeNotice(""), 1500);
+        } else {
+          setBattleCombo(0);
+        }
+      } else {
+        setBattleCombo(0);
+      }
+
       setLivesLost((current) => current + 1);
 
       const nextLives = battleLives - 1;
 
       if (nextLives <= 0) {
         if (secondChanceAvailable) {
-          setSecondChanceAvailable(false);
-          setBattleLives(1);
-          setChallengeNotice("🛡️ SECOND CHANCE! +1 life");
-          window.setTimeout(() => setChallengeNotice(""), 1500);
+          const restored = await consumeInventoryItem("second_chance");
+          if (restored) {
+            setSecondChanceAvailable(false);
+            setBattleLives(1);
+            setChallengeNotice("❤️ SECOND CHANCE! +1 life");
+            window.setTimeout(() => setChallengeNotice(""), 1500);
+          } else {
+            setSecondChanceAvailable(false);
+            setBattleLives(0);
+            window.setTimeout(() => finishBattle(), 350);
+            return;
+          }
         } else {
           setBattleLives(0);
           window.setTimeout(() => finishBattle(), 350);
@@ -4383,9 +4472,45 @@ function App() {
             opacity: 0.75,
           }}
         >
-          <span>🛡️ SECOND CHANCE</span>
-          <span>{secondChanceAvailable ? "READY" : "USED"}</span>
+          <span>❤️ SECOND CHANCE</span>
+          <span>{secondChanceAvailable ? "READY" : "—"}</span>
         </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+            padding: "7px 10px",
+            borderRadius: "10px",
+            background: comboShieldAvailable ? "rgba(59,130,246,0.10)" : "rgba(255,255,255,0.035)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            fontSize: "9px",
+            fontWeight: 800,
+            opacity: 0.75,
+          }}
+        >
+          <span>🛡️ COMBO SHIELD</span>
+          <span>{comboShieldAvailable ? "READY" : "—"}</span>
+        </div>
+
+        {xpBoostActive && (
+          <div
+            style={{
+              marginBottom: "10px",
+              padding: "7px 10px",
+              borderRadius: "10px",
+              textAlign: "center",
+              background: "rgba(250,204,21,0.10)",
+              border: "1px solid rgba(250,204,21,0.18)",
+              fontSize: "9px",
+              fontWeight: 900,
+            }}
+          >
+            ⚡ XP BOOST ACTIVE · +50% XP
+          </div>
+        )}
 
         {challengeNotice && (
           <div
