@@ -3835,6 +3835,50 @@ function App() {
 
   return (
     <div className="app">
+      <style>{`
+        @keyframes biqAnswerCorrect {
+          0% { transform: scale(1); }
+          35% { transform: scale(1.025); }
+          70% { transform: scale(0.995); }
+          100% { transform: scale(1); }
+        }
+
+        @keyframes biqAnswerWrong {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+
+        @keyframes biqTimerDanger {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.72; }
+        }
+
+        @keyframes biqLifeShake {
+          0%, 100% { transform: scale(1); }
+          30% { transform: scale(1.08) rotate(-3deg); }
+          60% { transform: scale(0.96) rotate(3deg); }
+        }
+
+        @keyframes biqComboBurst {
+          0% { transform: scale(0.96); opacity: 0.65; }
+          55% { transform: scale(1.025); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes biqXpPulse {
+          0%, 100% { transform: scale(1); }
+          45% { transform: scale(1.06); }
+        }
+
+        @keyframes biqProgressGlow {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.45); }
+        }
+      `}</style>
+
       <main className="battle-screen">
         <div className="battle-header">
           <button
@@ -3874,6 +3918,10 @@ function App() {
                 color:
                   questionTimeLeft <= 3
                     ? "#ff7187"
+                    : undefined,
+                animation:
+                  questionTimeLeft <= 3
+                    ? "biqTimerDanger 0.65s ease-in-out infinite"
                     : undefined,
 
                 background:
@@ -3985,6 +4033,10 @@ function App() {
                 battleLives <= 1
                   ? "rgba(255,90,115,0.12)"
                   : "rgba(255,255,255,0.045)",
+              animation:
+                battleLives <= 1
+                  ? "biqLifeShake 0.75s ease-in-out infinite"
+                  : undefined,
               border:
                 battleLives <= 1
                   ? "1px solid rgba(255,90,115,0.25)"
@@ -4019,6 +4071,10 @@ function App() {
               borderRadius: "11px",
               background:
                 "rgba(124,77,255,0.10)",
+              animation:
+                battleXp > 0
+                  ? "biqXpPulse 1.8s ease-in-out infinite"
+                  : undefined,
               border:
                 "1px solid rgba(124,77,255,0.20)",
               textAlign: "center",
@@ -4055,6 +4111,8 @@ function App() {
               textAlign: "center",
               background:
                 "rgba(255,153,0,0.10)",
+              animation:
+                "biqComboBurst 0.55s ease-out",
               border:
                 "1px solid rgba(255,153,0,0.18)",
               fontSize: "11px",
@@ -4112,7 +4170,12 @@ function App() {
           </div>
         )}
 
-        <section className="question-card">
+        <section
+          className="question-card"
+          style={{
+            animation: "biqProgressGlow 0.55s ease-out",
+          }}
+        >
           <div className="question-number">
             QUESTION{" "}
             {questionIndex + 1}
@@ -4158,6 +4221,18 @@ function App() {
                   className={
                     className
                   }
+                  style={{
+                    animation:
+                      selectedAnswer !== null &&
+                      (
+                        index === selectedAnswer ||
+                        (answer.correct && selectedAnswer !== index)
+                      )
+                        ? answer.correct
+                          ? "biqAnswerCorrect 0.6s ease-out"
+                          : "biqAnswerWrong 0.55s ease-out"
+                        : undefined,
+                  }}
                   disabled={
                     selectedAnswer !==
                     null
