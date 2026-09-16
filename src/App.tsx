@@ -2999,7 +2999,11 @@ function App() {
                 const isCurrentPlayer =
                   name === currentName;
 
+                // Hide rows duplicated by the podium only when the podium
+                // actually exists. With 1–2 players we still need to render
+                // the real player rows below the search field.
                 const isTopThree =
+                  topThree.length === 3 &&
                   rankingTab === "world" &&
                   index < 3 &&
                   rankingSearch.trim().length === 0;
