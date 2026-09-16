@@ -35,37 +35,6 @@ type PlayerData = {
   bestBattleXp: number;
 };
 
-const BATTLE_IQ_API = "https://battle-iq-api.gonta1906.workers.dev";
-
-async function recordCompletedBattle(
-  score: number,
-  xp: number,
-  durationSeconds: number
-) {
-  const webApp = getTelegramWebApp();
-  const initData = webApp?.initData;
-
-  if (!initData) return;
-
-  try {
-    await fetch(`${BATTLE_IQ_API}/api/battles`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `tma ${initData}`,
-      },
-      body: JSON.stringify({
-        score,
-        correctAnswers: score,
-        xp,
-        durationSeconds,
-      }),
-    });
-  } catch (error) {
-    console.warn("BATTLE IQ: battle analytics sync failed", error);
-  }
-}
-
 const ACHIEVEMENTS = [
   {
     id: "first_battle",
@@ -168,136 +137,36 @@ const ACHIEVEMENTS = [
   },
 ];
 
-const QUESTIONS: Question[] = [
-  {
-    question: "Яка планета найближча до Сонця?",
-    answers: [
-      { text: "Венера", correct: false },
-      { text: "Меркурій", correct: true },
-      { text: "Марс", correct: false },
-      { text: "Земля", correct: false },
-    ],
-  },
+const API_BASE = "https://battle-iq-api.gonta1906.workers.dev";
 
-  {
-    question: "Скільки континентів на Землі?",
-    answers: [
-      { text: "5", correct: false },
-      { text: "6", correct: false },
-      { text: "7", correct: true },
-      { text: "8", correct: false },
-    ],
-  },
+type ApiQuestion = {
+  id: number;
+  question: string;
+  answers: string[];
+  correctIndex: number;
+  category?: string;
+  difficulty?: string;
+};
 
-  {
-    question: "Який океан найбільший?",
-    answers: [
-      { text: "Атлантичний", correct: false },
-      { text: "Індійський", correct: false },
-      {
-        text: "Північний Льодовитий",
-        correct: false,
-      },
-      { text: "Тихий", correct: true },
-    ],
-  },
-
-  {
-    question: "Скільки хвилин у двох годинах?",
-    answers: [
-      { text: "100", correct: false },
-      { text: "120", correct: true },
-      { text: "140", correct: false },
-      { text: "160", correct: false },
-    ],
-  },
-
-  {
-    question: "Яка тварина є найбільшою на планеті?",
-    answers: [
-      { text: "Слон", correct: false },
-      { text: "Жираф", correct: false },
-      { text: "Синій кит", correct: true },
-      { text: "Акула", correct: false },
-    ],
-  },
-
-  {
-    question: "Яка столиця Франції?",
-    answers: [
-      { text: "Рим", correct: false },
-      { text: "Мадрид", correct: false },
-      { text: "Париж", correct: true },
-      { text: "Берлін", correct: false },
-    ],
-  },
-
-  {
-    question: "Скільки днів у високосному році?",
-    answers: [
-      { text: "365", correct: false },
-      { text: "366", correct: true },
-      { text: "364", correct: false },
-      { text: "367", correct: false },
-    ],
-  },
-
-  {
-    question: "Який газ переважає в атмосфері Землі?",
-    answers: [
-      { text: "Кисень", correct: false },
-      { text: "Водень", correct: false },
-      { text: "Азот", correct: true },
-      {
-        text: "Вуглекислий газ",
-        correct: false,
-      },
-    ],
-  },
-
-  {
-    question: "Скільки сторін має шестикутник?",
-    answers: [
-      { text: "5", correct: false },
-      { text: "6", correct: true },
-      { text: "7", correct: false },
-      { text: "8", correct: false },
-    ],
-  },
-
-  {
-    question: "Який метал позначається символом Au?",
-    answers: [
-      { text: "Срібло", correct: false },
-      { text: "Золото", correct: true },
-      { text: "Мідь", correct: false },
-      { text: "Залізо", correct: false },
-    ],
-  },
-
-  {
-    question: "Скільки планет у Сонячній системі?",
-    answers: [
-      { text: "7", correct: false },
-      { text: "8", correct: true },
-      { text: "9", correct: false },
-      { text: "10", correct: false },
-    ],
-  },
-
-  {
-    question: "Яка найбільша тварина на суші?",
-    answers: [
-      { text: "Носоріг", correct: false },
-      { text: "Бегемот", correct: false },
-      {
-        text: "Африканський слон",
-        correct: true,
-      },
-      { text: "Жираф", correct: false },
-    ],
-  },
-];
+function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
+  return items
+    .filter(
+      (item) =>
+        typeof item.question === "string" &&
+        Array.isArray(item.answers) &&
+        item.answers.length === 4 &&
+        Number.isInteger(item.correctIndex) &&
+        item.correctIndex >= 0 &&
+        item.correctIndex < item.answers.length
+    )
+    .map((item) => ({
+      question: item.question,
+      answers: item.answers.map((text, index) => ({
+        text,
+        correct: index === item.correctIndex,
+      })),
+    }));
+}
 
 function shuffle<T>(array: T[]): T[] {
   const result = [...array];
@@ -504,6 +373,74 @@ function App() {
   }, []);
 
   // ==========================================
+  // LOAD QUESTIONS FROM D1
+  // ==========================================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadQuestions() {
+      setQuestionsLoading(true);
+      setQuestionsError("");
+
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/questions?limit=2000`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data?.ok) {
+          throw new Error(
+            data?.error || "Не вдалося завантажити питання"
+          );
+        }
+
+        const normalized = normalizeApiQuestions(
+          Array.isArray(data.questions)
+            ? data.questions
+            : []
+        );
+
+        if (!normalized.length) {
+          throw new Error("База питань порожня");
+        }
+
+        if (!cancelled) {
+          setQuestionBank(normalized);
+        }
+      } catch (error) {
+        console.error(
+          "BATTLE IQ: questions loading failed",
+          error
+        );
+
+        if (!cancelled) {
+          setQuestionsError(
+            "Не вдалося завантажити питання. Спробуй ще раз."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setQuestionsLoading(false);
+        }
+      }
+    }
+
+    loadQuestions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ==========================================
   // GAME STATE
   // ==========================================
 
@@ -546,6 +483,15 @@ function App() {
 
   const [gameQuestions, setGameQuestions] =
     useState<Question[]>([]);
+
+  const [questionBank, setQuestionBank] =
+    useState<Question[]>([]);
+
+  const [questionsLoading, setQuestionsLoading] =
+    useState(true);
+
+  const [questionsError, setQuestionsError] =
+    useState("");
 
   const [questionIndex, setQuestionIndex] =
     useState(0);
@@ -703,8 +649,32 @@ function App() {
       "medium"
     );
 
+    if (questionsLoading) {
+      setChallengeNotice(
+        "⏳ Завантажуємо питання..."
+      );
+
+      window.setTimeout(() => {
+        setChallengeNotice("");
+      }, 1800);
+
+      return;
+    }
+
+    if (questionsError || questionBank.length < 10) {
+      setChallengeNotice(
+        "⚠️ Не вдалося завантажити банк питань."
+      );
+
+      window.setTimeout(() => {
+        setChallengeNotice("");
+      }, 2500);
+
+      return;
+    }
+
     const selectedQuestions =
-      shuffle(QUESTIONS).slice(0, 10);
+      shuffle(questionBank).slice(0, 10);
 
     const preparedQuestions =
       selectedQuestions.map(
@@ -746,12 +716,6 @@ function App() {
 
     webApp?.HapticFeedback?.notificationOccurred(
       "success"
-    );
-
-    void recordCompletedBattle(
-      score,
-      battleXp,
-      60 - timeLeft
     );
 
     setPlayer((current) => ({
@@ -1345,6 +1309,30 @@ function App() {
           </section>
 
           <section className="hero-card">
+            {questionsLoading && (
+              <div
+                style={{
+                  marginBottom: "12px",
+                  fontSize: "12px",
+                  opacity: 0.8,
+                }}
+              >
+                ⏳ Завантажуємо {questionBank.length || "банк"} питань...
+              </div>
+            )}
+
+            {questionsError && (
+              <div
+                style={{
+                  marginBottom: "12px",
+                  fontSize: "12px",
+                  color: "#ff9b9b",
+                }}
+              >
+                ⚠️ {questionsError}
+              </div>
+            )}
+
             <div className="hero-badge">
               🔥 DAILY CHALLENGE
             </div>
@@ -1378,11 +1366,11 @@ function App() {
             <div className="hero-stats">
               <div>
                 <strong>
-                  10
+                  {questionBank.length}
                 </strong>
 
                 <span>
-                  Questions
+                  Questions in bank
                 </span>
               </div>
 
