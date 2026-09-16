@@ -1892,6 +1892,68 @@ function App() {
   };
 
 
+  useEffect(() => {
+    if (screen !== "pvp_battle" || pvpMyFinished || !pvpQuestions.length) return;
+    const timer = window.setInterval(() => {
+      setPvpQuestionTimeLeft((value) => {
+        if (value <= 1) {
+          window.clearInterval(timer);
+          void submitPvpAnswer(-1);
+          return 8;
+        }
+        return value - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [screen, pvpQuestionIndex, pvpMyFinished, pvpQuestions.length]);
+
+
+  useEffect(() => {
+    if (screen !== "pvp_battle" || !pvpMatch?.matchId) return;
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) return;
+        setPvpMatch(data.match);
+        if (data.match?.status === "finished" && !pvpMyFinished) {
+          setPvpWinner(data.match?.winnerUserId);
+          setScreen("pvp_result");
+        }
+      } catch {}
+    }, 1500);
+
+    return () => window.clearInterval(poll);
+  }, [screen, pvpMatch?.matchId, pvpMyFinished]);
+
+
+  useEffect(() => {
+    if (screen !== "pvp_result" || !pvpMatch?.matchId) return;
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) return;
+        setPvpMatch(data.match);
+        if (data.match?.status === "finished") {
+          setPvpWinner(data.match?.winnerUserId);
+          window.clearInterval(poll);
+        }
+      } catch {}
+    }, 1000);
+    return () => window.clearInterval(poll);
+  }, [screen, pvpMatch?.matchId]);
+
+
   if (screen === "home") {
     return (
       <div className="app">
@@ -2248,44 +2310,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (screen !== "pvp_battle" || pvpMyFinished || !pvpQuestions.length) return;
-    const timer = window.setInterval(() => {
-      setPvpQuestionTimeLeft((value) => {
-        if (value <= 1) {
-          window.clearInterval(timer);
-          void submitPvpAnswer(-1);
-          return 8;
-        }
-        return value - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [screen, pvpQuestionIndex, pvpMyFinished, pvpQuestions.length]);
-
-  useEffect(() => {
-    if (screen !== "pvp_battle" || !pvpMatch?.matchId) return;
-    const tg = getTelegramWebApp();
-    if (!tg?.initData) return;
-
-    const poll = window.setInterval(async () => {
-      try {
-        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
-          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
-        });
-        const data = await response.json();
-        if (!response.ok || !data?.ok) return;
-        setPvpMatch(data.match);
-        if (data.match?.status === "finished" && !pvpMyFinished) {
-          setPvpWinner(data.match?.winnerUserId);
-          setScreen("pvp_result");
-        }
-      } catch {}
-    }, 1500);
-
-    return () => window.clearInterval(poll);
-  }, [screen, pvpMatch?.matchId, pvpMyFinished]);
-
   if (screen === "pvp") {
     return (
       <div className="app">
@@ -2369,27 +2393,6 @@ function App() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (screen !== "pvp_result" || !pvpMatch?.matchId) return;
-    const tg = getTelegramWebApp();
-    if (!tg?.initData) return;
-    const poll = window.setInterval(async () => {
-      try {
-        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
-          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
-        });
-        const data = await response.json();
-        if (!response.ok || !data?.ok) return;
-        setPvpMatch(data.match);
-        if (data.match?.status === "finished") {
-          setPvpWinner(data.match?.winnerUserId);
-          window.clearInterval(poll);
-        }
-      } catch {}
-    }, 1000);
-    return () => window.clearInterval(poll);
-  }, [screen, pvpMatch?.matchId]);
 
   if (screen === "pvp_result") {
     const opponent = pvpMatch?.opponent;
