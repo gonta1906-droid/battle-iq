@@ -2681,9 +2681,12 @@ function App() {
                 )
           );
 
+    // Show the podium only when we actually have 3 real players.
+    // With 1-2 players, keep the normal leaderboard rows visible.
     const topThree =
       rankingTab === "world" &&
-      rankingSearch.trim().length === 0
+      rankingSearch.trim().length === 0 &&
+      worldPlayers.length >= 3
         ? worldPlayers.slice(0, 3)
         : [];
 
@@ -2999,9 +3002,6 @@ function App() {
                 const isCurrentPlayer =
                   name === currentName;
 
-                // Hide rows duplicated by the podium only when the podium
-                // actually exists. With 1–2 players we still need to render
-                // the real player rows below the search field.
                 const isTopThree =
                   topThree.length === 3 &&
                   rankingTab === "world" &&
