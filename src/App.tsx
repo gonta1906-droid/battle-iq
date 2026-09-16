@@ -615,6 +615,9 @@ function App() {
   const [leaderboardMe, setLeaderboardMe] =
     useState<any | null>(null);
 
+  const [friends, setFriends] =
+    useState<any[]>([]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -649,6 +652,42 @@ function App() {
     };
 
     loadLeaderboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [player.xp, player.battles]);
+
+  // ==========================================
+  // LOAD REAL FRIENDS
+  // ==========================================
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFriends = async () => {
+      try {
+        const tg = getTelegramWebApp();
+        const initData = tg?.initData || "";
+
+        if (!initData) return;
+
+        const response = await fetch(`${API_BASE}/api/friends`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `tma ${initData}`,
+          },
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data?.ok || cancelled) return;
+
+        setFriends(Array.isArray(data.friends) ? data.friends : []);
+      } catch (error) {
+        console.warn("BATTLE IQ: friends sync failed", error);
+      }
+    };
+
+    loadFriends();
 
     return () => {
       cancelled = true;
@@ -2684,8 +2723,7 @@ function App() {
           ],
         ];
 
-    // Friends are intentionally not mocked anymore.
-    // A real Friends tab will use the friend system once it is connected.
+    // Friends come only from D1. Current player is always included.
     const friendPlayers = [
       [
         currentName,
@@ -2694,7 +2732,17 @@ function App() {
         "—",
         levelInfo.level,
         globalRank || 1,
+        String(telegramUser?.id ?? ""),
       ],
+      ...friends.map((user) => [
+        user.first_name || user.username || "Player",
+        Number(user.xp || 0).toLocaleString(),
+        "",
+        "—",
+        Number(user.level || 1),
+        Number(user.globalRank || 0),
+        String(user.telegram_id ?? user.id ?? ""),
+      ]),
     ];
 
     const sourcePlayers =
@@ -3009,20 +3057,57 @@ function App() {
           )}
 
           {rankingTab === "friends" && (
-            <div
+            <button
+              type="button"
+              onClick={async () => {
+                const tg = getTelegramWebApp();
+                const myId = telegramUser?.id;
+
+                if (!myId) {
+                  setChallengeNotice("⚠️ Відкрий BATTLE IQ через Telegram.");
+                  window.setTimeout(() => setChallengeNotice(""), 2600);
+                  return;
+                }
+
+                const inviteUrl =
+                  `https://t.me/battleiqbot?startapp=friend_${myId}`;
+
+                try {
+                  if (navigator.share) {
+                    await navigator.share({
+                      title: "BATTLE IQ",
+                      text: "⚔️ Приєднуйся до BATTLE IQ! Додамося в друзі та порівняємо результат.",
+                      url: inviteUrl,
+                    });
+                    setChallengeNotice("✅ Invite shared!");
+                  } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    setChallengeNotice("🔗 Invite link copied!");
+                  } else {
+                    setChallengeNotice(inviteUrl);
+                  }
+                } catch {
+                  setChallengeNotice("⚔️ Invite cancelled.");
+                }
+
+                tg?.HapticFeedback?.impactOccurred("medium");
+                window.setTimeout(() => setChallengeNotice(""), 3000);
+              }}
               style={{
+                width: "100%",
                 marginBottom: "12px",
+                border: "1px solid rgba(168,85,247,0.25)",
+                borderRadius: "14px",
                 padding: "11px 13px",
-                borderRadius: "13px",
-                background: "rgba(124,77,255,0.10)",
-                border: "1px solid rgba(168,85,247,0.18)",
-                fontSize: "10px",
-                lineHeight: 1.4,
-                opacity: 0.72,
+                background: "linear-gradient(135deg, rgba(124,77,255,0.16), rgba(168,85,247,0.08))",
+                color: "inherit",
+                fontSize: "11px",
+                fontWeight: 900,
+                cursor: "pointer",
               }}
             >
-              👥 Friends ranking will appear after the friend system is connected.
-            </div>
+              ➕ INVITE A FRIEND
+            </button>
           )}
 
           <section
@@ -3232,7 +3317,9 @@ function App() {
                   fontSize: "12px",
                 }}
               >
-                No players found.
+                {rankingTab === "friends"
+                  ? "👥 No friends yet. Invite someone to BATTLE IQ!"
+                  : "No players found."}
               </div>
             )}
           </section>
