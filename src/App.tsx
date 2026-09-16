@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 import {
@@ -511,12 +511,6 @@ function App() {
   const [battleFinished, setBattleFinished] =
     useState(false);
 
-  // Backend/D1 battle tracking.
-  // Refs prevent duplicate writes if finishBattle is triggered twice
-  // before React finishes updating state.
-  const battleStartTimeRef = useRef<number | null>(null);
-  const battleRecordedRef = useRef(false);
-
   const [previousXp, setPreviousXp] =
     useState(player.xp);
 
@@ -537,6 +531,53 @@ function App() {
     (levelInfo.currentXp /
       levelInfo.requiredXp) *
     100;
+
+  // ==========================================
+  // SYNC PLAYER PROFILE WITH D1
+  // ==========================================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncProfile = async () => {
+      const webApp = getTelegramWebApp();
+      if (!webApp?.initData) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/me`, {
+          method: "GET",
+          headers: {
+            Authorization: `tma ${webApp.initData}`,
+            Accept: "application/json",
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data?.ok || !data?.user || cancelled) return;
+
+        const remote = data.user;
+
+        setPlayer((current) => ({
+          ...current,
+          xp: Number(remote.xp ?? current.xp),
+          streak: Number(remote.streak ?? current.streak),
+          battles: Number(remote.battles ?? current.battles),
+          totalCorrect: Number(remote.totalCorrect ?? current.totalCorrect),
+          bestCombo: Number(remote.bestCombo ?? current.bestCombo),
+          bestBattleXp: Number(remote.bestBattleXp ?? current.bestBattleXp),
+        }));
+      } catch (error) {
+        console.warn("BATTLE IQ: profile sync failed", error);
+      }
+    };
+
+    syncProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ==========================================
   // SAVE PLAYER
@@ -704,9 +745,6 @@ function App() {
     setTimeLeft(60);
     setBattleFinished(false);
 
-    battleStartTimeRef.current = Date.now();
-    battleRecordedRef.current = false;
-
     setScreen("battle");
   };
 
@@ -715,92 +753,36 @@ function App() {
   // ==========================================
 
   const finishBattle = () => {
-    if (battleFinished || battleRecordedRef.current) return;
+    if (battleFinished) return;
 
-    // Lock immediately so timer/answer callbacks cannot create
-    // duplicate battle rows in D1.
-    battleRecordedRef.current = true;
     setBattleFinished(true);
     setPreviousXp(player.xp);
 
-    const webApp = getTelegramWebApp();
+    const webApp =
+      getTelegramWebApp();
 
     webApp?.HapticFeedback?.notificationOccurred(
       "success"
     );
 
-    const durationSeconds = battleStartTimeRef.current
-      ? Math.max(
-          0,
-          Math.min(
-            3600,
-            Math.round(
-              (Date.now() - battleStartTimeRef.current) / 1000
-            )
-          )
-        )
-      : Math.max(0, 60 - timeLeft);
-
-    // Record the completed battle in Cloudflare D1.
-    // The backend validates Telegram initData before accepting it.
-    void (async () => {
-      try {
-        const initData = webApp?.initData || "";
-
-        if (!initData) {
-          console.warn(
-            "BATTLE IQ: battle not sent to D1 because Telegram initData is unavailable"
-          );
-          return;
-        }
-
-        const response = await fetch(
-          `${API_BASE}/api/battles`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-              "Authorization": `tma ${initData}`,
-            },
-            body: JSON.stringify({
-              score: score * 10,
-              correctAnswers: score,
-              xp: battleXp,
-              durationSeconds,
-            }),
-          }
-        );
-
-        const data = await response.json().catch(
-          () => null
-        );
-
-        if (!response.ok || !data?.ok) {
-          throw new Error(
-            data?.error ||
-              `Battle save failed (${response.status})`
-          );
-        }
-
-        console.log(
-          "BATTLE IQ: battle saved to D1",
-          {
-            score,
-            correctAnswers: score,
-            xp: battleXp,
-            durationSeconds,
-          }
-        );
-      } catch (error) {
-        // The game result is still shown locally even if the network
-        // request fails. The error is visible in the console for debugging.
-        console.error(
-          "BATTLE IQ: failed to save battle to D1",
-          error
-        );
-      }
-    })();
+    // Persist the completed battle to D1 so ADMIN sees the same data.
+    if (webApp?.initData) {
+      void fetch(`${API_BASE}/api/battles`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${webApp.initData}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          score: score * 10,
+          correctAnswers: score,
+          xp: battleXp,
+          durationSeconds: Math.max(0, 60 - timeLeft),
+        }),
+      }).catch((error) => {
+        console.warn("BATTLE IQ: battle sync failed", error);
+      });
+    }
 
     setPlayer((current) => ({
       ...current,
