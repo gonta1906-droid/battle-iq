@@ -1921,7 +1921,9 @@ function App() {
         const data = await response.json();
         if (!response.ok || !data?.ok) return;
         setPvpMatch(data.match);
-        if (data.match?.status === "finished" && !pvpMyFinished) {
+        // The opponent can finish before us. Keep the battle screen active
+        // until our own 10 answers are completed, while showing live score.
+        if (data.match?.status === "finished" && pvpMyFinished) {
           setPvpWinner(data.match?.winnerUserId);
           setScreen("pvp_result");
         }
@@ -2354,6 +2356,8 @@ function App() {
     const q = pvpQuestions[pvpQuestionIndex];
     const opponent = pvpMatch?.opponent;
     const opponentScore = Number((pvpMatch as any)?.opponent?.score || 0);
+    const opponentFinished = Boolean((pvpMatch as any)?.opponent?.finished);
+    const lead = pvpScore - opponentScore;
     return (
       <div className="app">
         <div className="glow glow-one" />
@@ -2362,12 +2366,25 @@ function App() {
         <main className="content">
           <section className="hero-card" style={{ textAlign: "center" }}>
             <div className="hero-badge">⚔️ LIVE 1V1</div>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 18 }}>
-              <div className="info-card" style={{ flex: 1 }}><strong>YOU</strong><span>{pvpScore} pts</span></div>
-              <div className="info-card" style={{ flex: 1 }}><strong>{opponent?.first_name || opponent?.username || "OPPONENT"}</strong><span>{opponentScore} pts</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+              <div className="info-card" style={{ flex: 1, border: "1px solid rgba(139,92,246,.35)" }}>
+                <strong>YOU</strong><span style={{ fontSize: 28, fontWeight: 900 }}>{pvpScore}</span><small>POINTS</small>
+              </div>
+              <div className="info-card" style={{ flex: 1 }}>
+                <strong>{opponent?.first_name || opponent?.username || "OPPONENT"}</strong><span style={{ fontSize: 28, fontWeight: 900 }}>{opponentScore}</span><small>POINTS</small>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16, fontSize: 12, opacity: .75 }}>
+              <span>{lead > 0 ? `🔥 +${lead} AHEAD` : lead < 0 ? `⚡ ${Math.abs(lead)} BEHIND` : "⚖️ TIED"}</span>
+              {opponentFinished && <span>• OPPONENT FINISHED</span>}
             </div>
             <div style={{ fontSize: 13, opacity: .7, marginBottom: 8 }}>QUESTION {Math.min(pvpQuestionIndex + 1, 10)} / 10</div>
             <div style={{ fontSize: 30, fontWeight: 900, marginBottom: 16 }}>{pvpQuestionTimeLeft}s</div>
+            {opponentFinished && !pvpMyFinished && (
+              <div style={{ marginBottom: 14, padding: "10px 12px", borderRadius: 12, background: "rgba(122,72,255,.12)", border: "1px solid rgba(145,105,255,.25)", fontSize: 13 }}>
+                🏁 Суперник вже завершив. Дай відповідь на свої питання, щоб завершити матч.
+              </div>
+            )}
             {q ? (
               <>
                 <div className="hero-card" style={{ marginBottom: 14 }}>
@@ -2410,7 +2427,7 @@ function App() {
         <main className="content">
           <section className="hero-card" style={{ textAlign: "center" }}>
             <div className="hero-badge">🏁 MATCH COMPLETE</div>
-            <h1>{isDraw ? "DRAW" : won ? "YOU WIN!" : "MATCH OVER"}</h1>
+            <h1>{isDraw ? "DRAW" : won ? "YOU WIN!" : "YOU LOSE"}</h1>
             <p>{opponent?.first_name || opponent?.username || "Opponent"}</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10, margin: "24px 0" }}>
               <div className="info-card"><strong>YOU</strong><span style={{ fontSize: 28 }}>{myScore}</span></div>
