@@ -604,6 +604,18 @@ function App() {
   const [xpBoostActive, setXpBoostActive] =
     useState(false);
 
+  const [boosterPickerOpen, setBoosterPickerOpen] =
+    useState(false);
+
+  const [selectedSecondChance, setSelectedSecondChance] =
+    useState(false);
+
+  const [selectedComboShield, setSelectedComboShield] =
+    useState(false);
+
+  const [selectedXpBoost, setSelectedXpBoost] =
+    useState(false);
+
   const [questionResults, setQuestionResults] =
     useState<QuestionResult[]>([]);
 
@@ -985,7 +997,7 @@ function App() {
   // START BATTLE
   // ==========================================
 
-  const startBattle = async () => {
+  const launchBattle = async () => {
     const webApp =
       getTelegramWebApp();
 
@@ -1030,16 +1042,12 @@ function App() {
         })
       );
 
-    // Activate boosters from the server-backed inventory.
-    const secondChanceOwned = Number(inventory.find((item) => item.product_id === "second_chance")?.quantity || 0) > 0;
-    const comboShieldOwned = Number(inventory.find((item) => item.product_id === "combo_shield")?.quantity || 0) > 0;
-    const xpBoostOwned = Number(inventory.find((item) => item.product_id === "xp_boost")?.quantity || 0) > 0;
-
-    setSecondChanceAvailable(secondChanceOwned);
-    setComboShieldAvailable(comboShieldOwned);
+    // Activate only the boosters selected in the pre-battle panel.
+    setSecondChanceAvailable(selectedSecondChance);
+    setComboShieldAvailable(selectedComboShield);
     setXpBoostActive(false);
 
-    if (xpBoostOwned) {
+    if (selectedXpBoost) {
       const consumed = await consumeInventoryItem("xp_boost");
       if (consumed) {
         setXpBoostActive(true);
@@ -1063,8 +1071,34 @@ function App() {
     setQuestionResults([]);
     setLivesLost(0);
     setBattleFinished(false);
+    setBoosterPickerOpen(false);
+    setSelectedSecondChance(false);
+    setSelectedComboShield(false);
+    setSelectedXpBoost(false);
 
     setScreen("battle");
+  };
+
+  const startBattle = () => {
+    const battleBoosters = [
+      "second_chance",
+      "combo_shield",
+      "xp_boost",
+    ];
+
+    const ownedBattleBoosters = inventory.filter((item) =>
+      battleBoosters.includes(item.product_id) && Number(item.quantity || 0) > 0
+    );
+
+    if (ownedBattleBoosters.length === 0) {
+      void launchBattle();
+      return;
+    }
+
+    setSelectedSecondChance(false);
+    setSelectedComboShield(false);
+    setSelectedXpBoost(false);
+    setBoosterPickerOpen(true);
   };
 
   // ==========================================
@@ -4142,6 +4176,110 @@ function App() {
             onClick={() => setScreen("home")}
           >
             ← BACK TO HOME
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // BATTLE BOOSTER PICKER
+  // ==========================================
+
+  if (boosterPickerOpen) {
+    const getBooster = (id: string) =>
+      inventory.find((item) => item.product_id === id);
+
+    const boosterCards = [
+      {
+        id: "second_chance",
+        icon: "❤️",
+        title: "Second Chance",
+        text: "Відновить 1 життя після критичної помилки.",
+        selected: selectedSecondChance,
+        setSelected: setSelectedSecondChance,
+      },
+      {
+        id: "combo_shield",
+        icon: "🛡️",
+        title: "Combo Shield",
+        text: "Одна помилка не скине твоє комбо.",
+        selected: selectedComboShield,
+        setSelected: setSelectedComboShield,
+      },
+      {
+        id: "xp_boost",
+        icon: "⚡",
+        title: "XP Boost",
+        text: "+50% XP за цей бій.",
+        selected: selectedXpBoost,
+        setSelected: setSelectedXpBoost,
+      },
+    ];
+
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <section style={{ padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.24)", marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>BEFORE BATTLE</div>
+            <h1 style={{ margin: "6px 0 7px", fontSize: 28 }}>⚡ Boosters</h1>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62 }}>Обери предмети, які хочеш активувати на цей бій.</div>
+          </section>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {boosterCards.map((booster) => {
+              const owned = getBooster(booster.id);
+              const quantity = Number(owned?.quantity || 0);
+              const available = quantity > 0;
+              return (
+                <button
+                  key={booster.id}
+                  type="button"
+                  disabled={!available}
+                  onClick={() => available && booster.setSelected(!booster.selected)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: 14,
+                    borderRadius: 17,
+                    border: booster.selected ? "1px solid rgba(145,110,255,0.65)" : "1px solid rgba(255,255,255,0.07)",
+                    background: booster.selected ? "rgba(124,77,255,0.16)" : "rgba(255,255,255,0.045)",
+                    color: "inherit",
+                    opacity: available ? 1 : 0.45,
+                    cursor: available ? "pointer" : "default",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 13, display: "grid", placeItems: "center", background: "rgba(255,255,255,0.07)", fontSize: 22, flexShrink: 0 }}>{booster.icon}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 900, fontSize: 13 }}>{booster.title}</div>
+                      <div style={{ marginTop: 4, fontSize: 10, opacity: 0.58, lineHeight: 1.4 }}>{booster.text}</div>
+                      <div style={{ marginTop: 5, fontSize: 9, fontWeight: 800, opacity: 0.48 }}>OWNED ×{quantity}</div>
+                    </div>
+                    <div style={{ width: 25, height: 25, borderRadius: "50%", display: "grid", placeItems: "center", border: "1px solid rgba(255,255,255,0.18)", background: booster.selected ? "rgba(124,77,255,0.75)" : "transparent", fontSize: 13, fontWeight: 900 }}>{booster.selected ? "✓" : ""}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            className="play-button"
+            onClick={() => void launchBattle()}
+            style={{ marginTop: 16 }}
+          >
+            ⚔️ START BATTLE
+            <span className="arrow">→</span>
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={() => setBoosterPickerOpen(false)}
+          >
+            ← BACK
           </button>
         </main>
       </div>
