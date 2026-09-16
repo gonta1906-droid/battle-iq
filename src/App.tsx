@@ -37,6 +37,39 @@ type PlayerData = {
   bestBattleXp: number;
 };
 
+type ShopProduct = {
+  id: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  price_stars: number;
+  enabled?: number;
+  featured?: boolean;
+};
+
+type InventoryItem = {
+  product_id: string;
+  quantity: number;
+  equipped: number;
+  title: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  price_stars: number;
+};
+
+const SHOP_FALLBACK: ShopProduct[] = [
+  { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", description: "Use your own profile picture", price_stars: 50, category: "PROFILE", featured: true },
+  { id: "neon_frame", icon: "🟣", title: "Neon Frame", description: "Stand out in the ranking", price_stars: 25, category: "PROFILE" },
+  { id: "fire_frame", icon: "🔥", title: "Fire Frame", description: "Bring the heat to your profile", price_stars: 50, category: "PROFILE" },
+  { id: "legendary_frame", icon: "👑", title: "Legendary Frame", description: "Premium profile frame", price_stars: 100, category: "PROFILE" },
+  { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, category: "BATTLE" },
+  { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, category: "BATTLE" },
+  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, category: "BATTLE" },
+  { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
+];
+
 const ACHIEVEMENTS = [
   {
     id: "first_battle",
@@ -345,39 +378,6 @@ const DAILY_MISSIONS = [
       stats: DailyMissionStats
     ) => stats.xpEarned,
   },
-];
-
-type ShopProduct = {
-  id: string;
-  title: string;
-  description?: string;
-  icon?: string;
-  category: string;
-  price_stars: number;
-  enabled?: number;
-  featured?: boolean;
-};
-
-type InventoryItem = {
-  product_id: string;
-  quantity: number;
-  equipped: number;
-  title: string;
-  description?: string;
-  icon?: string;
-  category: string;
-  price_stars: number;
-};
-
-const SHOP_FALLBACK: ShopProduct[] = [
-  { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", description: "Use your own profile picture", price_stars: 50, category: "PROFILE", featured: true },
-  { id: "neon_frame", icon: "🟣", title: "Neon Frame", description: "Stand out in the ranking", price_stars: 25, category: "PROFILE" },
-  { id: "fire_frame", icon: "🔥", title: "Fire Frame", description: "Bring the heat to your profile", price_stars: 50, category: "PROFILE" },
-  { id: "legendary_frame", icon: "👑", title: "Legendary Frame", description: "Premium profile frame", price_stars: 100, category: "PROFILE" },
-  { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, category: "BATTLE" },
-  { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, category: "BATTLE" },
-  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, category: "BATTLE" },
-  { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
 ];
 
 function App() {
