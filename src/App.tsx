@@ -557,6 +557,9 @@ function App() {
   const [previousXp, setPreviousXp] =
     useState(player.xp);
 
+  const [globalRank, setGlobalRank] =
+    useState<number | null>(null);
+
   const currentQuestion =
     gameQuestions[questionIndex];
 
@@ -610,6 +613,10 @@ function App() {
           bestCombo: Number(remote.bestCombo ?? current.bestCombo),
           bestBattleXp: Number(remote.bestBattleXp ?? current.bestBattleXp),
         }));
+
+        if (remote.globalRank != null) {
+          setGlobalRank(Number(remote.globalRank));
+        }
       } catch (error) {
         console.warn("BATTLE IQ: profile sync failed", error);
       }
@@ -621,6 +628,48 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  // ==========================================
+  // LOAD REAL GLOBAL RANKING
+  // ==========================================
+
+  const [leaderboard, setLeaderboard] =
+    useState<any[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLeaderboard = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/users?limit=100`, {
+          headers: { Accept: "application/json" },
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data?.ok || cancelled) return;
+
+        setLeaderboard(Array.isArray(data.users) ? data.users : []);
+
+        const tg = getTelegramUser();
+        if (tg?.id != null) {
+          const me = (data.users as any[]).find(
+            (item) => String(item.telegram_id) === String(tg.id)
+          );
+          if (me?.globalRank != null) {
+            setGlobalRank(Number(me.globalRank));
+          }
+        }
+      } catch (error) {
+        console.warn("BATTLE IQ: leaderboard sync failed", error);
+      }
+    };
+
+    loadLeaderboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [player.xp, player.battles]);
 
   // ==========================================
   // SAVE PLAYER
@@ -810,21 +859,46 @@ function App() {
 
     // Persist the completed battle to D1 so ADMIN sees the same data.
     if (webApp?.initData) {
-      void fetch(`${API_BASE}/api/battles`, {
-        method: "POST",
-        headers: {
-          Authorization: `tma ${webApp.initData}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          score: score * 10,
-          correctAnswers: score,
-          xp: battleXp,
-          durationSeconds: Math.max(0, 60 - timeLeft),
-        }),
-      }).catch((error) => {
-        console.warn("BATTLE IQ: battle sync failed", error);
-      });
+      void (async () => {
+        try {
+          const response = await fetch(`${API_BASE}/api/battles`, {
+            method: "POST",
+            headers: {
+              Authorization: `tma ${webApp.initData}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              score: score * 10,
+              correctAnswers: score,
+              xp: battleXp,
+              durationSeconds: Math.max(0, 60 - timeLeft),
+              bestCombo: battleCombo,
+            }),
+          });
+
+          const data = await response.json().catch(() => null);
+          if (!response.ok || !data?.ok) {
+            throw new Error(data?.error || `Battle sync failed (${response.status})`);
+          }
+
+          if (data.profile) {
+            setPlayer((current) => ({
+              ...current,
+              xp: Number(data.profile.xp ?? current.xp),
+              streak: Number(data.profile.streak ?? current.streak),
+              battles: Number(data.profile.battles ?? current.battles),
+              totalCorrect: Number(data.profile.totalCorrect ?? current.totalCorrect),
+              bestCombo: Number(data.profile.bestCombo ?? current.bestCombo),
+              bestBattleXp: Number(
+                data.profile.bestBattleXp ?? current.bestBattleXp
+              ),
+            }));
+          }
+        } catch (error) {
+          console.warn("BATTLE IQ: battle sync failed", error);
+        }
+      })();
     }
 
     setPlayer((current) => ({
@@ -1412,7 +1486,7 @@ function App() {
             <div className="rank">
               <span>🏆</span>
               <strong>
-                #1,842
+                #{globalRank?.toLocaleString() ?? "—"}
               </strong>
             </div>
           </section>
@@ -1582,7 +1656,7 @@ function App() {
                 </strong>
 
                 <span>
-                  You're #1,842
+                  You're #{globalRank?.toLocaleString() ?? "—"}
                 </span>
               </div>
 
@@ -2249,7 +2323,7 @@ function App() {
               ],
               [
                 "🏆",
-                "#1,842",
+                globalRank != null ? `#${globalRank.toLocaleString()}` : "—",
                 "GLOBAL RANK",
               ],
             ].map(
@@ -2618,19 +2692,18 @@ function App() {
       telegramUser?.first_name ||
       "Sergio";
 
-    const worldPlayers = [
-      ["Alex", "12,840", "🥇", "+3"],
-      ["Max", "11,920", "🥈", "−1"],
-      ["Daniel", "11,540", "🥉", "+7"],
-      ["Vlad", "10,880", "", "+12"],
-      ["Nikita", "10,210", "", "−4"],
-      [
-        currentName,
-        player.xp.toLocaleString(),
-        "",
-        "+18",
-      ],
-    ];
+    const worldPlayers = leaderboard.length
+      ? leaderboard.map((user, index) => [
+          user.first_name || user.username || "Player",
+          Number(user.xp || 0).toLocaleString(),
+          index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "",
+          "—",
+          Number(user.level || 1),
+          Number(user.globalRank || index + 1),
+        ])
+      : [
+          [currentName, player.xp.toLocaleString(), "", "—", levelInfo.level, globalRank || 1],
+        ];
 
     const friendPlayers = [
       [
@@ -2960,7 +3033,7 @@ function App() {
             }}
           >
             {filteredPlayers.map(
-              ([name, xp, _medal, movement], index) => {
+              ([name, xp, _medal, movement, level, rank], index) => {
                 const isCurrentPlayer =
                   name === currentName;
 
@@ -3002,7 +3075,7 @@ function App() {
                         flexShrink: 0,
                       }}
                     >
-                      #{index + 1}
+                      #{rank ?? index + 1}
                     </div>
 
                     <div
@@ -3073,7 +3146,7 @@ function App() {
                           fontWeight: 700,
                         }}
                       >
-                        LEVEL {isCurrentPlayer ? levelInfo.level : Math.max(1, 20 - index)}
+                        LEVEL {isCurrentPlayer ? levelInfo.level : Number(level || 1)}
                       </span>
                     </div>
 
@@ -3209,7 +3282,7 @@ function App() {
                   lineHeight: 1,
                 }}
               >
-                #{rankingTab === "world" ? "1,842" : "1"}
+                #{rankingTab === "world" ? (globalRank?.toLocaleString() ?? "—") : "1"}
               </strong>
             </div>
             <span
