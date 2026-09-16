@@ -16,7 +16,9 @@ type Screen =
   | "missions"
   | "shop"
   | "result"
-  | "pvp";
+  | "pvp"
+  | "pvp_battle"
+  | "pvp_result";
 
 type Answer = {
   text: string;
@@ -30,9 +32,18 @@ type Question = {
 
 type QuestionResult = "correct" | "wrong" | "timeout";
 
+type PvpQuestion = {
+  id: number;
+  question: string;
+  answers: string[];
+  category?: string;
+  difficulty?: string;
+};
+
 type PvpMatch = {
   matchId: number;
   status: "waiting" | "ready" | "finished";
+  startedAt?: string | null;
   opponent?: {
     telegram_id: string;
     username?: string | null;
@@ -536,6 +547,30 @@ function App() {
 
   const [pvpError, setPvpError] =
     useState("");
+
+  const [pvpQuestions, setPvpQuestions] =
+    useState<PvpQuestion[]>([]);
+
+  const [pvpQuestionIndex, setPvpQuestionIndex] =
+    useState(0);
+
+  const [pvpSelectedAnswer, setPvpSelectedAnswer] =
+    useState<number | null>(null);
+
+  const [pvpScore, setPvpScore] =
+    useState(0);
+
+  const [pvpQuestionTimeLeft, setPvpQuestionTimeLeft] =
+    useState(8);
+
+  const [pvpSubmitting, setPvpSubmitting] =
+    useState(false);
+
+  const [pvpMyFinished, setPvpMyFinished] =
+    useState(false);
+
+  const [pvpWinner, setPvpWinner] =
+    useState<number | null | undefined>(undefined);
 
   const [notificationsOpen, setNotificationsOpen] =
     useState(false);
@@ -2130,6 +2165,127 @@ function App() {
     );
   }
 
+  const startPvpBattle = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData || !pvpMatch?.matchId) return;
+
+    setPvpError("");
+    try {
+      const response = await fetch(`${API_BASE}/api/pvp/questions?id=${pvpMatch.matchId}`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok || !Array.isArray(data.questions)) {
+        throw new Error(data?.error || "Не вдалося завантажити PvP питання");
+      }
+      setPvpQuestions(data.questions);
+      setPvpQuestionIndex(0);
+      setPvpSelectedAnswer(null);
+      setPvpScore(0);
+      setPvpQuestionTimeLeft(8);
+      setPvpSubmitting(false);
+      setPvpMyFinished(false);
+      setPvpWinner(undefined);
+      setScreen("pvp_battle");
+      tg.HapticFeedback?.impactOccurred("medium");
+    } catch (error) {
+      setPvpError(error instanceof Error ? error.message : "Помилка запуску матчу");
+    }
+  };
+
+  const submitPvpAnswer = async (answerIndex: number) => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData || !pvpMatch?.matchId || pvpSubmitting || pvpMyFinished) return;
+    const q = pvpQuestions[pvpQuestionIndex];
+    if (!q) return;
+
+    setPvpSubmitting(true);
+    setPvpSelectedAnswer(answerIndex >= 0 ? answerIndex : null);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/pvp/answer`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          matchId: pvpMatch.matchId,
+          questionIndex: pvpQuestionIndex,
+          answerIndex,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) throw new Error(data?.error || "Не вдалося надіслати відповідь");
+
+      if (data.correct) {
+        tg.HapticFeedback?.notificationOccurred("success");
+      } else {
+        tg.HapticFeedback?.notificationOccurred("error");
+      }
+
+      setPvpScore(Number(data.score || 0));
+      setPvpMatch((current) => current ? ({
+        ...current,
+        status: data.matchStatus || current.status,
+      }) : current);
+
+      if (data.finished) {
+        setPvpMyFinished(true);
+        setPvpWinner(data.winnerUserId);
+        setScreen("pvp_result");
+      } else {
+        setPvpQuestionIndex(Number(data.nextQuestionIndex ?? pvpQuestionIndex + 1));
+        setPvpSelectedAnswer(null);
+        setPvpQuestionTimeLeft(8);
+      }
+    } catch (error) {
+      setPvpError(error instanceof Error ? error.message : "Помилка відповіді");
+      setPvpSelectedAnswer(null);
+    } finally {
+      setPvpSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (screen !== "pvp_battle" || pvpMyFinished || !pvpQuestions.length) return;
+    const timer = window.setInterval(() => {
+      setPvpQuestionTimeLeft((value) => {
+        if (value <= 1) {
+          window.clearInterval(timer);
+          void submitPvpAnswer(-1);
+          return 8;
+        }
+        return value - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [screen, pvpQuestionIndex, pvpMyFinished, pvpQuestions.length]);
+
+  useEffect(() => {
+    if (screen !== "pvp_battle" || !pvpMatch?.matchId) return;
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) return;
+        setPvpMatch(data.match);
+        if (data.match?.status === "finished" && !pvpMyFinished) {
+          setPvpWinner(data.match?.winnerUserId);
+          setScreen("pvp_result");
+        }
+      } catch {}
+    }, 1500);
+
+    return () => window.clearInterval(poll);
+  }, [screen, pvpMatch?.matchId, pvpMyFinished]);
+
   if (screen === "pvp") {
     return (
       <div className="app">
@@ -2145,24 +2301,18 @@ function App() {
                 ? `Суперник: ${pvpMatch.opponent?.first_name || pvpMatch.opponent?.username || "Player"}`
                 : "Шукаємо іншого гравця в черзі."}
             </p>
-
             <div style={{ margin: "24px auto", width: 110, height: 110, borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(122,72,255,.16)", border: "1px solid rgba(145,105,255,.35)", fontSize: 48 }}>
               {pvpMatch?.status === "ready" ? "⚔️" : "🔎"}
             </div>
-
             {pvpSearching && (
               <div style={{ fontSize: 13, opacity: .7, marginBottom: 18 }}>
                 Пошук триває… перевіряємо чергу кожні 2 секунди
               </div>
             )}
-
-            {pvpError && (
-              <div style={{ color: "#ff9b9b", marginBottom: 16 }}>{pvpError}</div>
-            )}
-
+            {pvpError && <div style={{ color: "#ff9b9b", marginBottom: 16 }}>{pvpError}</div>}
             {pvpMatch?.status === "ready" ? (
-              <button className="play-button" onClick={() => setChallengeNotice("🔥 PvP матч готовий — наступним кроком підключимо питання та синхронний бій.")}>
-                CONTINUE
+              <button className="play-button" onClick={() => void startPvpBattle()}>
+                START MATCH ⚔️
               </button>
             ) : (
               <button className="challenge-button" onClick={() => { setPvpSearching(false); setScreen("home"); }}>
@@ -2171,11 +2321,105 @@ function App() {
             )}
           </section>
         </main>
-        {challengeNotice && (
-          <div style={{ position: "fixed", left: 12, right: 12, bottom: 82, padding: "12px 14px", borderRadius: 14, background: "rgba(20,17,30,.96)", border: "1px solid rgba(255,255,255,.12)", textAlign: "center", zIndex: 50 }}>
-            {challengeNotice}
-          </div>
-        )}
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "pvp_battle") {
+    const q = pvpQuestions[pvpQuestionIndex];
+    const opponent = pvpMatch?.opponent;
+    const opponentScore = Number((pvpMatch as any)?.opponent?.score || 0);
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <section className="hero-card" style={{ textAlign: "center" }}>
+            <div className="hero-badge">⚔️ LIVE 1V1</div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 18 }}>
+              <div className="info-card" style={{ flex: 1 }}><strong>YOU</strong><span>{pvpScore} pts</span></div>
+              <div className="info-card" style={{ flex: 1 }}><strong>{opponent?.first_name || opponent?.username || "OPPONENT"}</strong><span>{opponentScore} pts</span></div>
+            </div>
+            <div style={{ fontSize: 13, opacity: .7, marginBottom: 8 }}>QUESTION {Math.min(pvpQuestionIndex + 1, 10)} / 10</div>
+            <div style={{ fontSize: 30, fontWeight: 900, marginBottom: 16 }}>{pvpQuestionTimeLeft}s</div>
+            {q ? (
+              <>
+                <div className="hero-card" style={{ marginBottom: 14 }}>
+                  <h2 style={{ margin: 0 }}>{q.question}</h2>
+                </div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {q.answers.map((answer, index) => (
+                    <button
+                      key={`${q.id}-${index}`}
+                      className="challenge-button"
+                      disabled={pvpSubmitting || pvpSelectedAnswer !== null}
+                      onClick={() => void submitPvpAnswer(index)}
+                      style={{ minHeight: 52, textAlign: "left", padding: "12px 16px", opacity: pvpSelectedAnswer !== null && pvpSelectedAnswer !== index ? .55 : 1 }}
+                    >
+                      <b>{String.fromCharCode(65 + index)}.</b> {answer}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : <div>Завантаження питання…</div>}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    if (screen !== "pvp_result" || !pvpMatch?.matchId) return;
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) return;
+        setPvpMatch(data.match);
+        if (data.match?.status === "finished") {
+          setPvpWinner(data.match?.winnerUserId);
+          window.clearInterval(poll);
+        }
+      } catch {}
+    }, 1000);
+    return () => window.clearInterval(poll);
+  }, [screen, pvpMatch?.matchId]);
+
+  if (screen === "pvp_result") {
+    const opponent = pvpMatch?.opponent;
+    const opponentScore = Number((pvpMatch as any)?.opponent?.score || 0);
+    const myScore = pvpScore;
+    const winner = pvpWinner;
+    const isDraw = winner === null || (winner === undefined && myScore === opponentScore);
+    const myTelegramId = telegramUser?.id ? String(telegramUser.id) : "";
+    const won = !isDraw && String(winner) === myTelegramId;
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <section className="hero-card" style={{ textAlign: "center" }}>
+            <div className="hero-badge">🏁 MATCH COMPLETE</div>
+            <h1>{isDraw ? "DRAW" : won ? "YOU WIN!" : "MATCH OVER"}</h1>
+            <p>{opponent?.first_name || opponent?.username || "Opponent"}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10, margin: "24px 0" }}>
+              <div className="info-card"><strong>YOU</strong><span style={{ fontSize: 28 }}>{myScore}</span></div>
+              <strong style={{ fontSize: 22 }}>VS</strong>
+              <div className="info-card"><strong>OPPONENT</strong><span style={{ fontSize: 28 }}>{opponentScore}</span></div>
+            </div>
+            {!pvpMyFinished && <p style={{ opacity: .7 }}>Суперник уже завершив матч. Заверши свої 10 питань, щоб отримати фінальний результат.</p>}
+            <button className="play-button" onClick={() => { setPvpMatch(null); setPvpQuestions([]); setPvpMyFinished(false); setPvpWinner(undefined); setScreen("home"); }}>
+              BACK HOME
+            </button>
+          </section>
+        </main>
         <BottomNav />
       </div>
     );
