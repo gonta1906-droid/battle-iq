@@ -615,8 +615,18 @@ function App() {
 
     const loadLeaderboard = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/users?limit=100`, {
-          headers: { Accept: "application/json" },
+        const tg = getTelegramWebApp();
+        const initData = tg?.initData || "";
+
+        if (!initData) {
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/api/ranking`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `tma ${initData}`,
+          },
         });
 
         const data = await response.json();
@@ -624,14 +634,8 @@ function App() {
 
         setLeaderboard(Array.isArray(data.users) ? data.users : []);
 
-        const tg = getTelegramUser();
-        if (tg?.id != null) {
-          const me = (data.users as any[]).find(
-            (item) => String(item.telegram_id) === String(tg.id)
-          );
-          if (me?.globalRank != null) {
-            setGlobalRank(Number(me.globalRank));
-          }
+        if (data.me?.globalRank != null) {
+          setGlobalRank(Number(data.me.globalRank));
         }
       } catch (error) {
         console.warn("BATTLE IQ: leaderboard sync failed", error);
@@ -2645,16 +2649,17 @@ function App() {
           [currentName, player.xp.toLocaleString(), "", "—", levelInfo.level, globalRank || 1],
         ];
 
+    // Friends are intentionally not mocked anymore.
+    // A real Friends tab will use the friend system once it is connected.
     const friendPlayers = [
       [
         currentName,
         player.xp.toLocaleString(),
         "",
         "—",
+        levelInfo.level,
+        globalRank || 1,
       ],
-      ["Alex", "4,820", "", "+2"],
-      ["Max", "3,950", "", "−1"],
-      ["Daniel", "2,740", "", "+4"],
     ];
 
     const sourcePlayers =
@@ -2963,6 +2968,23 @@ function App() {
                 }
               )}
             </section>
+          )}
+
+          {rankingTab === "friends" && (
+            <div
+              style={{
+                marginBottom: "12px",
+                padding: "11px 13px",
+                borderRadius: "13px",
+                background: "rgba(124,77,255,0.10)",
+                border: "1px solid rgba(168,85,247,0.18)",
+                fontSize: "10px",
+                lineHeight: 1.4,
+                opacity: 0.72,
+              }}
+            >
+              👥 Friends ranking will appear after the friend system is connected.
+            </div>
           )}
 
           <section
