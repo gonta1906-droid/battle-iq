@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 import {
@@ -511,6 +511,12 @@ function App() {
   const [battleFinished, setBattleFinished] =
     useState(false);
 
+  // Backend/D1 battle tracking.
+  // Refs prevent duplicate writes if finishBattle is triggered twice
+  // before React finishes updating state.
+  const battleStartTimeRef = useRef<number | null>(null);
+  const battleRecordedRef = useRef(false);
+
   const [previousXp, setPreviousXp] =
     useState(player.xp);
 
@@ -698,6 +704,9 @@ function App() {
     setTimeLeft(60);
     setBattleFinished(false);
 
+    battleStartTimeRef.current = Date.now();
+    battleRecordedRef.current = false;
+
     setScreen("battle");
   };
 
@@ -706,17 +715,92 @@ function App() {
   // ==========================================
 
   const finishBattle = () => {
-    if (battleFinished) return;
+    if (battleFinished || battleRecordedRef.current) return;
 
+    // Lock immediately so timer/answer callbacks cannot create
+    // duplicate battle rows in D1.
+    battleRecordedRef.current = true;
     setBattleFinished(true);
     setPreviousXp(player.xp);
 
-    const webApp =
-      getTelegramWebApp();
+    const webApp = getTelegramWebApp();
 
     webApp?.HapticFeedback?.notificationOccurred(
       "success"
     );
+
+    const durationSeconds = battleStartTimeRef.current
+      ? Math.max(
+          0,
+          Math.min(
+            3600,
+            Math.round(
+              (Date.now() - battleStartTimeRef.current) / 1000
+            )
+          )
+        )
+      : Math.max(0, 60 - timeLeft);
+
+    // Record the completed battle in Cloudflare D1.
+    // The backend validates Telegram initData before accepting it.
+    void (async () => {
+      try {
+        const initData = webApp?.initData || "";
+
+        if (!initData) {
+          console.warn(
+            "BATTLE IQ: battle not sent to D1 because Telegram initData is unavailable"
+          );
+          return;
+        }
+
+        const response = await fetch(
+          `${API_BASE}/api/battles`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `tma ${initData}`,
+            },
+            body: JSON.stringify({
+              score: score * 10,
+              correctAnswers: score,
+              xp: battleXp,
+              durationSeconds,
+            }),
+          }
+        );
+
+        const data = await response.json().catch(
+          () => null
+        );
+
+        if (!response.ok || !data?.ok) {
+          throw new Error(
+            data?.error ||
+              `Battle save failed (${response.status})`
+          );
+        }
+
+        console.log(
+          "BATTLE IQ: battle saved to D1",
+          {
+            score,
+            correctAnswers: score,
+            xp: battleXp,
+            durationSeconds,
+          }
+        );
+      } catch (error) {
+        // The game result is still shown locally even if the network
+        // request fails. The error is visible in the console for debugging.
+        console.error(
+          "BATTLE IQ: failed to save battle to D1",
+          error
+        );
+      }
+    })();
 
     setPlayer((current) => ({
       ...current,
