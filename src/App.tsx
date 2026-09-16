@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import "./App.css";
 
 import {
@@ -69,6 +70,18 @@ const SHOP_FALLBACK: ShopProduct[] = [
   { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, category: "BATTLE" },
   { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
 ];
+
+const PROFILE_FRAME_EMOJI: Record<string, string> = {
+  neon_frame: "🟣",
+  fire_frame: "🔥",
+  legendary_frame: "👑",
+};
+
+const FRAME_STYLES: Record<string, CSSProperties> = {
+  neon_frame: { border: "2px solid rgba(124,77,255,0.95)", boxShadow: "0 0 0 3px rgba(124,77,255,0.16), 0 0 24px rgba(124,77,255,0.42)" },
+  fire_frame: { border: "2px solid rgba(255,110,60,0.95)", boxShadow: "0 0 0 3px rgba(255,110,60,0.14), 0 0 24px rgba(255,110,60,0.34)" },
+  legendary_frame: { border: "2px solid rgba(255,205,70,0.95)", boxShadow: "0 0 0 3px rgba(255,205,70,0.14), 0 0 28px rgba(255,205,70,0.36)" },
+};
 
 const ACHIEVEMENTS = [
   {
@@ -545,6 +558,9 @@ function App() {
   const [shopBusy, setShopBusy] =
     useState<string | null>(null);
 
+  const [equippedFrame, setEquippedFrame] =
+    useState<string | null>(null);
+
   const [gameQuestions, setGameQuestions] =
     useState<Question[]>([]);
 
@@ -650,6 +666,11 @@ function App() {
           bestCombo: Number(remote.bestCombo ?? current.bestCombo),
           bestBattleXp: Number(remote.bestBattleXp ?? current.bestBattleXp),
         }));
+
+        if (remote.frame) {
+          const frameId = remote.frame === "neon" ? "neon_frame" : remote.frame === "fire" ? "fire_frame" : remote.frame === "legendary" ? "legendary_frame" : null;
+          setEquippedFrame(frameId);
+        }
 
         if (remote.globalRank != null) {
           setGlobalRank(Number(remote.globalRank));
@@ -781,6 +802,8 @@ function App() {
         const inventoryData = await inventoryResponse.json();
         if (!cancelled && inventoryResponse.ok && inventoryData?.ok && Array.isArray(inventoryData.items)) {
           setInventory(inventoryData.items);
+          const active = inventoryData.items.find((item: InventoryItem) => Number(item.equipped) === 1);
+          if (active) setEquippedFrame(active.product_id);
         }
       } catch (error) {
         console.warn("BATTLE IQ: shop sync failed", error);
@@ -1641,8 +1664,9 @@ function App() {
 
         <main className="content">
           <section className="profile-card">
-            <div className="avatar">
+            <div className="avatar" style={{ position: "relative", ...((equippedFrame && FRAME_STYLES[equippedFrame]) || {}) }}>
               😎
+              {equippedFrame && <span style={{ position: "absolute", right: -6, bottom: -6, width: 22, height: 22, borderRadius: "50%", display: "grid", placeItems: "center", background: "#171522", border: "1px solid rgba(255,255,255,0.12)", fontSize: 12 }}>{PROFILE_FRAME_EMOJI[equippedFrame]}</span>}
             </div>
 
             <div className="profile-info">
@@ -1891,20 +1915,23 @@ function App() {
   }
 
   const refreshInventory = async () => {
-    const tg = getTelegramWebApp();
-    if (!tg?.initData) return;
-    try {
-      const response = await fetch(`${API_BASE}/api/inventory`, {
-        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
-      });
-      const data = await response.json();
-      if (response.ok && data?.ok && Array.isArray(data.items)) {
+      const tg = getTelegramWebApp();
+      if (!tg?.initData) return false;
+      try {
+        const response = await fetch(`${API_BASE}/api/inventory`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok || !Array.isArray(data.items)) return false;
         setInventory(data.items);
+        const active = data.items.find((item: InventoryItem) => Number(item.equipped) === 1);
+        setEquippedFrame(active ? active.product_id : null);
+        return true;
+      } catch (error) {
+        console.warn("BATTLE IQ: inventory refresh failed", error);
+        return false;
       }
-    } catch (error) {
-      console.warn("BATTLE IQ: inventory refresh failed", error);
-    }
-  };
+    };
 
   // ==========================================
   // SHOP 2.0
@@ -1943,9 +1970,21 @@ function App() {
 
         tg.openInvoice(data.url, (status: string) => {
           if (status === "paid") {
-            setChallengeNotice(`✅ ${product.title} оплачено!`);
-            void refreshInventory();
+            setChallengeNotice(`✅ ${product.title} оплачено! Оновлюємо інвентар…`);
             tg.HapticFeedback?.notificationOccurred("success");
+            void (async () => {
+              for (let attempt = 0; attempt < 6; attempt++) {
+                await new Promise((resolve) => window.setTimeout(resolve, attempt === 0 ? 500 : 1000));
+                const ok = await refreshInventory();
+                if (ok) {
+                  const tg2 = getTelegramWebApp();
+                  const note = tg2 ? `🎉 ${product.title} вже в інвентарі!` : `🎉 ${product.title} додано!`;
+                  setChallengeNotice(note);
+                  return;
+                }
+              }
+              setChallengeNotice("⏳ Платіж успішний. Telegram ще підтверджує товар — відкрий Shop ще раз за кілька секунд.");
+            })();
           } else if (status === "pending") {
             setChallengeNotice("⏳ Платіж обробляється. Товар з'явиться після підтвердження Telegram.");
           } else if (status === "failed") {
@@ -1980,6 +2019,7 @@ function App() {
         const data = await response.json();
         if (!response.ok || !data?.ok) throw new Error(data?.error || "Не вдалося активувати предмет");
         setInventory((items) => items.map((item) => ({ ...item, equipped: item.product_id === productId ? 1 : 0 })));
+        setEquippedFrame(productId);
         setChallengeNotice("✨ Рамку активовано!");
       } catch (error) {
         setChallengeNotice(error instanceof Error ? `⚠️ ${error.message}` : "⚠️ Не вдалося активувати предмет.");
@@ -2014,7 +2054,7 @@ function App() {
           <section style={{ marginBottom: 24 }}>
             <div className="section-title" style={{ marginBottom: 11 }}>
               <h2>🎒 Inventory</h2>
-              <span>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items</span>
+              <span>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items{equippedFrame ? ` · ${PROFILE_FRAME_EMOJI[equippedFrame]} active` : ""}</span>
             </div>
             {inventory.length === 0 ? (
               <div style={{ padding: 16, borderRadius: 16, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 11, opacity: 0.55, textAlign: "center" }}>
@@ -2048,14 +2088,16 @@ function App() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
                 {shopProducts.filter((p) => p.category === category).map((product) => {
                   const item = owned(product.id);
+                  const repeatable = product.category === "BATTLE";
+                  const showOwned = Boolean(item) && !repeatable;
                   return (
                     <div key={product.id} style={{ position: "relative", padding: 14, minHeight: 178, borderRadius: 20, background: product.featured ? "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.045))" : "rgba(255,255,255,0.045)", border: product.featured ? "1px solid rgba(145,110,255,0.28)" : "1px solid rgba(255,255,255,0.07)", boxSizing: "border-box" }}>
                       {product.featured && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(124,77,255,0.28)", color: "#cfc1ff" }}>FEATURED</div>}
                       <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 15, background: "rgba(255,255,255,0.07)", fontSize: 25, marginBottom: 12 }}>{product.icon || "🎁"}</div>
                       <div style={{ fontWeight: 900, fontSize: 14 }}>{product.title}</div>
                       <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.description || "Premium BATTLE IQ item"}</div>
-                      {item ? (
-                        <div style={{ marginTop: 11, padding: "8px 7px", borderRadius: 11, background: "rgba(124,77,255,0.13)", border: "1px solid rgba(124,77,255,0.2)", textAlign: "center", fontSize: 10, fontWeight: 900 }}>OWNED · x{item.quantity}</div>
+                      {showOwned ? (
+                        <div style={{ marginTop: 11, padding: "8px 7px", borderRadius: 11, background: "rgba(124,77,255,0.13)", border: "1px solid rgba(124,77,255,0.2)", textAlign: "center", fontSize: 10, fontWeight: 900 }}>OWNED · x{item?.quantity || 0}</div>
                       ) : (
                         <button type="button" disabled={shopBusy === product.id} onClick={() => buyProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: shopBusy === product.id ? "rgba(124,77,255,0.2)" : "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>
                           {shopBusy === product.id ? "OPENING…" : `BUY · ${product.price_stars} ⭐`}
@@ -2478,7 +2520,7 @@ function App() {
                   "0 12px 35px rgba(124,77,255,0.18)",
               }}
             >
-              😎
+              <span style={{ display: "grid", placeItems: "center", width: "100%", height: "100%", borderRadius: "inherit", ...((equippedFrame && FRAME_STYLES[equippedFrame]) || {}) }}>😎</span>
             </div>
 
             <h1
