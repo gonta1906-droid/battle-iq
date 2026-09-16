@@ -347,6 +347,39 @@ const DAILY_MISSIONS = [
   },
 ];
 
+type ShopProduct = {
+  id: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  price_stars: number;
+  enabled?: number;
+  featured?: boolean;
+};
+
+type InventoryItem = {
+  product_id: string;
+  quantity: number;
+  equipped: number;
+  title: string;
+  description?: string;
+  icon?: string;
+  category: string;
+  price_stars: number;
+};
+
+const SHOP_FALLBACK: ShopProduct[] = [
+  { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", description: "Use your own profile picture", price_stars: 50, category: "PROFILE", featured: true },
+  { id: "neon_frame", icon: "🟣", title: "Neon Frame", description: "Stand out in the ranking", price_stars: 25, category: "PROFILE" },
+  { id: "fire_frame", icon: "🔥", title: "Fire Frame", description: "Bring the heat to your profile", price_stars: 50, category: "PROFILE" },
+  { id: "legendary_frame", icon: "👑", title: "Legendary Frame", description: "Premium profile frame", price_stars: 100, category: "PROFILE" },
+  { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, category: "BATTLE" },
+  { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, category: "BATTLE" },
+  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, category: "BATTLE" },
+  { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
+];
+
 function App() {
   // ==========================================
   // TELEGRAM
@@ -499,6 +532,18 @@ function App() {
       bestCombo: 0,
       bestBattleXp: 0,
     });
+
+  const [shopProducts, setShopProducts] =
+    useState<ShopProduct[]>(SHOP_FALLBACK);
+
+  const [inventory, setInventory] =
+    useState<InventoryItem[]>([]);
+
+  const [shopLoading, setShopLoading] =
+    useState(false);
+
+  const [shopBusy, setShopBusy] =
+    useState<string | null>(null);
 
   const [gameQuestions, setGameQuestions] =
     useState<Question[]>([]);
@@ -711,6 +756,42 @@ function App() {
       cancelled = true;
     };
   }, [player.xp, player.battles]);
+
+  // ==========================================
+  // SHOP + INVENTORY
+  // ==========================================
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadShop = async () => {
+      setShopLoading(true);
+      try {
+        const productsResponse = await fetch(`${API_BASE}/api/shop`);
+        const productsData = await productsResponse.json();
+        if (!cancelled && productsResponse.ok && productsData?.ok && Array.isArray(productsData.products)) {
+          setShopProducts(productsData.products);
+        }
+
+        const tg = getTelegramWebApp();
+        if (!tg?.initData) return;
+
+        const inventoryResponse = await fetch(`${API_BASE}/api/inventory`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const inventoryData = await inventoryResponse.json();
+        if (!cancelled && inventoryResponse.ok && inventoryData?.ok && Array.isArray(inventoryData.items)) {
+          setInventory(inventoryData.items);
+        }
+      } catch (error) {
+        console.warn("BATTLE IQ: shop sync failed", error);
+      } finally {
+        if (!cancelled) setShopLoading(false);
+      }
+    };
+
+    loadShop();
+    return () => { cancelled = true; };
+  }, [telegramUser?.id]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -1809,29 +1890,104 @@ function App() {
     );
   }
 
+  const refreshInventory = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/inventory`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json();
+      if (response.ok && data?.ok && Array.isArray(data.items)) {
+        setInventory(data.items);
+      }
+    } catch (error) {
+      console.warn("BATTLE IQ: inventory refresh failed", error);
+    }
+  };
+
   // ==========================================
-  // SHOP
+  // SHOP 2.0
   // ==========================================
 
   if (screen === "shop") {
-    const shopProducts = [
-      { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", text: "Use your own profile picture", price: 50, category: "PROFILE", featured: true },
-      { id: "neon_frame", icon: "🟣", title: "Neon Frame", text: "Stand out in the ranking", price: 25, category: "PROFILE" },
-      { id: "fire_frame", icon: "🔥", title: "Fire Frame", text: "Bring the heat to your profile", price: 50, category: "PROFILE" },
-      { id: "legendary_frame", icon: "👑", title: "Legendary Frame", text: "Premium profile frame", price: 100, category: "PROFILE" },
-      { id: "second_chance", icon: "❤️", title: "Second Chance", text: "One extra life in a battle", price: 15, category: "BATTLE" },
-      { id: "combo_shield", icon: "🛡️", title: "Combo Shield", text: "Protect your combo from one mistake", price: 30, category: "BATTLE" },
-      { id: "xp_boost", icon: "⚡", title: "XP Boost", text: "Boost your battle progression", price: 25, category: "BATTLE" },
-      { id: "battle_pass", icon: "🎟️", title: "Battle Pass", text: "Unlock exclusive season rewards", price: 299, category: "PASS", featured: true },
-    ];
+    const categories = ["PROFILE", "BATTLE", "PASS"];
+    const owned = (id: string) => inventory.find((item) => item.product_id === id);
 
-    const buyProduct = (product: typeof shopProducts[number]) => {
-      getTelegramWebApp()?.HapticFeedback?.impactOccurred("medium");
-      setChallengeNotice(`⭐ ${product.title} — Telegram Stars payment will be connected next.`);
-      window.setTimeout(() => setChallengeNotice(""), 3200);
+    const buyProduct = async (product: ShopProduct) => {
+      const tg = getTelegramWebApp() as any;
+      if (!tg?.initData || typeof tg.openInvoice !== "function") {
+        setChallengeNotice("⚠️ Відкрий BATTLE IQ саме через Telegram для оплати.");
+        window.setTimeout(() => setChallengeNotice(""), 2600);
+        return;
+      }
+
+      setShopBusy(product.id);
+      tg.HapticFeedback?.impactOccurred("medium");
+
+      try {
+        const response = await fetch(`${API_BASE}/api/shop/invoice`, {
+          method: "POST",
+          headers: {
+            Authorization: `tma ${tg.initData}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ productId: product.id }),
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data?.ok || !data?.url) {
+          throw new Error(data?.error || "Не вдалося створити рахунок");
+        }
+
+        tg.openInvoice(data.url, (status: string) => {
+          if (status === "paid") {
+            setChallengeNotice(`✅ ${product.title} оплачено!`);
+            void refreshInventory();
+            tg.HapticFeedback?.notificationOccurred("success");
+          } else if (status === "pending") {
+            setChallengeNotice("⏳ Платіж обробляється. Товар з'явиться після підтвердження Telegram.");
+          } else if (status === "failed") {
+            setChallengeNotice("❌ Платіж не пройшов. Спробуй ще раз.");
+          } else {
+            setChallengeNotice("Покупку скасовано.");
+          }
+          window.setTimeout(() => setChallengeNotice(""), 3600);
+        });
+      } catch (error) {
+        console.warn("BATTLE IQ: invoice failed", error);
+        setChallengeNotice(error instanceof Error ? `⚠️ ${error.message}` : "⚠️ Не вдалося відкрити оплату.");
+        window.setTimeout(() => setChallengeNotice(""), 3000);
+      } finally {
+        setShopBusy(null);
+      }
     };
 
-    const categories = ["PROFILE", "BATTLE", "PASS"];
+    const equipFrame = async (productId: string) => {
+      const tg = getTelegramWebApp();
+      if (!tg?.initData) return;
+      setShopBusy(productId);
+      try {
+        const response = await fetch(`${API_BASE}/api/inventory/equip`, {
+          method: "POST",
+          headers: {
+            Authorization: `tma ${tg.initData}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ productId }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) throw new Error(data?.error || "Не вдалося активувати предмет");
+        setInventory((items) => items.map((item) => ({ ...item, equipped: item.product_id === productId ? 1 : 0 })));
+        setChallengeNotice("✨ Рамку активовано!");
+      } catch (error) {
+        setChallengeNotice(error instanceof Error ? `⚠️ ${error.message}` : "⚠️ Не вдалося активувати предмет.");
+      } finally {
+        setShopBusy(null);
+        window.setTimeout(() => setChallengeNotice(""), 2400);
+      }
+    };
 
     return (
       <div className="app">
@@ -1840,19 +1996,46 @@ function App() {
         <Header />
 
         <main className="content">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
-              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop</h1>
+              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 2.0</h1>
             </div>
             <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
           </div>
 
-          <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 24 }}>
+          <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 18 }}>
             <div style={{ position: "absolute", width: 150, height: 150, right: -55, top: -65, borderRadius: "50%", background: "rgba(124,77,255,0.18)", filter: "blur(8px)" }} />
             <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>PREMIUM ITEMS</div>
-            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Make your profile yours.</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 290, marginTop: 6 }}>Avatars, frames, battle boosts and the season pass. Buy exactly what you want with Telegram Stars.</div>
+            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Buy exactly what you want.</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Оплата проходить через офіційний Telegram Stars. Куплені предмети зберігаються в твоєму інвентарі.</div>
+          </section>
+
+          <section style={{ marginBottom: 24 }}>
+            <div className="section-title" style={{ marginBottom: 11 }}>
+              <h2>🎒 Inventory</h2>
+              <span>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items</span>
+            </div>
+            {inventory.length === 0 ? (
+              <div style={{ padding: 16, borderRadius: 16, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 11, opacity: 0.55, textAlign: "center" }}>
+                {shopLoading ? "Loading inventory…" : "Твій інвентар поки порожній."}
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
+                {inventory.map((item) => (
+                  <div key={item.product_id} style={{ minWidth: 125, padding: 11, borderRadius: 16, background: item.equipped ? "rgba(124,77,255,0.15)" : "rgba(255,255,255,0.045)", border: item.equipped ? "1px solid rgba(145,110,255,0.35)" : "1px solid rgba(255,255,255,0.07)" }}>
+                    <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
+                    <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
+                    <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
+                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame"].includes(item.product_id) && (
+                      <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
+                        {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           {categories.map((category) => (
@@ -1863,21 +2046,30 @@ function App() {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-                {shopProducts.filter((p) => p.category === category).map((product) => (
-                  <div key={product.id} style={{ position: "relative", padding: 14, minHeight: 170, borderRadius: 20, background: product.featured ? "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.045))" : "rgba(255,255,255,0.045)", border: product.featured ? "1px solid rgba(145,110,255,0.28)" : "1px solid rgba(255,255,255,0.07)", boxSizing: "border-box" }}>
-                    {product.featured && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(124,77,255,0.28)", color: "#cfc1ff" }}>FEATURED</div>}
-                    <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 15, background: "rgba(255,255,255,0.07)", fontSize: 25, marginBottom: 12 }}>{product.icon}</div>
-                    <div style={{ fontWeight: 900, fontSize: 14 }}>{product.title}</div>
-                    <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.text}</div>
-                    <button type="button" onClick={() => buyProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>BUY · {product.price} ⭐</button>
-                  </div>
-                ))}
+                {shopProducts.filter((p) => p.category === category).map((product) => {
+                  const item = owned(product.id);
+                  return (
+                    <div key={product.id} style={{ position: "relative", padding: 14, minHeight: 178, borderRadius: 20, background: product.featured ? "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.045))" : "rgba(255,255,255,0.045)", border: product.featured ? "1px solid rgba(145,110,255,0.28)" : "1px solid rgba(255,255,255,0.07)", boxSizing: "border-box" }}>
+                      {product.featured && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(124,77,255,0.28)", color: "#cfc1ff" }}>FEATURED</div>}
+                      <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 15, background: "rgba(255,255,255,0.07)", fontSize: 25, marginBottom: 12 }}>{product.icon || "🎁"}</div>
+                      <div style={{ fontWeight: 900, fontSize: 14 }}>{product.title}</div>
+                      <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.description || "Premium BATTLE IQ item"}</div>
+                      {item ? (
+                        <div style={{ marginTop: 11, padding: "8px 7px", borderRadius: 11, background: "rgba(124,77,255,0.13)", border: "1px solid rgba(124,77,255,0.2)", textAlign: "center", fontSize: 10, fontWeight: 900 }}>OWNED · x{item.quantity}</div>
+                      ) : (
+                        <button type="button" disabled={shopBusy === product.id} onClick={() => buyProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: shopBusy === product.id ? "rgba(124,77,255,0.2)" : "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>
+                          {shopBusy === product.id ? "OPENING…" : `BUY · ${product.price_stars} ⭐`}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           ))}
 
           <div style={{ padding: "13px 14px", borderRadius: 15, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 10.5, lineHeight: 1.5, opacity: 0.52, textAlign: "center", marginBottom: 12 }}>
-            Purchases will use official Telegram Stars. No random boxes — you buy the exact item shown.
+            🔐 Покупка перевіряється сервером. Товар додається в D1 тільки після підтвердження успішного платежу Telegram.
           </div>
         </main>
 
