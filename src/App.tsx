@@ -15,7 +15,8 @@ type Screen =
   | "profile"
   | "missions"
   | "shop"
-  | "result";
+  | "result"
+  | "pvp";
 
 type Answer = {
   text: string;
@@ -28,6 +29,19 @@ type Question = {
 };
 
 type QuestionResult = "correct" | "wrong" | "timeout";
+
+type PvpMatch = {
+  matchId: number;
+  status: "waiting" | "ready" | "finished";
+  opponent?: {
+    telegram_id: string;
+    username?: string | null;
+    first_name?: string | null;
+    xp?: number;
+    level?: number;
+  } | null;
+};
+
 
 type PlayerData = {
   xp: number;
@@ -512,6 +526,15 @@ function App() {
     useState("");
 
   const [challengeNotice, setChallengeNotice] =
+    useState("");
+
+  const [pvpMatch, setPvpMatch] =
+    useState<PvpMatch | null>(null);
+
+  const [pvpSearching, setPvpSearching] =
+    useState(false);
+
+  const [pvpError, setPvpError] =
     useState("");
 
   const [notificationsOpen, setNotificationsOpen] =
@@ -1742,6 +1765,63 @@ function App() {
   // HOME
   // ==========================================
 
+  const startPvpSearch = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) {
+      setPvpError("Відкрий BATTLE IQ через Telegram.");
+      return;
+    }
+
+    setPvpError("");
+    setPvpSearching(true);
+    setPvpMatch(null);
+    setScreen("pvp");
+
+    try {
+      const response = await fetch(`${API_BASE}/api/pvp/queue`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || "Не вдалося знайти суперника");
+      }
+      setPvpMatch(data.match);
+      setPvpSearching(data.match?.status === "waiting");
+    } catch (error) {
+      setPvpSearching(false);
+      setPvpError(error instanceof Error ? error.message : "Помилка пошуку");
+    }
+  };
+
+  useEffect(() => {
+    if (screen !== "pvp" || !pvpMatch?.matchId || pvpMatch.status !== "waiting") return;
+
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+
+    const poll = window.setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/pvp/match?id=${pvpMatch.matchId}`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) return;
+        setPvpMatch(data.match);
+        if (data.match?.status === "ready") {
+          setPvpSearching(false);
+          getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+        }
+      } catch {}
+    }, 2000);
+
+    return () => window.clearInterval(poll);
+  }, [screen, pvpMatch?.matchId, pvpMatch?.status]);
+
   const handleChallenge = async (name: string) => {
     const webApp = getTelegramWebApp();
 
@@ -2030,8 +2110,72 @@ function App() {
               INVITE
             </button>
           </section>
+
+          <section className="challenge-card" style={{ marginTop: "12px" }}>
+            <div className="challenge-left">
+              <div className="mini-icon">🔥</div>
+              <div>
+                <strong>PLAY PVP 1V1</strong>
+                <span>Знайди суперника та зіграй онлайн</span>
+              </div>
+            </div>
+            <button className="challenge-button" onClick={startPvpSearch} type="button">
+              FIND MATCH
+            </button>
+          </section>
         </main>
 
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen === "pvp") {
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <section className="hero-card" style={{ textAlign: "center" }}>
+            <div className="hero-badge">⚔️ PVP 1V1</div>
+            <h1>{pvpMatch?.status === "ready" ? "MATCH FOUND!" : "Finding opponent..."}</h1>
+            <p>
+              {pvpMatch?.status === "ready"
+                ? `Суперник: ${pvpMatch.opponent?.first_name || pvpMatch.opponent?.username || "Player"}`
+                : "Шукаємо іншого гравця в черзі."}
+            </p>
+
+            <div style={{ margin: "24px auto", width: 110, height: 110, borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(122,72,255,.16)", border: "1px solid rgba(145,105,255,.35)", fontSize: 48 }}>
+              {pvpMatch?.status === "ready" ? "⚔️" : "🔎"}
+            </div>
+
+            {pvpSearching && (
+              <div style={{ fontSize: 13, opacity: .7, marginBottom: 18 }}>
+                Пошук триває… перевіряємо чергу кожні 2 секунди
+              </div>
+            )}
+
+            {pvpError && (
+              <div style={{ color: "#ff9b9b", marginBottom: 16 }}>{pvpError}</div>
+            )}
+
+            {pvpMatch?.status === "ready" ? (
+              <button className="play-button" onClick={() => setChallengeNotice("🔥 PvP матч готовий — наступним кроком підключимо питання та синхронний бій.")}>
+                CONTINUE
+              </button>
+            ) : (
+              <button className="challenge-button" onClick={() => { setPvpSearching(false); setScreen("home"); }}>
+                CANCEL
+              </button>
+            )}
+          </section>
+        </main>
+        {challengeNotice && (
+          <div style={{ position: "fixed", left: 12, right: 12, bottom: 82, padding: "12px 14px", borderRadius: 14, background: "rgba(20,17,30,.96)", border: "1px solid rgba(255,255,255,.12)", textAlign: "center", zIndex: 50 }}>
+            {challengeNotice}
+          </div>
+        )}
         <BottomNav />
       </div>
     );
