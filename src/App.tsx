@@ -617,6 +617,9 @@ function App() {
   const [battleXp, setBattleXp] =
     useState(0);
 
+  const [eventBonusXp, setEventBonusXp] =
+    useState(0);
+
   const [selectedAnswer, setSelectedAnswer] =
     useState<number | null>(null);
 
@@ -1054,6 +1057,19 @@ function App() {
   };
 
   // ==========================================
+  // BATTLE 4.0 EVENTS
+  // ==========================================
+
+  const getQuestionTimeLimit = (index: number) =>
+    index >= 3 && index <= 5 ? 5 : 8;
+
+  const isSpeedRound =
+    questionIndex >= 3 && questionIndex <= 5;
+
+  const isDoubleXpRound =
+    questionIndex >= 7;
+
+  // ==========================================
   // START BATTLE
   // ==========================================
 
@@ -1123,10 +1139,11 @@ function App() {
     setQuestionIndex(0);
     setScore(0);
     setBattleXp(0);
+    setEventBonusXp(0);
     setBattleCombo(0);
     setSelectedAnswer(null);
     setTimeLeft(60);
-    setQuestionTimeLeft(8);
+    setQuestionTimeLeft(getQuestionTimeLimit(0));
     setBattleLives(3);
     setQuestionResults([]);
     setLivesLost(0);
@@ -1246,7 +1263,7 @@ function App() {
     );
 
     setSelectedAnswer(null);
-    setQuestionTimeLeft(8);
+    setQuestionTimeLeft(getQuestionTimeLimit(questionIndex + 1));
   };
 
   // ==========================================
@@ -1357,9 +1374,20 @@ function App() {
         (50 + speedBonus) *
         comboMultiplier;
 
+      const eventMultiplier =
+        isDoubleXpRound ? 2 : isSpeedRound ? 1.5 : 1;
+
+      const boostedBaseXp =
+        Math.ceil(baseEarnedXp * eventMultiplier);
+
       const earnedXp = xpBoostActive
-        ? Math.ceil(baseEarnedXp * 1.5)
-        : baseEarnedXp;
+        ? Math.ceil(boostedBaseXp * 1.5)
+        : boostedBaseXp;
+
+      const eventExtra =
+        Math.max(0, boostedBaseXp - baseEarnedXp);
+
+      setEventBonusXp((value) => value + eventExtra);
 
       setBattleXp(
         (value) =>
@@ -4368,6 +4396,31 @@ function App() {
             </div>
           </div>
 
+          {eventBonusXp > 0 && (
+            <section
+              style={{
+                width: "100%",
+                marginTop: "10px",
+                padding: "11px 12px",
+                borderRadius: "14px",
+                background: "rgba(124,77,255,0.09)",
+                border: "1px solid rgba(124,77,255,0.18)",
+                textAlign: "left",
+              }}
+            >
+              <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>BATTLE EVENTS</div>
+              <div style={{ marginTop: "5px", fontSize: "11px", fontWeight: 800 }}>
+                ⚡ Speed Round · 1.5× XP
+              </div>
+              <div style={{ marginTop: "3px", fontSize: "11px", fontWeight: 800 }}>
+                ⚡ Double XP · Final Round
+              </div>
+              <div style={{ marginTop: "5px", fontSize: "10px", opacity: 0.62 }}>
+                +{eventBonusXp} XP from battle events
+              </div>
+            </section>
+          )}
+
           {leveledUp && (
             <section
               style={{
@@ -5064,6 +5117,44 @@ function App() {
             }}
           >
             {challengeNotice}
+          </div>
+        )}
+
+        {isSpeedRound && (
+          <div
+            style={{
+              marginBottom: "10px",
+              padding: "10px 12px",
+              borderRadius: "13px",
+              background: "rgba(34,211,238,0.10)",
+              border: "1px solid rgba(34,211,238,0.24)",
+              textAlign: "center",
+              animation: "biqComboBurst 0.45s ease-out",
+            }}
+          >
+            <div style={{ fontSize: "15px" }}>⚡ SPEED ROUND</div>
+            <div style={{ marginTop: "3px", fontSize: "10px", opacity: 0.68 }}>
+              5 seconds · 1.5× XP
+            </div>
+          </div>
+        )}
+
+        {isDoubleXpRound && (
+          <div
+            style={{
+              marginBottom: "10px",
+              padding: "10px 12px",
+              borderRadius: "13px",
+              background: "rgba(250,204,21,0.10)",
+              border: "1px solid rgba(250,204,21,0.24)",
+              textAlign: "center",
+              animation: "biqComboBurst 0.45s ease-out",
+            }}
+          >
+            <div style={{ fontSize: "15px" }}>⚡ DOUBLE XP</div>
+            <div style={{ marginTop: "3px", fontSize: "10px", opacity: 0.68 }}>
+              Final round · 2× XP
+            </div>
           </div>
         )}
 
