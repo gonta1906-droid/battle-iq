@@ -357,93 +357,36 @@ type DailyMissionStats = {
   claimed: string[];
 };
 
-function getTodayKey() {
-  const now = new Date();
-
-  const year = now.getFullYear();
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, "0");
-  const day = String(
-    now.getDate()
-  ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function loadDailyMissionStats(): DailyMissionStats {
-  const today = getTodayKey();
-
-  try {
-    const saved = localStorage.getItem(
-      "battle_iq_daily_missions"
-    );
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      if (parsed.date === today) {
-        return parsed;
-      }
-    }
-  } catch {}
-
-  return {
-    date: today,
-    battles: 0,
-    correct: 0,
-    bestCombo: 0,
-    xpEarned: 0,
-    claimed: [],
-  };
-}
+type WeeklyMissionStats = {
+  periodKey: string;
+  battles: number;
+  correct: number;
+  bestCombo: number;
+  xpEarned: number;
+  claimed: string[];
+};
 
 const DAILY_MISSIONS = [
-  {
-    id: "battle_3",
-    icon: "⚔️",
-    title: "Warm Up",
-    description: "Complete 3 battles today",
-    target: 3,
-    reward: 150,
-    getProgress: (
-      stats: DailyMissionStats
-    ) => stats.battles,
-  },
-  {
-    id: "correct_20",
-    icon: "🧠",
-    title: "Sharp Mind",
-    description: "Answer 20 questions correctly",
-    target: 20,
-    reward: 200,
-    getProgress: (
-      stats: DailyMissionStats
-    ) => stats.correct,
-  },
-  {
-    id: "combo_5",
-    icon: "🔥",
-    title: "On Fire",
-    description: "Reach a 5-answer combo",
-    target: 5,
-    reward: 250,
-    getProgress: (
-      stats: DailyMissionStats
-    ) => stats.bestCombo,
-  },
-  {
-    id: "xp_500",
-    icon: "⚡",
-    title: "XP Hunter",
-    description: "Earn 500 XP from battles",
-    target: 500,
-    reward: 300,
-    getProgress: (
-      stats: DailyMissionStats
-    ) => stats.xpEarned,
-  },
+  { id: "battle_1", icon: "⚔️", title: "Warm Up", description: "Complete 1 battle today", target: 1, reward: 50, getProgress: (s: DailyMissionStats) => s.battles },
+  { id: "correct_15", icon: "🧠", title: "Sharp Mind", description: "Answer 15 questions correctly", target: 15, reward: 75, getProgress: (s: DailyMissionStats) => s.correct },
+  { id: "combo_5", icon: "🔥", title: "On Fire", description: "Reach a 5-answer combo", target: 5, reward: 75, getProgress: (s: DailyMissionStats) => s.bestCombo },
+  { id: "xp_300", icon: "⚡", title: "XP Hunter", description: "Earn 300 XP from battles", target: 300, reward: 100, getProgress: (s: DailyMissionStats) => s.xpEarned },
 ];
+
+const WEEKLY_MISSIONS = [
+  { id: "battle_7", icon: "🏹", title: "Weekly Warrior", description: "Complete 7 battles this week", target: 7, reward: 250, getProgress: (s: WeeklyMissionStats) => s.battles },
+  { id: "correct_60", icon: "🧠", title: "Deep Thinker", description: "Answer 60 questions correctly", target: 60, reward: 300, getProgress: (s: WeeklyMissionStats) => s.correct },
+  { id: "combo_8", icon: "🔥", title: "Combo Master", description: "Reach an 8-answer combo", target: 8, reward: 300, getProgress: (s: WeeklyMissionStats) => s.bestCombo },
+  { id: "xp_1500", icon: "⚡", title: "XP Machine", description: "Earn 1,500 XP from battles", target: 1500, reward: 400, getProgress: (s: WeeklyMissionStats) => s.xpEarned },
+];
+
+function emptyDailyMissionStats(): DailyMissionStats {
+  return { date: "", battles: 0, correct: 0, bestCombo: 0, xpEarned: 0, claimed: [] };
+}
+
+function emptyWeeklyMissionStats(): WeeklyMissionStats {
+  return { periodKey: "", battles: 0, correct: 0, bestCombo: 0, xpEarned: 0, claimed: [] };
+}
 
 function App() {
   // ==========================================
@@ -610,10 +553,12 @@ function App() {
   const [settingsOpen, setSettingsOpen] =
     useState(false);
 
-  const [dailyMissions, setDailyMissions] =
-    useState<DailyMissionStats>(() =>
-      loadDailyMissionStats()
-    );
+  const [dailyMissions, setDailyMissions] = useState<DailyMissionStats>(emptyDailyMissionStats());
+
+  const [weeklyMissions, setWeeklyMissions] = useState<WeeklyMissionStats>(emptyWeeklyMissionStats());
+
+  const [missionsLoading, setMissionsLoading] = useState(false);
+  const [missionNotice, setMissionNotice] = useState("");
 
   const [achievementToast, setAchievementToast] =
     useState<{
@@ -893,6 +838,32 @@ function App() {
   }, [player.xp, player.battles]);
 
   // ==========================================
+  // SERVER-AUTHORITATIVE MISSIONS
+  // ==========================================
+  const loadMissions = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    setMissionsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/missions`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) throw new Error(data?.error || "Mission sync failed");
+      setDailyMissions(data.daily || emptyDailyMissionStats());
+      setWeeklyMissions(data.weekly || emptyWeeklyMissionStats());
+    } catch (error) {
+      console.warn("BATTLE IQ: missions sync failed", error);
+    } finally {
+      setMissionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadMissions();
+  }, [telegramUser?.id, player.battles, player.xp]);
+
+  // ==========================================
   // SHOP + INVENTORY
   // ==========================================
   useEffect(() => {
@@ -929,13 +900,6 @@ function App() {
     loadShop();
     return () => { cancelled = true; };
   }, [telegramUser?.id]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "battle_iq_daily_missions",
-      JSON.stringify(dailyMissions)
-    );
-  }, [dailyMissions]);
 
   useEffect(() => {
     const unlocked = ACHIEVEMENTS.filter(
@@ -1258,19 +1222,10 @@ function App() {
       })();
     }
 
-    setDailyMissions((current) => ({
-      ...current,
-      battles: current.battles + 1,
-      correct: current.correct + score,
-      bestCombo: Math.max(
-        current.bestCombo,
-        battleCombo
-      ),
-      xpEarned:
-        current.xpEarned + battleXp,
-    }));
-
     setScreen("result");
+
+    // Re-read mission progress from D1 after the battle is recorded.
+    window.setTimeout(() => { void loadMissions(); }, 250);
   };
 
   // ==========================================
@@ -2785,313 +2740,126 @@ function App() {
   }
 
   // ==========================================
-  // MISSIONS
+  // MISSIONS 2.0
   // ==========================================
 
   if (screen === "missions") {
-    const claimMission = (
+    const claimMission = async (
+      periodType: "daily" | "weekly",
       missionId: string,
-      reward: number
+      target: number,
+      reward: number,
+      progress: number,
     ) => {
-      void reward;
+      if (progress < target || missionsLoading) return;
+      const stats = periodType === "daily" ? dailyMissions : weeklyMissions;
+      if (stats.claimed.includes(missionId)) return;
 
-      const mission =
-        DAILY_MISSIONS.find(
-          (item) => item.id === missionId
-        );
+      const tg = getTelegramWebApp();
+      if (!tg?.initData) return;
 
-      if (!mission) return;
+      setMissionsLoading(true);
+      setMissionNotice("");
+      try {
+        const response = await fetch(`${API_BASE}/api/missions/claim`, {
+          method: "POST",
+          headers: {
+            Authorization: `tma ${tg.initData}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ periodType, missionId }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) throw new Error(data?.error || "Could not claim mission");
 
-      const progress =
-        mission.getProgress(
-          dailyMissions
-        );
-
-      const alreadyClaimed =
-        dailyMissions.claimed.includes(
-          missionId
-        );
-
-      if (
-        progress < mission.target ||
-        alreadyClaimed
-      ) {
-        return;
+        if (data.profile) {
+          setPlayer((current) => ({
+            ...current,
+            xp: Number(data.profile.xp ?? current.xp),
+          }));
+        }
+        await loadMissions();
+        tg.HapticFeedback?.notificationOccurred("success");
+        setMissionNotice(`+${Number(data.reward ?? reward)} XP claimed!`);
+        window.setTimeout(() => setMissionNotice(""), 2500);
+      } catch (error) {
+        console.warn("BATTLE IQ: mission claim failed", error);
+        setMissionNotice(error instanceof Error ? error.message : "Could not claim mission");
+        window.setTimeout(() => setMissionNotice(""), 3000);
+      } finally {
+        setMissionsLoading(false);
       }
-
-      getTelegramWebApp()
-        ?.HapticFeedback?.notificationOccurred(
-          "success"
-        );
-
-      // Progression XP is authoritative in D1. Mission rewards stay out of
-      // local player state until a server-side claim endpoint is connected.
-      setDailyMissions((current) => ({
-        ...current,
-        claimed: [
-          ...current.claimed,
-          missionId,
-        ],
-      }));
     };
 
-    const completedCount =
-      DAILY_MISSIONS.filter(
-        (mission) =>
-          mission.getProgress(
-            dailyMissions
-          ) >= mission.target
-      ).length;
+    const renderMission = (
+      mission: typeof DAILY_MISSIONS[number],
+      stats: DailyMissionStats | WeeklyMissionStats,
+      periodType: "daily" | "weekly",
+    ) => {
+      const progress = Math.min(mission.getProgress(stats as any), mission.target);
+      const completed = progress >= mission.target;
+      const claimed = stats.claimed.includes(mission.id);
+      const percent = (progress / mission.target) * 100;
+
+      return (
+        <div key={mission.id} style={{ padding: "16px", borderRadius: "16px", background: completed ? "rgba(124,77,255,0.16)" : "rgba(255,255,255,0.05)", border: completed ? "1px solid rgba(124,77,255,0.35)" : "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ width: "44px", height: "44px", borderRadius: "12px", display: "grid", placeItems: "center", background: "rgba(124,77,255,0.14)", fontSize: "22px", flexShrink: 0 }}>{mission.icon}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <strong style={{ display: "block", fontSize: "14px" }}>{mission.title}</strong>
+              <span style={{ display: "block", marginTop: "3px", fontSize: "12px", opacity: 0.65 }}>{mission.description}</span>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <strong style={{ display: "block", fontSize: "13px" }}>+{mission.reward}</strong>
+              <small style={{ opacity: 0.55 }}>XP</small>
+            </div>
+          </div>
+          <div style={{ marginTop: "14px", height: "7px", borderRadius: "999px", overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
+            <div style={{ width: `${percent}%`, height: "100%", borderRadius: "999px", background: "linear-gradient(90deg, #7c4dff, #a855f7)", transition: "width 0.25s ease" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginTop: "9px" }}>
+            <span style={{ fontSize: "11px", opacity: 0.6 }}>{progress}/{mission.target}</span>
+            <button disabled={!completed || claimed || missionsLoading} onClick={() => void claimMission(periodType, mission.id, mission.target, mission.reward, progress)} style={{ border: 0, borderRadius: "10px", padding: "8px 12px", background: claimed ? "rgba(255,255,255,0.08)" : completed ? "#7c4dff" : "rgba(255,255,255,0.06)", color: "inherit", fontSize: "11px", fontWeight: 800, cursor: completed && !claimed ? "pointer" : "default", opacity: !completed || claimed ? 0.55 : 1 }}>
+              {claimed ? "✓ CLAIMED" : completed ? "CLAIM XP" : "LOCKED"}
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    const dailyCompleted = DAILY_MISSIONS.filter((m) => m.getProgress(dailyMissions) >= m.target).length;
+    const weeklyCompleted = WEEKLY_MISSIONS.filter((m) => m.getProgress(weeklyMissions) >= m.target).length;
 
     return (
       <div className="app">
         <div className="glow glow-one" />
         <div className="glow glow-two" />
-
         <Header />
-
         <main className="profile-page">
           <section className="profile-hero">
-            <div
-              className="profile-big-avatar"
-            >
-              🎯
-            </div>
-
-            <h1>
-              DAILY MISSIONS
-            </h1>
-
-            <div className="profile-level">
-              {completedCount}/
-              {DAILY_MISSIONS.length} COMPLETE
-            </div>
-
-            <p
-              style={{
-                marginTop: "8px",
-                opacity: 0.65,
-                fontSize: "13px",
-              }}
-            >
-              Complete missions every day
-              and earn bonus XP.
-            </p>
+            <div className="profile-big-avatar">🎯</div>
+            <h1>MISSIONS</h1>
+            <div className="profile-level">{dailyCompleted}/{DAILY_MISSIONS.length} DAILY · {weeklyCompleted}/{WEEKLY_MISSIONS.length} WEEKLY</div>
+            <p style={{ marginTop: "8px", opacity: 0.65, fontSize: "13px" }}>Complete missions and claim bonus XP.</p>
           </section>
 
-          <section
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
-            {DAILY_MISSIONS.map(
-              (mission) => {
-                const progress = Math.min(
-                  mission.getProgress(
-                    dailyMissions
-                  ),
-                  mission.target
-                );
+          {missionNotice && <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 14, background: "rgba(124,77,255,0.16)", border: "1px solid rgba(124,77,255,0.3)", textAlign: "center", fontSize: 12, fontWeight: 800 }}>{missionNotice}</div>}
 
-                const completed =
-                  progress >= mission.target;
+          <section>
+            <div className="section-title"><h2>DAILY</h2><span>{dailyMissions.date || "SYNCING…"}</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {DAILY_MISSIONS.map((mission) => renderMission(mission, dailyMissions, "daily"))}
+            </div>
+          </section>
 
-                const claimed =
-                  dailyMissions.claimed.includes(
-                    mission.id
-                  );
-
-                const percent =
-                  (progress /
-                    mission.target) *
-                  100;
-
-                return (
-                  <div
-                    key={mission.id}
-                    style={{
-                      padding: "16px",
-                      borderRadius: "16px",
-                      background:
-                        completed
-                          ? "rgba(124,77,255,0.16)"
-                          : "rgba(255,255,255,0.05)",
-                      border:
-                        completed
-                          ? "1px solid rgba(124,77,255,0.35)"
-                          : "1px solid rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "44px",
-                          height: "44px",
-                          borderRadius: "12px",
-                          display: "grid",
-                          placeItems: "center",
-                          background:
-                            "rgba(124,77,255,0.14)",
-                          fontSize: "22px",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {mission.icon}
-                      </div>
-
-                      <div
-                        style={{
-                          flex: 1,
-                          minWidth: 0,
-                        }}
-                      >
-                        <strong
-                          style={{
-                            display: "block",
-                            fontSize: "14px",
-                          }}
-                        >
-                          {mission.title}
-                        </strong>
-
-                        <span
-                          style={{
-                            display: "block",
-                            marginTop: "3px",
-                            fontSize: "12px",
-                            opacity: 0.65,
-                          }}
-                        >
-                          {mission.description}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          textAlign: "right",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <strong
-                          style={{
-                            display: "block",
-                            fontSize: "13px",
-                          }}
-                        >
-                          +{mission.reward}
-                        </strong>
-
-                        <small
-                          style={{
-                            opacity: 0.55,
-                          }}
-                        >
-                          XP
-                        </small>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: "14px",
-                        height: "7px",
-                        borderRadius: "999px",
-                        overflow: "hidden",
-                        background:
-                          "rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${percent}%`,
-                          height: "100%",
-                          borderRadius: "999px",
-                          background:
-                            "linear-gradient(90deg, #7c4dff, #a855f7)",
-                          transition:
-                            "width 0.25s ease",
-                        }}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "10px",
-                        marginTop: "9px",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          opacity: 0.6,
-                        }}
-                      >
-                        {progress}/
-                        {mission.target}
-                      </span>
-
-                      <button
-                        disabled={
-                          !completed ||
-                          claimed
-                        }
-                        onClick={() =>
-                          claimMission(
-                            mission.id,
-                            mission.reward
-                          )
-                        }
-                        style={{
-                          border: 0,
-                          borderRadius: "10px",
-                          padding:
-                            "8px 12px",
-                          background:
-                            claimed
-                              ? "rgba(255,255,255,0.08)"
-                              : completed
-                              ? "#7c4dff"
-                              : "rgba(255,255,255,0.06)",
-                          color: "inherit",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                          cursor:
-                            completed &&
-                            !claimed
-                              ? "pointer"
-                              : "default",
-                          opacity:
-                            !completed ||
-                            claimed
-                              ? 0.55
-                              : 1,
-                        }}
-                      >
-                        {claimed
-                          ? "✓ CLAIMED"
-                          : completed
-                          ? "CLAIM XP"
-                          : "LOCKED"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
-            )}
+          <section style={{ marginTop: 22 }}>
+            <div className="section-title"><h2>WEEKLY</h2><span>7 DAY GOALS</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {WEEKLY_MISSIONS.map((mission) => renderMission(mission as any, weeklyMissions, "weekly"))}
+            </div>
           </section>
         </main>
-
         <BottomNav />
       </div>
     );
