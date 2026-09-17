@@ -120,7 +120,8 @@ type DailyBonusReward = {
 
 type DailyBonusData = {
   today: string; currentDay: number; claimedToday: boolean;
-  claimedDay: number | null; rewards: DailyBonusReward[];
+  claimedDay: number | null; streak: number; bestStreak: number;
+  totalClaims: number; rewards: DailyBonusReward[];
 };
 
 type ReferralData = {
@@ -3385,10 +3386,32 @@ function App() {
             <button type="button" onClick={loadDailyBonus} style={{ border:0, borderRadius:12, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:800 }}>↻</button>
           </div>
           <section style={{ padding:20, borderRadius:24, background:"linear-gradient(135deg, rgba(255,190,70,.16), rgba(255,90,150,.10))", border:"1px solid rgba(255,190,70,.18)", marginBottom:16 }}>
-            <div style={{ fontSize:40 }}>🎁</div>
-            <h2 style={{ margin:"8px 0 4px" }}>7-Day Streak</h2>
-            <p style={{ margin:0, opacity:.65 }}>Claim one reward each day. Missing a day resets the cycle.</p>
+            <div style={{ fontSize:40 }}>🔥</div>
+            <h2 style={{ margin:"8px 0 4px" }}>Daily Streak</h2>
+            <p style={{ margin:0, opacity:.65 }}>Keep the streak alive by claiming one reward every day. Miss a day and the streak resets.</p>
           </section>
+
+          <section className="stats-grid" style={{ marginBottom:16 }}>
+            <div className="stat-card"><span>🔥</span><strong>{dailyBonus?.streak ?? 0}</strong><small>CURRENT STREAK</small></div>
+            <div className="stat-card"><span>🏆</span><strong>{dailyBonus?.bestStreak ?? 0}</strong><small>BEST STREAK</small></div>
+          </section>
+
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:6, marginBottom:18 }}>
+            {(dailyBonus?.rewards ?? []).map((reward) => {
+              const done = dailyBonus?.claimedToday && reward.day === dailyBonus?.claimedDay;
+              const active = reward.day === dailyBonus?.currentDay && !dailyBonus?.claimedToday;
+              return (
+                <div key={`mini-${reward.day}`} style={{
+                  textAlign:"center", padding:"8px 2px", borderRadius:12,
+                  background: done ? "rgba(80,220,150,.13)" : active ? "rgba(255,190,70,.14)" : "rgba(255,255,255,.04)",
+                  border: active ? "1px solid rgba(255,190,70,.28)" : "1px solid rgba(255,255,255,.05)"
+                }}>
+                  <div style={{ fontSize:11, opacity:.5 }}>D{reward.day}</div>
+                  <div style={{ fontSize:18 }}>{done ? "✓" : reward.icon}</div>
+                </div>
+              );
+            })}
+          </div>
           {dailyBonusNotice && <div style={{ marginBottom:14, padding:"12px 14px", borderRadius:14, background:"rgba(80,220,150,.12)", fontWeight:800 }}>{dailyBonusNotice}</div>}
           <section style={{ display:"grid", gap:10 }}>
             {(dailyBonus?.rewards ?? []).map((reward) => {
