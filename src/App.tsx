@@ -24,7 +24,8 @@ type Screen =
   | "referral"
   | "daily_bonus"
   | "social"
-  | "collection";
+  | "collection"
+  | "battle_stats";
 
 type Answer = {
   text: string;
@@ -1066,6 +1067,9 @@ function App() {
   const [pvpHistory, setPvpHistory] = useState<any[]>([]);
   const [pvpLeaderboard, setPvpLeaderboard] = useState<any[]>([]);
   const [pvpStatsLoading, setPvpStatsLoading] = useState(false);
+  const [battleStats, setBattleStats] = useState<any>(null);
+  const [battleHistory, setBattleHistory] = useState<any[]>([]);
+  const [battleStatsLoading, setBattleStatsLoading] = useState(false);
 
   const [notificationsOpen, setNotificationsOpen] =
     useState(false);
@@ -2684,6 +2688,34 @@ function App() {
 
     return () => window.clearInterval(poll);
   }, [screen, pvpMatch?.matchId, pvpMatch?.status]);
+
+  const loadBattleStats = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    setBattleStatsLoading(true);
+    try {
+      const headers = { Authorization: `tma ${tg.initData}`, Accept: "application/json" };
+      const [statsRes, historyRes] = await Promise.all([
+        fetch(`${API_BASE}/api/battles/stats`, { headers }),
+        fetch(`${API_BASE}/api/battles/history?limit=20`, { headers }),
+      ]);
+      const [statsData, historyData] = await Promise.all([
+        statsRes.json().catch(() => null),
+        historyRes.json().catch(() => null),
+      ]);
+      if (statsRes.ok && statsData?.ok) setBattleStats(statsData.stats);
+      if (historyRes.ok && historyData?.ok) setBattleHistory(Array.isArray(historyData.battles) ? historyData.battles : []);
+    } catch (error) {
+      console.warn("BATTLE IQ: battle stats load failed", error);
+    } finally {
+      setBattleStatsLoading(false);
+    }
+  };
+
+  const openBattleStats = async () => {
+    setScreen("battle_stats");
+    await loadBattleStats();
+  };
 
   const loadPvpStats = async () => {
     const tg = getTelegramWebApp();
@@ -4477,6 +4509,135 @@ function App() {
   // PROFILE
   // ==========================================
 
+  if (screen === "battle_stats") {
+    const stats = battleStats || {
+      played: 0, totalCorrect: 0, accuracy: 0, totalXp: 0,
+      averageXp: 0, bestXp: 0, bestScore: 0, averageScore: 0,
+      averageDuration: 0, streak: 0, bestCombo: 0, bestBattleXp: 0,
+      last7Days: { battles: 0, xp: 0, correct: 0 },
+      today: { battles: 0, xp: 0, correct: 0 },
+    };
+    const formatDuration = (seconds: number) => {
+      const total = Math.max(0, Math.round(Number(seconds || 0)));
+      const minutes = Math.floor(total / 60);
+      const secs = total % 60;
+      return `${minutes}:${String(secs).padStart(2, "0")}`;
+    };
+    const formatDate = (value: string | null | undefined) => {
+      if (!value) return "—";
+      const date = new Date(value.replace(" ", "T") + (value.endsWith("Z") ? "" : "Z"));
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString("uk-UA", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    };
+
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content" style={{ paddingBottom: 100 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:12, marginBottom:18 }}>
+            <div>
+              <div style={{ fontSize:11, letterSpacing:1.8, fontWeight:900, opacity:.5 }}>BATTLE IQ ANALYTICS</div>
+              <h1 style={{ margin:"4px 0 0", fontSize:30, lineHeight:1.05 }}>Battle Stats</h1>
+            </div>
+            <button type="button" onClick={() => void loadBattleStats()} disabled={battleStatsLoading} style={{ border:0,borderRadius:12,padding:"9px 12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:900,fontSize:10 }}>{battleStatsLoading ? "…" : "↻ SYNC"}</button>
+          </div>
+
+          <section style={{ padding:18,borderRadius:22,background:"linear-gradient(145deg,rgba(124,77,255,.18),rgba(255,255,255,.035))",border:"1px solid rgba(255,255,255,.08)" }}>
+            <div style={{ fontSize:10,letterSpacing:1.2,fontWeight:900,opacity:.5 }}>CAREER</div>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8,marginTop:12 }}>
+              {[
+                ["⚔️", stats.played, "BATTLES"],
+                ["🎯", `${stats.accuracy}%`, "ACCURACY"],
+                ["⚡", Number(stats.totalXp || 0).toLocaleString(), "TOTAL XP"],
+                ["🏆", `${stats.bestScore}%`, "BEST SCORE"],
+                ["🔥", stats.bestCombo, "BEST COMBO"],
+                ["💎", stats.bestXp, "BEST BATTLE XP"],
+              ].map(([icon,value,label]) => (
+                <div key={String(label)} style={{ padding:"11px 7px",borderRadius:13,background:"rgba(255,255,255,.045)",textAlign:"center",border:"1px solid rgba(255,255,255,.055)" }}>
+                  <div style={{ fontSize:16 }}>{icon}</div>
+                  <strong style={{ display:"block",marginTop:4,fontSize:16 }}>{value}</strong>
+                  <div style={{ marginTop:3,fontSize:8,opacity:.45,fontWeight:900 }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section style={{ marginTop:12,padding:15,borderRadius:18,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.07)" }}>
+            <div style={{ display:"flex",justifyContent:"space-between",gap:10,alignItems:"center" }}>
+              <div>
+                <div style={{ fontSize:10,fontWeight:900,letterSpacing:1,opacity:.5 }}>RECENT ACTIVITY</div>
+                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>Last 7 days</strong>
+              </div>
+              <span style={{ fontSize:20 }}>📈</span>
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8,marginTop:11 }}>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.battles}</strong><div style={{fontSize:8,opacity:.45}}>BATTLES</div></div>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{Number(stats.last7Days.xp || 0).toLocaleString()}</strong><div style={{fontSize:8,opacity:.45}}>XP</div></div>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.correct}</strong><div style={{fontSize:8,opacity:.45}}>CORRECT</div></div>
+            </div>
+            <div style={{ marginTop:10,fontSize:10,opacity:.52 }}>Today: {stats.today.battles} battles · +{Number(stats.today.xp || 0)} XP · {stats.today.correct} correct</div>
+          </section>
+
+          <section style={{ marginTop:12,padding:15,borderRadius:18,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.07)" }}>
+            <div style={{ display:"flex",justifyContent:"space-between",gap:10,alignItems:"center" }}>
+              <div>
+                <div style={{ fontSize:10,fontWeight:900,letterSpacing:1,opacity:.5 }}>AVERAGES</div>
+                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>How you usually play</strong>
+              </div>
+              <div style={{ fontSize:20 }}>🧠</div>
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:8,marginTop:11 }}>
+              <div className="info-card"><strong>AVG XP</strong><span style={{fontSize:20}}>{stats.averageXp}</span></div>
+              <div className="info-card"><strong>AVG SCORE</strong><span style={{fontSize:20}}>{stats.averageScore}%</span></div>
+              <div className="info-card"><strong>AVG TIME</strong><span style={{fontSize:20}}>{formatDuration(stats.averageDuration)}</span></div>
+              <div className="info-card"><strong>STREAK</strong><span style={{fontSize:20}}>🔥 {stats.streak}</span></div>
+            </div>
+          </section>
+
+          <section style={{ marginTop:12 }}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+              <div>
+                <div style={{ fontSize:10,fontWeight:900,letterSpacing:1,opacity:.5 }}>BATTLE HISTORY</div>
+                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>Recent 20 battles</strong>
+              </div>
+              <span style={{ fontSize:20 }}>🗂️</span>
+            </div>
+
+            {battleStatsLoading && <div style={{ padding:18,textAlign:"center",opacity:.55 }}>Loading battle history…</div>}
+            {!battleStatsLoading && battleHistory.length === 0 && (
+              <div style={{ padding:22,borderRadius:18,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)",textAlign:"center" }}>
+                <div style={{fontSize:30}}>⚔️</div>
+                <strong>Ще немає завершених батлів</strong>
+                <p style={{margin:"7px 0 0",opacity:.5,fontSize:11}}>Зіграй перший батл — він зʼявиться тут автоматично.</p>
+              </div>
+            )}
+            <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+              {battleHistory.map((battle, index) => (
+                <div key={battle.id} style={{ padding:12,borderRadius:15,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.065)" }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                    <div style={{ width:36,height:36,borderRadius:11,display:"grid",placeItems:"center",background:battle.correctAnswers >= 8 ? "rgba(74,222,128,.12)" : battle.correctAnswers >= 5 ? "rgba(250,204,21,.10)" : "rgba(255,255,255,.05)",fontSize:18 }}>{battle.correctAnswers >= 8 ? "🏆" : battle.correctAnswers >= 5 ? "⚡" : "🎯"}</div>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ display:"flex",justifyContent:"space-between",gap:8 }}>
+                        <strong style={{ fontSize:12 }}>#{battleHistory.length - index} · {battle.correctAnswers}/10 correct</strong>
+                        <strong style={{ fontSize:12 }}>+{battle.xp} XP</strong>
+                      </div>
+                      <div style={{ marginTop:4,fontSize:9,opacity:.48 }}>{battle.accuracy}% accuracy · {formatDuration(battle.durationSeconds)} · {formatDate(battle.createdAt)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <button type="button" onClick={() => setScreen("profile")} style={{ width:"100%",marginTop:14,border:0,borderRadius:14,padding:"12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:950,fontSize:11 }}>← BACK TO PROFILE</button>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
   if (screen === "profile") {
     const achievements = serverAchievements.length
       ? serverAchievements
@@ -5000,6 +5161,31 @@ function App() {
               </strong>
             </div>
           </section>
+
+          <button
+            type="button"
+            onClick={() => void openBattleStats()}
+            style={{
+              width: "100%",
+              marginTop: "12px",
+              padding: "14px 15px",
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, rgba(124,77,255,.16), rgba(60,170,255,.08))",
+              border: "1px solid rgba(124,77,255,.20)",
+              color: "inherit",
+              textAlign: "left",
+              cursor: "pointer",
+            }}
+          >
+            <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:10 }}>
+              <div>
+                <div style={{ fontSize:10,opacity:.5,fontWeight:900,letterSpacing:"0.08em" }}>BATTLE ANALYTICS</div>
+                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>History & full statistics</strong>
+                <span style={{ display:"block",marginTop:3,fontSize:9,opacity:.48 }}>Server data from your completed battles</span>
+              </div>
+              <span style={{ fontSize:24 }}>📊</span>
+            </div>
+          </button>
 
           {/* ACHIEVEMENTS HEADER */}
           <div
