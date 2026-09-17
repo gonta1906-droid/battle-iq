@@ -175,12 +175,16 @@ const PROFILE_FRAME_EMOJI: Record<string, string> = {
   neon_frame: "🟣",
   fire_frame: "🔥",
   legendary_frame: "👑",
+  season_s1_free_25: "💠",
+  season_s1_premium_25: "💜",
 };
 
 const FRAME_STYLES: Record<string, CSSProperties> = {
   neon_frame: { border: "2px solid rgba(124,77,255,0.95)", boxShadow: "0 0 0 3px rgba(124,77,255,0.16), 0 0 24px rgba(124,77,255,0.42)" },
   fire_frame: { border: "2px solid rgba(255,110,60,0.95)", boxShadow: "0 0 0 3px rgba(255,110,60,0.14), 0 0 24px rgba(255,110,60,0.34)" },
   legendary_frame: { border: "2px solid rgba(255,205,70,0.95)", boxShadow: "0 0 0 3px rgba(255,205,70,0.14), 0 0 28px rgba(255,205,70,0.36)" },
+  season_s1_free_25: { border: "2px solid rgba(80,210,255,0.95)", boxShadow: "0 0 0 3px rgba(80,210,255,0.16), 0 0 26px rgba(80,210,255,0.35)" },
+  season_s1_premium_25: { border: "2px solid rgba(205,110,255,0.95)", boxShadow: "0 0 0 3px rgba(205,110,255,0.16), 0 0 28px rgba(205,110,255,0.38)" },
 };
 
 const ACHIEVEMENTS = [
@@ -764,6 +768,7 @@ function App() {
   const [seasonError, setSeasonError] = useState("");
   const [seasonNow, setSeasonNow] = useState(Date.now());
   const [seasonPass, setSeasonPass] = useState<SeasonPassData | null>(null);
+  const [seasonPassLoading, setSeasonPassLoading] = useState(false);
   const [seasonPassClaiming, setSeasonPassClaiming] = useState<string | null>(null);
   const [seasonPassNotice, setSeasonPassNotice] = useState("");
 
@@ -873,7 +878,7 @@ function App() {
         }));
 
         if (remote.frame) {
-          const frameId = remote.frame === "neon" ? "neon_frame" : remote.frame === "fire" ? "fire_frame" : remote.frame === "legendary" ? "legendary_frame" : null;
+          const frameId = remote.frame === "neon" ? "neon_frame" : remote.frame === "fire" ? "fire_frame" : remote.frame === "legendary" ? "legendary_frame" : remote.frame === "season_1_free" ? "season_s1_free_25" : remote.frame === "season_1_premium" ? "season_s1_premium_25" : null;
           setEquippedFrame(frameId);
         }
 
@@ -1194,6 +1199,7 @@ function App() {
       }
       setSeasonPassNotice(`🎉 ${data.reward?.title || "Нагороду отримано"}`);
       tg.HapticFeedback?.notificationOccurred?.("success");
+      await refreshInventory();
       await loadSeason();
     } catch (error) {
       console.warn("BATTLE IQ: season pass claim failed", error);
@@ -2987,7 +2993,7 @@ function App() {
                     <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
-                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame"].includes(item.product_id) && (
+                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame", "season_s1_free_25", "season_s1_premium_25"].includes(item.product_id) && (
                       <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
                         {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
                       </button>
