@@ -33,6 +33,8 @@ type Answer = {
 type Question = {
   question: string;
   answers: Answer[];
+  category?: string;
+  difficulty?: string;
 };
 
 type QuestionResult = "correct" | "wrong" | "timeout";
@@ -208,18 +210,12 @@ const PROFILE_FRAME_EMOJI: Record<string, string> = {
   neon_frame: "🟣",
   fire_frame: "🔥",
   legendary_frame: "👑",
-  ice_frame: "❄️",
-  galaxy_frame: "🌌",
-  diamond_frame: "💎",
 };
 
 const FRAME_STYLES: Record<string, CSSProperties> = {
   neon_frame: { border: "2px solid rgba(124,77,255,0.95)", boxShadow: "0 0 0 3px rgba(124,77,255,0.16), 0 0 24px rgba(124,77,255,0.42)" },
   fire_frame: { border: "2px solid rgba(255,110,60,0.95)", boxShadow: "0 0 0 3px rgba(255,110,60,0.14), 0 0 24px rgba(255,110,60,0.34)" },
   legendary_frame: { border: "2px solid rgba(255,205,70,0.95)", boxShadow: "0 0 0 3px rgba(255,205,70,0.14), 0 0 28px rgba(255,205,70,0.36)" },
-  ice_frame: { border: "2px solid rgba(120,210,255,0.95)", boxShadow: "0 0 0 3px rgba(120,210,255,0.14), 0 0 28px rgba(120,210,255,0.34)" },
-  galaxy_frame: { border: "2px solid rgba(180,120,255,0.95)", boxShadow: "0 0 0 3px rgba(180,120,255,0.14), 0 0 32px rgba(180,120,255,0.38)" },
-  diamond_frame: { border: "2px solid rgba(180,245,255,0.98)", boxShadow: "0 0 0 3px rgba(180,245,255,0.14), 0 0 30px rgba(180,245,255,0.40)" },
 };
 
 const ACHIEVEMENTS = [
@@ -369,6 +365,8 @@ function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
             text: answer.text,
             correct: answer.correct,
           })),
+          category: item.category,
+          difficulty: item.difficulty,
         };
       }
 
@@ -390,12 +388,14 @@ function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
               correct: index === item.correctIndex,
             })
           ),
+          category: item.category,
+          difficulty: item.difficulty,
         };
       }
 
       return null;
     })
-    .filter((item): item is Question => item !== null);
+    .filter((item) => item !== null) as Question[];
 }
 
 function shuffle<T>(array: T[]): T[] {
@@ -921,6 +921,13 @@ function App() {
 
   const [battleCombo, setBattleCombo] =
     useState(0);
+
+  const [battleMilestone, setBattleMilestone] =
+    useState<{
+      icon: string;
+      title: string;
+      subtitle: string;
+    } | null>(null);
 
   // D1 is the source of truth for player progression.
   // localStorage is intentionally not used for XP/level/battles.
@@ -1611,6 +1618,20 @@ function App() {
   const isDoubleXpRound =
     questionIndex >= 7;
 
+  const showBattleMilestone = (
+    icon: string,
+    title: string,
+    subtitle: string
+  ) => {
+    setBattleMilestone({ icon, title, subtitle });
+
+    window.setTimeout(() => {
+      setBattleMilestone((current) =>
+        current?.title === title ? null : current
+      );
+    }, 1500);
+  };
+
   // ==========================================
   // START BATTLE
   // ==========================================
@@ -1683,6 +1704,7 @@ function App() {
     setBattleXp(0);
     setEventBonusXp(0);
     setBattleCombo(0);
+    setBattleMilestone(null);
     setSelectedAnswer(null);
     setTimeLeft(90);
     setQuestionTimeLeft(getQuestionTimeLimit(0));
@@ -1898,7 +1920,7 @@ function App() {
       );
 
       const speedBonus =
-        Math.floor(timeLeft / 3);
+        Math.floor(questionTimeLeft / 3);
 
       const nextCombo =
         battleCombo + 1;
@@ -1912,9 +1934,19 @@ function App() {
             )
         );
 
+      const difficultyMultiplier =
+        String(currentQuestion.difficulty || "").toLowerCase().includes("hard")
+          ? 1.35
+          : String(currentQuestion.difficulty || "").toLowerCase().includes("medium")
+          ? 1.15
+          : 1;
+
       const baseEarnedXp =
-        (50 + speedBonus) *
-        comboMultiplier;
+        Math.ceil(
+          (50 + speedBonus) *
+            comboMultiplier *
+            difficultyMultiplier
+        );
 
       const eventMultiplier =
         isDoubleXpRound ? 2 : isSpeedRound ? 1.5 : 1;
@@ -1935,6 +1967,44 @@ function App() {
         (value) =>
           value + earnedXp
       );
+
+      if (nextCombo === 3) {
+        showBattleMilestone(
+          "🔥",
+          "COMBO x3",
+          "Multiplier activated"
+        );
+      } else if (nextCombo === 5) {
+        showBattleMilestone(
+          "🔥",
+          "HOT STREAK x5",
+          "Keep the run alive"
+        );
+      } else if (nextCombo === 8) {
+        showBattleMilestone(
+          "💥",
+          "ON FIRE x8",
+          "Maximum combo multiplier"
+        );
+      } else if (nextCombo === 10) {
+        showBattleMilestone(
+          "👑",
+          "PERFECT COMBO x10",
+          "10 correct answers in a row"
+        );
+      }
+
+      if (
+        String(currentQuestion.difficulty || "")
+          .toLowerCase()
+          .includes("hard")
+      ) {
+        showBattleMilestone(
+          "🔴",
+          "HARD CLEAR",
+          `+${earnedXp} XP`
+        );
+      }
     } else {
       webApp?.HapticFeedback?.notificationOccurred(
         "error"
@@ -3294,7 +3364,7 @@ function App() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
-              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 3.0</h1>
+              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 2.0</h1>
             </div>
             <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
           </div>
@@ -3302,23 +3372,8 @@ function App() {
           <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 18 }}>
             <div style={{ position: "absolute", width: 150, height: 150, right: -55, top: -65, borderRadius: "50%", background: "rgba(124,77,255,0.18)", filter: "blur(8px)" }} />
             <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>PREMIUM ITEMS</div>
-            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Build your own loadout.</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Оплата через Telegram Stars. Обирай косметику та Battle-утиліти без рандомних кейсів — усе, що купуєш, потрапляє в інвентар.</div>
-          </section>
-
-          <section style={{ marginBottom: 16 }}>
-            <div style={{
-              display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,
-              padding:"12px 14px",borderRadius:16,
-              background:"linear-gradient(135deg,rgba(130,100,255,.12),rgba(90,210,255,.08))",
-              border:"1px solid rgba(130,100,255,.16)"
-            }}>
-              <div>
-                <div style={{fontSize:10,fontWeight:950,letterSpacing:1,opacity:.5}}>NEW ARRIVALS</div>
-                <div style={{fontSize:14,fontWeight:900,marginTop:3}}>❄️ Ice · 🌌 Galaxy · 💎 Diamond</div>
-              </div>
-              <div style={{fontSize:22}}>✨</div>
-            </div>
+            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Buy exactly what you want.</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Оплата проходить через офіційний Telegram Stars. Куплені предмети зберігаються в твоєму інвентарі.</div>
           </section>
 
           <section style={{ marginBottom: 24 }}>
@@ -3337,7 +3392,7 @@ function App() {
                     <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
-                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame", "ice_frame", "galaxy_frame", "diamond_frame"].includes(item.product_id) && (
+                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame"].includes(item.product_id) && (
                       <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
                         {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
                       </button>
@@ -3351,7 +3406,7 @@ function App() {
           {categories.map((category) => (
             <section key={category} style={{ marginBottom: 24 }}>
               <div className="section-title" style={{ marginBottom: 11 }}>
-                <h2>{category === "PROFILE" ? "👤 Profile Cosmetics" : category === "BATTLE" ? "⚔️ Battle Utilities" : "🎟️ Season"}</h2>
+                <h2>{category === "PROFILE" ? "👤 Profile" : category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"}</h2>
                 <span>⭐ Stars</span>
               </div>
 
@@ -5506,7 +5561,7 @@ function App() {
         0,
         Math.min(
           60,
-          60 - timeLeft
+          90 - timeLeft
         )
       );
 
@@ -5974,9 +6029,43 @@ function App() {
           0%, 100% { filter: brightness(1); }
           50% { filter: brightness(1.45); }
         }
+
+        @keyframes biqMilestonePop {
+          0% { transform: translateX(-50%) scale(0.86); opacity: 0; }
+          70% { transform: translateX(-50%) scale(1.04); opacity: 1; }
+          100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
       `}</style>
 
       <main className="battle-screen">
+        {battleMilestone && (
+          <div
+            style={{
+              position: "fixed",
+              left: "50%",
+              top: "18%",
+              transform: "translateX(-50%)",
+              zIndex: 1200,
+              width: "min(310px, calc(100vw - 32px))",
+              padding: "16px 18px",
+              borderRadius: "20px",
+              textAlign: "center",
+              background: "linear-gradient(135deg, rgba(124,77,255,0.96), rgba(168,85,247,0.94))",
+              boxShadow: "0 18px 55px rgba(0,0,0,0.38)",
+              animation: "biqMilestonePop 0.28s ease-out",
+              pointerEvents: "none",
+            }}
+          >
+            <div style={{ fontSize: "30px" }}>{battleMilestone.icon}</div>
+            <div style={{ marginTop: "4px", fontSize: "18px", fontWeight: 950 }}>
+              {battleMilestone.title}
+            </div>
+            <div style={{ marginTop: "3px", fontSize: "10px", opacity: 0.78, fontWeight: 800 }}>
+              {battleMilestone.subtitle}
+            </div>
+          </div>
+        )}
+
         <div className="battle-header">
           <button
             className="back-button"
@@ -6317,7 +6406,7 @@ function App() {
           >
             <div style={{ fontSize: "15px" }}>⚡ SPEED ROUND</div>
             <div style={{ marginTop: "3px", fontSize: "10px", opacity: 0.68 }}>
-              5 seconds · 1.5× XP
+              10 seconds · 1.5× XP
             </div>
           </div>
         )}
@@ -6350,6 +6439,54 @@ function App() {
           <div className="question-number">
             QUESTION{" "}
             {questionIndex + 1}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "6px",
+              flexWrap: "wrap",
+              margin: "7px 0 10px",
+            }}
+          >
+            {currentQuestion.category && (
+              <span
+                style={{
+                  padding: "5px 8px",
+                  borderRadius: "999px",
+                  background: "rgba(124,77,255,0.10)",
+                  border: "1px solid rgba(124,77,255,0.18)",
+                  fontSize: "9px",
+                  fontWeight: 900,
+                  opacity: 0.75,
+                }}
+              >
+                {currentQuestion.category}
+              </span>
+            )}
+
+            <span
+              style={{
+                padding: "5px 8px",
+                borderRadius: "999px",
+                background:
+                  String(currentQuestion.difficulty || "").toLowerCase().includes("hard")
+                    ? "rgba(248,113,113,0.10)"
+                    : String(currentQuestion.difficulty || "").toLowerCase().includes("medium")
+                    ? "rgba(251,191,36,0.10)"
+                    : "rgba(74,222,128,0.10)",
+                border:
+                  String(currentQuestion.difficulty || "").toLowerCase().includes("hard")
+                    ? "1px solid rgba(248,113,113,0.18)"
+                    : String(currentQuestion.difficulty || "").toLowerCase().includes("medium")
+                    ? "1px solid rgba(251,191,36,0.18)"
+                    : "1px solid rgba(74,222,128,0.18)",
+                fontSize: "9px",
+                fontWeight: 900,
+              }}
+            >
+              {String(currentQuestion.difficulty || "easy").toUpperCase()}
+            </span>
           </div>
 
           <h1>
