@@ -114,6 +114,17 @@ type SeasonPassData = {
   rewards: SeasonPassReward[];
 };
 
+type ServerNotification = {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  icon: string;
+  data: Record<string, any>;
+  isRead: boolean;
+  createdAt: string;
+};
+
 type DailyBonusReward = {
   day: number; code: string; title: string; icon: string; type: string;
   amount: number; claimed: boolean; available: boolean;
@@ -599,6 +610,83 @@ function App() {
   }, []);
 
   // ==========================================
+  const loadServerNotifications = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    setNotificationsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/notifications`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok) {
+        setServerNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+        setNotificationUnread(Number(data.unread || 0));
+      }
+    } catch (error) {
+      console.warn("BATTLE IQ: notification load failed", error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
+  const bootstrapNotifications = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    try {
+      await fetch(`${API_BASE}/api/notifications/bootstrap`, {
+        method: "POST",
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+    } catch {}
+  };
+
+  const openServerNotifications = async () => {
+    setNotificationsOpen((value) => !value);
+    setSettingsOpen(false);
+    await loadServerNotifications();
+  };
+
+  const markServerNotificationRead = async (id:number) => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    try {
+      await fetch(`${API_BASE}/api/notifications/read`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+      setServerNotifications((prev) => prev.map((n) => n.id === id ? {...n,isRead:true} : n));
+      setNotificationUnread((prev) => Math.max(0, prev - 1));
+    } catch {}
+  };
+
+  const markAllServerNotificationsRead = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    try {
+      await fetch(`${API_BASE}/api/notifications/read`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ all: true }),
+      });
+      setServerNotifications((prev) => prev.map((n) => ({...n,isRead:true})));
+      setNotificationUnread(0);
+    } catch {}
+  };
+
+  useEffect(() => {
+    void bootstrapNotifications().then(() => loadServerNotifications());
+  }, []);
+
   const loadDailyBonus = async () => {
     const tg = getTelegramWebApp();
     if (!tg?.initData) return;
@@ -802,6 +890,10 @@ function App() {
 
   const [notificationsOpen, setNotificationsOpen] =
     useState(false);
+  const [serverNotifications, setServerNotifications] = useState<ServerNotification[]>([]);
+  const [notificationUnread, setNotificationUnread] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+
 
   const [settingsOpen, setSettingsOpen] =
     useState(false);
@@ -1993,17 +2085,23 @@ function App() {
           <button
             className="icon-btn"
             onClick={() => {
-              setNotificationsOpen(
-                (value) => !value
-              );
-              setSettingsOpen(false);
-
+              void openServerNotifications();
               getTelegramWebApp()
                 ?.HapticFeedback?.selectionChanged();
             }}
             aria-label="Notifications"
           >
             🔔
+            {notificationUnread > 0 && (
+              <span style={{
+                position:"absolute", top:"-4px", right:"-4px",
+                minWidth:"16px", height:"16px", padding:"0 4px",
+                borderRadius:"99px", display:"grid", placeItems:"center",
+                background:"#ff5e9b", color:"#fff", fontSize:"9px", fontWeight:950
+              }}>
+                {notificationUnread > 9 ? "9+" : notificationUnread}
+              </span>
+            )}
           </button>
 
           <button
@@ -2025,69 +2123,57 @@ function App() {
       </header>
 
       {notificationsOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: "68px",
-            right: "14px",
-            width: "min(310px, calc(100vw - 28px))",
-            zIndex: 1000,
-            padding: "16px",
-            borderRadius: "16px",
-            background:
-              "rgba(18, 15, 35, 0.98)",
-            border:
-              "1px solid rgba(255,255,255,0.10)",
-            boxShadow:
-              "0 18px 50px rgba(0,0,0,0.45)",
-            backdropFilter: "blur(16px)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "10px",
-            }}
-          >
-            <strong>
-              🔔 Notifications
-            </strong>
-
-            <button
-              onClick={() =>
-                setNotificationsOpen(false)
-              }
-              style={{
-                border: 0,
-                background: "transparent",
-                color: "inherit",
-                fontSize: "18px",
-                cursor: "pointer",
-              }}
-            >
-              ×
-            </button>
+        <div style={{
+          position:"fixed",top:"68px",right:"14px",width:"min(330px,calc(100vw - 28px))",
+          zIndex:1000,padding:"16px",borderRadius:"16px",
+          background:"rgba(18,15,35,.98)",border:"1px solid rgba(255,255,255,.10)",
+          boxShadow:"0 18px 50px rgba(0,0,0,.45)",backdropFilter:"blur(16px)"
+        }}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div>
+              <strong>🔔 Notifications</strong>
+              {notificationUnread > 0 && <div style={{fontSize:10,opacity:.5,marginTop:3}}>{notificationUnread} unread</div>}
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              {notificationUnread > 0 && (
+                <button onClick={() => void markAllServerNotificationsRead()}
+                  style={{border:0,borderRadius:9,padding:"6px 8px",background:"rgba(255,255,255,.06)",color:"inherit",fontSize:10,fontWeight:900}}>
+                  ✓ ALL
+                </button>
+              )}
+              <button onClick={() => setNotificationsOpen(false)}
+                style={{border:0,background:"transparent",color:"inherit",fontSize:18,cursor:"pointer"}}>×</button>
+            </div>
           </div>
 
-          <div
-            style={{
-              padding: "12px",
-              borderRadius: "12px",
-              background:
-                "rgba(124, 77, 255, 0.12)",
-              fontSize: "13px",
-              lineHeight: 1.45,
-            }}
-          >
-            🎮 Your next BATTLE IQ challenge
-            is waiting.
-            <br />
-            <span style={{ opacity: 0.65 }}>
-              Complete a battle to earn XP.
-            </span>
-          </div>
+          {notificationsLoading && serverNotifications.length === 0 ? (
+            <div style={{padding:14,borderRadius:12,background:"rgba(255,255,255,.04)",fontSize:12,opacity:.65}}>Loading...</div>
+          ) : serverNotifications.length === 0 ? (
+            <div style={{padding:16,borderRadius:12,background:"rgba(124,77,255,.10)",fontSize:12,lineHeight:1.45}}>
+              🎮 No notifications yet.
+              <br /><span style={{opacity:.55}}>New friends, level-ups and rewards will appear here.</span>
+            </div>
+          ) : (
+            <div style={{display:"grid",gap:7,maxHeight:360,overflowY:"auto"}}>
+              {serverNotifications.slice(0,8).map((n) => (
+                <button key={n.id} onClick={() => void markServerNotificationRead(n.id)}
+                  style={{
+                    width:"100%",textAlign:"left",border:0,color:"inherit",padding:10,borderRadius:12,
+                    background:n.isRead ? "rgba(255,255,255,.035)" : "rgba(124,77,255,.13)",
+                    opacity:n.isRead ? .68 : 1
+                  }}>
+                  <div style={{display:"flex",gap:9,alignItems:"flex-start"}}>
+                    <span style={{fontSize:19}}>{n.icon}</span>
+                    <span style={{flex:1}}>
+                      <strong style={{fontSize:12}}>{n.title}</strong>
+                      <div style={{fontSize:11,opacity:.62,lineHeight:1.35,marginTop:2}}>{n.message}</div>
+                    </span>
+                    {!n.isRead && <span style={{width:6,height:6,borderRadius:"50%",background:"#ff5e9b",marginTop:5}} />}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
