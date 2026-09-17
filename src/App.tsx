@@ -624,7 +624,7 @@ function App() {
     useState<number | null>(null);
 
   const [timeLeft, setTimeLeft] =
-    useState(60);
+    useState(90);
 
   // Battle 3.0: per-question timer + lives.
   const [questionTimeLeft, setQuestionTimeLeft] =
@@ -1061,7 +1061,7 @@ function App() {
   // ==========================================
 
   const getQuestionTimeLimit = (index: number) =>
-    index >= 3 && index <= 5 ? 5 : 8;
+    index >= 3 && index <= 5 ? 10 : index >= 7 ? 20 : 15;
 
   const isSpeedRound =
     questionIndex >= 3 && questionIndex <= 5;
@@ -1142,7 +1142,7 @@ function App() {
     setEventBonusXp(0);
     setBattleCombo(0);
     setSelectedAnswer(null);
-    setTimeLeft(60);
+    setTimeLeft(90);
     setQuestionTimeLeft(getQuestionTimeLimit(0));
     setBattleLives(3);
     setQuestionResults([]);
@@ -1210,7 +1210,7 @@ function App() {
               score: score * 10,
               correctAnswers: score,
               xp: battleXp,
-              durationSeconds: Math.max(0, 60 - timeLeft),
+              durationSeconds: Math.max(0, 90 - timeLeft),
               bestCombo: battleCombo,
             }),
           });
