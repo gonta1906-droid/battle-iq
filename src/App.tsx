@@ -153,6 +153,9 @@ type PlayerData = {
   totalCorrect: number;
   bestCombo: number;
   bestBattleXp: number;
+  profileTitle?: string | null;
+  victoryEffect?: string | null;
+  profileBackground?: string | null;
 };
 
 type ShopProduct = {
@@ -214,6 +217,21 @@ const SHOP_FALLBACK: ShopProduct[] = [
   { id: "solar_frame", icon: "☀️", title: "Solar Frame", description: "Bright solar profile frame", price_stars: 145, category: "COSMETICS" },
   { id: "frostbite_frame", icon: "🧊", title: "Frostbite Frame", description: "Frozen crystal profile frame", price_stars: 165, category: "COSMETICS" },
   { id: "cosmic_frame", icon: "🪐", title: "Cosmic Frame", description: "Deep-space cosmic profile frame", price_stars: 190, category: "COSMETICS" },
+  { id: "rookie_title", icon: "🏷️", title: "ROOKIE", description: "Clean starter title for your profile", price_stars: 35, category: "TITLES" },
+  { id: "quiz_master_title", icon: "🧠", title: "QUIZ MASTER", description: "For players who live for questions", price_stars: 55, category: "TITLES" },
+  { id: "speed_demon_title", icon: "⚡", title: "SPEED DEMON", description: "Fast answers. Faster bragging rights.", price_stars: 65, category: "TITLES" },
+  { id: "iq_hunter_title", icon: "🎯", title: "IQ HUNTER", description: "Show that you are chasing every point", price_stars: 80, category: "TITLES" },
+  { id: "battle_legend_title", icon: "👑", title: "BATTLE LEGEND", description: "Legendary title for your player card", price_stars: 110, category: "TITLES" },
+  { id: "lightning_effect", icon: "⚡", title: "Lightning", description: "Electric victory effect for battle results", price_stars: 65, category: "EFFECTS" },
+  { id: "fire_effect", icon: "🔥", title: "Fire", description: "Hot victory effect for battle results", price_stars: 75, category: "EFFECTS" },
+  { id: "frost_effect", icon: "❄️", title: "Frost", description: "Frozen victory effect for battle results", price_stars: 85, category: "EFFECTS" },
+  { id: "neon_burst_effect", icon: "💥", title: "Neon Burst", description: "Bright neon victory effect", price_stars: 95, category: "EFFECTS" },
+  { id: "cosmic_effect", icon: "🌌", title: "Cosmic", description: "Deep-space victory effect", price_stars: 110, category: "EFFECTS" },
+  { id: "neon_background", icon: "🟣", title: "Neon", description: "Neon profile background", price_stars: 45, category: "BACKGROUNDS" },
+  { id: "galaxy_background", icon: "🌌", title: "Galaxy", description: "Starfield profile background", price_stars: 70, category: "BACKGROUNDS" },
+  { id: "matrix_background", icon: "💚", title: "Matrix", description: "Digital green profile background", price_stars: 75, category: "BACKGROUNDS" },
+  { id: "aurora_background", icon: "🌈", title: "Aurora", description: "Northern-light profile background", price_stars: 85, category: "BACKGROUNDS" },
+  { id: "deep_space_background", icon: "🪐", title: "Deep Space", description: "Deep cosmic profile background", price_stars: 100, category: "BACKGROUNDS" },
 ];
 
 const PROFILE_FRAME_EMOJI: Record<string, string> = {
@@ -252,6 +270,58 @@ const FRAME_STYLES: Record<string, CSSProperties> = {
   solar_frame: { border: "2px solid rgba(255,215,90,0.98)", boxShadow: "0 0 0 3px rgba(255,215,90,0.12), 0 0 32px rgba(255,215,90,0.38)" },
   frostbite_frame: { border: "2px solid rgba(175,235,255,0.98)", boxShadow: "0 0 0 3px rgba(175,235,255,0.12), 0 0 32px rgba(175,235,255,0.40)" },
   cosmic_frame: { border: "2px solid rgba(150,110,255,0.98)", boxShadow: "0 0 0 3px rgba(150,110,255,0.12), 0 0 36px rgba(150,110,255,0.42)" },
+};
+
+const VICTORY_EFFECT_EMOJI: Record<string, string> = {
+  lightning: "⚡",
+  fire: "🔥",
+  frost: "❄️",
+  neon_burst: "💥",
+  cosmic: "🌌",
+};
+
+const VICTORY_EFFECT_LABEL: Record<string, string> = {
+  lightning: "LIGHTNING",
+  fire: "FIRE",
+  frost: "FROST",
+  neon_burst: "NEON BURST",
+  cosmic: "COSMIC",
+};
+
+const PROFILE_BACKGROUND_STYLES: Record<string, CSSProperties> = {
+  neon: {
+    background: "linear-gradient(145deg, rgba(124,77,255,0.30), rgba(30,210,255,0.12))",
+  },
+  galaxy: {
+    background: "radial-gradient(circle at 20% 10%, rgba(170,100,255,0.28), transparent 38%), linear-gradient(145deg, rgba(35,25,85,0.95), rgba(8,10,28,0.98))",
+  },
+  matrix: {
+    background: "linear-gradient(145deg, rgba(20,120,75,0.28), rgba(4,26,18,0.98))",
+  },
+  aurora: {
+    background: "radial-gradient(circle at 80% 20%, rgba(60,220,170,0.26), transparent 42%), radial-gradient(circle at 15% 70%, rgba(100,120,255,0.22), transparent 40%), rgba(12,20,32,0.98)",
+  },
+  deep_space: {
+    background: "radial-gradient(circle at 50% 10%, rgba(80,80,190,0.24), transparent 40%), linear-gradient(145deg, rgba(8,10,30,0.98), rgba(3,4,14,1))",
+  },
+};
+
+const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "background"; value: string }> = {
+  rookie_title: { kind: "title", value: "ROOKIE" },
+  quiz_master_title: { kind: "title", value: "QUIZ MASTER" },
+  speed_demon_title: { kind: "title", value: "SPEED DEMON" },
+  iq_hunter_title: { kind: "title", value: "IQ HUNTER" },
+  battle_legend_title: { kind: "title", value: "BATTLE LEGEND" },
+  lightning_effect: { kind: "effect", value: "lightning" },
+  fire_effect: { kind: "effect", value: "fire" },
+  frost_effect: { kind: "effect", value: "frost" },
+  neon_burst_effect: { kind: "effect", value: "neon_burst" },
+  cosmic_effect: { kind: "effect", value: "cosmic" },
+  neon_background: { kind: "background", value: "neon" },
+  galaxy_background: { kind: "background", value: "galaxy" },
+  matrix_background: { kind: "background", value: "matrix" },
+  aurora_background: { kind: "background", value: "aurora" },
+  deep_space_background: { kind: "background", value: "deep_space" },
 };
 
 const ACHIEVEMENTS = [
@@ -976,6 +1046,9 @@ function App() {
       totalCorrect: 0,
       bestCombo: 0,
       bestBattleXp: 0,
+      profileTitle: null,
+      victoryEffect: null,
+      profileBackground: null,
     });
 
   const [shopProducts, setShopProducts] =
@@ -1191,10 +1264,33 @@ function App() {
           totalCorrect: Number(remote.totalCorrect ?? current.totalCorrect),
           bestCombo: Number(remote.bestCombo ?? current.bestCombo),
           bestBattleXp: Number(remote.bestBattleXp ?? current.bestBattleXp),
+          profileTitle: remote.profile_title ?? current.profileTitle ?? null,
+          victoryEffect: remote.victory_effect ?? current.victoryEffect ?? null,
+          profileBackground: remote.profile_background ?? current.profileBackground ?? null,
         }));
 
         if (remote.frame) {
-          const frameId = remote.frame === "neon" ? "neon_frame" : remote.frame === "fire" ? "fire_frame" : remote.frame === "legendary" ? "legendary_frame" : null;
+          const frameMap: Record<string, string> = {
+            neon: "neon_frame",
+            fire: "fire_frame",
+            legendary: "legendary_frame",
+            ice: "ice_frame",
+            galaxy: "galaxy_frame",
+            diamond: "diamond_frame",
+            aurora: "aurora_frame",
+            cyber: "cyber_frame",
+            plasma: "plasma_frame",
+            ocean: "ocean_frame",
+            emerald: "emerald_frame",
+            sunset: "sunset_frame",
+            shadow: "shadow_frame",
+            solar: "solar_frame",
+            frostbite: "frostbite_frame",
+            cosmic: "cosmic_frame",
+            season_1_free: "season_s1_free_25",
+            season_1_premium: "season_s1_premium_25",
+          };
+          const frameId = remote.frame ? frameMap[remote.frame] || null : null;
           setEquippedFrame(frameId);
         }
 
@@ -3300,7 +3396,7 @@ function App() {
   // ==========================================
 
   if (screen === "shop") {
-    const categories = ["PROFILE", "COSMETICS", "BATTLE", "PASS"];
+    const categories = ["PROFILE", "COSMETICS", "TITLES", "EFFECTS", "BACKGROUNDS", "BATTLE", "PASS"];
     const owned = (id: string) => inventory.find((item) => item.product_id === id);
 
     const buyProduct = async (product: ShopProduct) => {
@@ -3391,6 +3487,52 @@ function App() {
       }
     };
 
+
+    const equipCosmetic = async (product: ShopProduct) => {
+      const tg = getTelegramWebApp();
+      if (!tg?.initData) return;
+
+      setShopBusy(product.id);
+      try {
+        const response = await fetch(`${API_BASE}/api/inventory/equip`, {
+          method: "POST",
+          headers: {
+            Authorization: `tma ${tg.initData}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ productId: product.id }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.error || "Не вдалося активувати предмет");
+        }
+
+        setPlayer((current) => {
+          const meta = COSMETIC_PRODUCT_META[product.id];
+          if (!meta) return current;
+          if (meta.kind === "title") return { ...current, profileTitle: meta.value };
+          if (meta.kind === "effect") return { ...current, victoryEffect: meta.value };
+          return { ...current, profileBackground: meta.value };
+        });
+
+        tg.HapticFeedback?.notificationOccurred("success");
+        setChallengeNotice(`✨ ${product.title} активовано!`);
+      } catch (error) {
+        setChallengeNotice(error instanceof Error ? `⚠️ ${error.message}` : "⚠️ Не вдалося активувати предмет.");
+      } finally {
+        setShopBusy(null);
+        window.setTimeout(() => setChallengeNotice(""), 2400);
+      }
+    };
+
+    const cosmeticActive = (product: ShopProduct) => {
+      const meta = COSMETIC_PRODUCT_META[product.id];
+      if (!meta) return false;
+      if (meta.kind === "title") return player.profileTitle === meta.value;
+      if (meta.kind === "effect") return player.victoryEffect === meta.value;
+      return player.profileBackground === meta.value;
+    };
+
     return (
       <div className="app">
         <div className="glow glow-one" />
@@ -3429,10 +3571,30 @@ function App() {
                     <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
-                    {(item.category === "PROFILE" || item.category === "COSMETICS") &&
-                      Object.prototype.hasOwnProperty.call(PROFILE_FRAME_EMOJI, item.product_id) && (
-                      <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
-                        {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
+                    {(
+                      Object.prototype.hasOwnProperty.call(PROFILE_FRAME_EMOJI, item.product_id) ||
+                      Object.prototype.hasOwnProperty.call(COSMETIC_PRODUCT_META, item.product_id)
+                    ) && (
+                      <button
+                        type="button"
+                        disabled={shopBusy === item.product_id}
+                        onClick={() => {
+                          if (Object.prototype.hasOwnProperty.call(PROFILE_FRAME_EMOJI, item.product_id)) {
+                            void equipFrame(item.product_id);
+                          } else {
+                            const product: ShopProduct = {
+                              id: item.product_id,
+                              title: item.title,
+                              description: item.description,
+                              icon: item.icon,
+                              category: item.category,
+                              price_stars: item.price_stars,
+                            };
+                            void equipCosmetic(product);
+                          }
+                        }}
+                        style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: (item.equipped || cosmeticActive({ id: item.product_id, title: item.title, description: item.description, icon: item.icon, category: item.category, price_stars: item.price_stars })) ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
+                        {(item.equipped || cosmeticActive({ id: item.product_id, title: item.title, description: item.description, icon: item.icon, category: item.category, price_stars: item.price_stars })) ? "EQUIPPED ✓" : "EQUIP"}
                       </button>
                     )}
                   </div>
@@ -3444,7 +3606,14 @@ function App() {
           {categories.map((category) => (
             <section key={category} style={{ marginBottom: 24 }}>
               <div className="section-title" style={{ marginBottom: 11 }}>
-                <h2>{category === "PROFILE" ? "👤 Profile" : category === "COSMETICS" ? "✨ Cosmetics" : category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"}</h2>
+                <h2>{
+                  category === "PROFILE" ? "👤 Profile" :
+                  category === "COSMETICS" ? "✨ Frames" :
+                  category === "TITLES" ? "🏷️ Titles" :
+                  category === "EFFECTS" ? "✨ Victory Effects" :
+                  category === "BACKGROUNDS" ? "🎨 Profile Backgrounds" :
+                  category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"
+                }</h2>
                 <span>⭐ Stars</span>
               </div>
 
@@ -3501,21 +3670,38 @@ function App() {
                 <button onClick={() => setPreviewProduct(null)} style={{border:0,background:"transparent",color:"inherit",fontSize:24,cursor:"pointer"}}>×</button>
               </div>
 
-              <div style={{marginTop:18,padding:18,borderRadius:22,background:"rgba(255,255,255,.045)",border:"1px solid rgba(255,255,255,.07)",textAlign:"center"}}>
-                <div style={{
-                  width:92,height:92,margin:"0 auto",borderRadius:28,display:"grid",placeItems:"center",
-                  fontSize:45,background:"rgba(255,255,255,.06)",
-                  ...(PROFILE_FRAME_EMOJI[previewProduct.id]
-                    ? { boxShadow: "0 0 0 3px rgba(124,77,255,0.14), 0 0 28px rgba(124,77,255,0.28)" }
-                    : {})
-                }}>
-                  {previewProduct.icon || "✨"}
-                </div>
-                <div style={{fontSize:20,fontWeight:950,marginTop:12}}>{previewProduct.title}</div>
-                <div style={{fontSize:12,opacity:.6,lineHeight:1.5,marginTop:5}}>{previewProduct.description}</div>
-                {PROFILE_FRAME_EMOJI[previewProduct.id] && (
-                  <div style={{marginTop:10,fontSize:10,fontWeight:900,opacity:.45}}>PROFILE FRAME · COSMETIC</div>
-                )}
+              <div style={{marginTop:18,padding:15,borderRadius:22,background:"rgba(255,255,255,.045)",border:"1px solid rgba(255,255,255,.07)"}}>
+                {(() => {
+                  const meta = COSMETIC_PRODUCT_META[previewProduct.id];
+                  const previewTitle = meta?.kind === "title" ? meta.value : (player.profileTitle || levelTitle);
+                  const previewEffect = meta?.kind === "effect" ? meta.value : player.victoryEffect;
+                  const previewBackground = meta?.kind === "background" ? meta.value : player.profileBackground;
+                  const previewFrame = PROFILE_FRAME_EMOJI[previewProduct.id] ? previewProduct.id : (equippedFrame || "");
+                  return (
+                    <div style={{
+                      padding:18,borderRadius:20,textAlign:"center",
+                      ...(PROFILE_BACKGROUND_STYLES[previewBackground || ""] || { background:"linear-gradient(145deg,rgba(124,77,255,.16),rgba(255,255,255,.04))" }),
+                      ...(FRAME_STYLES[previewFrame] || {}),
+                    }}>
+                      <div style={{fontSize:10,fontWeight:950,letterSpacing:1.2,opacity:.5}}>PROFILE PREVIEW</div>
+                      <div style={{width:74,height:74,margin:"12px auto 9px",borderRadius:22,display:"grid",placeItems:"center",background:"rgba(255,255,255,.08)",fontSize:34,...(FRAME_STYLES[previewFrame] || {})}}>
+                        😎
+                      </div>
+                      <div style={{fontSize:18,fontWeight:950}}>{telegramUser?.first_name || "BATTLE IQ PLAYER"}</div>
+                      <div style={{marginTop:4,fontSize:10,fontWeight:900,opacity:.55}}>{previewTitle}</div>
+                      {previewEffect && (
+                        <div style={{marginTop:10,padding:"7px 10px",display:"inline-flex",gap:6,alignItems:"center",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>
+                          {VICTORY_EFFECT_EMOJI[previewEffect] || "✨"} {VICTORY_EFFECT_LABEL[previewEffect] || "VICTORY EFFECT"}
+                        </div>
+                      )}
+                      <div style={{marginTop:10,display:"inline-flex",alignItems:"center",gap:7,padding:"7px 10px",borderRadius:999,background:"rgba(255,255,255,.07)",fontSize:10,fontWeight:900}}>
+                        {previewProduct.icon || "✨"} {previewProduct.title}
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={{fontSize:20,fontWeight:950,textAlign:"center",marginTop:13}}>{previewProduct.title}</div>
+                <div style={{fontSize:12,opacity:.6,lineHeight:1.5,textAlign:"center",marginTop:5}}>{previewProduct.description}</div>
               </div>
 
               <button
@@ -4170,8 +4356,9 @@ function App() {
               padding: "24px 16px 20px",
               textAlign: "center",
               borderRadius: "20px",
-              background:
-                "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.035))",
+              ...(PROFILE_BACKGROUND_STYLES[player.profileBackground || ""] || {
+                background: "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.035))",
+              }),
               border:
                 "1px solid rgba(255,255,255,0.08)",
               boxSizing: "border-box",
@@ -4237,7 +4424,15 @@ function App() {
                 letterSpacing: "0.06em",
               }}
             >
-              LEVEL {levelInfo.level} · {levelTitle}
+              {player.profileTitle || levelTitle}
+              {" · "}
+              LEVEL {levelInfo.level}
+            </div>
+
+            <div style={{ display:"flex", justifyContent:"center", gap:6, flexWrap:"wrap", marginTop:9 }}>
+              {player.profileTitle && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>🏷️ {player.profileTitle}</span>}
+              {player.victoryEffect && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>{VICTORY_EFFECT_EMOJI[player.victoryEffect] || "✨"} {VICTORY_EFFECT_LABEL[player.victoryEffect] || "EFFECT"}</span>}
+              {player.profileBackground && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>🎨 {player.profileBackground.replace("_"," ").toUpperCase()}</span>}
             </div>
 
             <div
@@ -5684,6 +5879,16 @@ function App() {
               ? "LEVEL UP!"
               : "BATTLE COMPLETE"}
           </span>
+          {player.victoryEffect && (
+            <div style={{
+              marginTop:10,padding:"9px 12px",borderRadius:999,
+              background:"rgba(124,77,255,.10)",
+              border:"1px solid rgba(124,77,255,.20)",
+              fontSize:10,fontWeight:950
+            }}>
+              {VICTORY_EFFECT_EMOJI[player.victoryEffect] || "✨"} {VICTORY_EFFECT_LABEL[player.victoryEffect] || "VICTORY EFFECT"} ACTIVE
+            </div>
+          )}
 
           <h1>
             {leveledUp
