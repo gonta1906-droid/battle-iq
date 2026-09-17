@@ -204,18 +204,54 @@ const SHOP_FALLBACK: ShopProduct[] = [
   { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, category: "BATTLE" },
   { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, category: "BATTLE" },
   { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
+  { id: "aurora_frame", icon: "🌈", title: "Aurora Frame", description: "Northern-light inspired profile frame", price_stars: 65, category: "COSMETICS" },
+  { id: "cyber_frame", icon: "🧬", title: "Cyber Frame", description: "Neon cyber profile frame", price_stars: 85, category: "COSMETICS" },
+  { id: "plasma_frame", icon: "⚡", title: "Plasma Frame", description: "Electric plasma profile frame", price_stars: 95, category: "COSMETICS" },
+  { id: "ocean_frame", icon: "🌊", title: "Ocean Frame", description: "Deep-blue ocean profile frame", price_stars: 105, category: "COSMETICS" },
+  { id: "emerald_frame", icon: "💚", title: "Emerald Frame", description: "Emerald profile frame", price_stars: 115, category: "COSMETICS" },
+  { id: "sunset_frame", icon: "🌅", title: "Sunset Frame", description: "Warm sunset profile frame", price_stars: 125, category: "COSMETICS" },
+  { id: "shadow_frame", icon: "🌑", title: "Shadow Frame", description: "Dark shadow profile frame", price_stars: 135, category: "COSMETICS" },
+  { id: "solar_frame", icon: "☀️", title: "Solar Frame", description: "Bright solar profile frame", price_stars: 145, category: "COSMETICS" },
+  { id: "frostbite_frame", icon: "🧊", title: "Frostbite Frame", description: "Frozen crystal profile frame", price_stars: 165, category: "COSMETICS" },
+  { id: "cosmic_frame", icon: "🪐", title: "Cosmic Frame", description: "Deep-space cosmic profile frame", price_stars: 190, category: "COSMETICS" },
 ];
 
 const PROFILE_FRAME_EMOJI: Record<string, string> = {
   neon_frame: "🟣",
   fire_frame: "🔥",
   legendary_frame: "👑",
+  ice_frame: "❄️",
+  galaxy_frame: "🌌",
+  diamond_frame: "💎",
+  aurora_frame: "🌈",
+  cyber_frame: "🧬",
+  plasma_frame: "⚡",
+  ocean_frame: "🌊",
+  emerald_frame: "💚",
+  sunset_frame: "🌅",
+  shadow_frame: "🌑",
+  solar_frame: "☀️",
+  frostbite_frame: "🧊",
+  cosmic_frame: "🪐",
 };
 
 const FRAME_STYLES: Record<string, CSSProperties> = {
   neon_frame: { border: "2px solid rgba(124,77,255,0.95)", boxShadow: "0 0 0 3px rgba(124,77,255,0.16), 0 0 24px rgba(124,77,255,0.42)" },
   fire_frame: { border: "2px solid rgba(255,110,60,0.95)", boxShadow: "0 0 0 3px rgba(255,110,60,0.14), 0 0 24px rgba(255,110,60,0.34)" },
   legendary_frame: { border: "2px solid rgba(255,205,70,0.95)", boxShadow: "0 0 0 3px rgba(255,205,70,0.14), 0 0 28px rgba(255,205,70,0.36)" },
+  ice_frame: { border: "2px solid rgba(120,210,255,0.95)", boxShadow: "0 0 0 3px rgba(120,210,255,0.14), 0 0 28px rgba(120,210,255,0.34)" },
+  galaxy_frame: { border: "2px solid rgba(180,120,255,0.95)", boxShadow: "0 0 0 3px rgba(180,120,255,0.14), 0 0 32px rgba(180,120,255,0.38)" },
+  diamond_frame: { border: "2px solid rgba(180,245,255,0.98)", boxShadow: "0 0 0 3px rgba(180,245,255,0.14), 0 0 30px rgba(180,245,255,0.40)" },
+  aurora_frame: { border: "2px solid rgba(110,245,190,0.95)", boxShadow: "0 0 0 3px rgba(110,245,190,0.12), 0 0 30px rgba(110,245,190,0.34)" },
+  cyber_frame: { border: "2px solid rgba(80,220,255,0.95)", boxShadow: "0 0 0 3px rgba(80,220,255,0.12), 0 0 30px rgba(80,220,255,0.36)" },
+  plasma_frame: { border: "2px solid rgba(190,90,255,0.98)", boxShadow: "0 0 0 3px rgba(190,90,255,0.12), 0 0 30px rgba(190,90,255,0.38)" },
+  ocean_frame: { border: "2px solid rgba(60,175,255,0.95)", boxShadow: "0 0 0 3px rgba(60,175,255,0.12), 0 0 30px rgba(60,175,255,0.34)" },
+  emerald_frame: { border: "2px solid rgba(80,225,145,0.95)", boxShadow: "0 0 0 3px rgba(80,225,145,0.12), 0 0 30px rgba(80,225,145,0.34)" },
+  sunset_frame: { border: "2px solid rgba(255,135,95,0.98)", boxShadow: "0 0 0 3px rgba(255,135,95,0.12), 0 0 30px rgba(255,135,95,0.38)" },
+  shadow_frame: { border: "2px solid rgba(170,170,190,0.80)", boxShadow: "0 0 0 3px rgba(0,0,0,0.28), 0 0 30px rgba(40,40,70,0.55)" },
+  solar_frame: { border: "2px solid rgba(255,215,90,0.98)", boxShadow: "0 0 0 3px rgba(255,215,90,0.12), 0 0 32px rgba(255,215,90,0.38)" },
+  frostbite_frame: { border: "2px solid rgba(175,235,255,0.98)", boxShadow: "0 0 0 3px rgba(175,235,255,0.12), 0 0 32px rgba(175,235,255,0.40)" },
+  cosmic_frame: { border: "2px solid rgba(150,110,255,0.98)", boxShadow: "0 0 0 3px rgba(150,110,255,0.12), 0 0 36px rgba(150,110,255,0.42)" },
 };
 
 const ACHIEVEMENTS = [
@@ -502,6 +538,7 @@ function emptyWeeklyMissionStats(): WeeklyMissionStats {
 }
 
 function App() {
+  const [previewProduct, setPreviewProduct] = useState<ShopProduct | null>(null);
   // ==========================================
   // TELEGRAM
   // ==========================================
@@ -3263,7 +3300,7 @@ function App() {
   // ==========================================
 
   if (screen === "shop") {
-    const categories = ["PROFILE", "BATTLE", "PASS"];
+    const categories = ["PROFILE", "COSMETICS", "BATTLE", "PASS"];
     const owned = (id: string) => inventory.find((item) => item.product_id === id);
 
     const buyProduct = async (product: ShopProduct) => {
@@ -3364,7 +3401,7 @@ function App() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
-              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 2.0</h1>
+              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 4.0</h1>
             </div>
             <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
           </div>
@@ -3372,8 +3409,8 @@ function App() {
           <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 18 }}>
             <div style={{ position: "absolute", width: 150, height: 150, right: -55, top: -65, borderRadius: "50%", background: "rgba(124,77,255,0.18)", filter: "blur(8px)" }} />
             <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>PREMIUM ITEMS</div>
-            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Buy exactly what you want.</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Оплата проходить через офіційний Telegram Stars. Куплені предмети зберігаються в твоєму інвентарі.</div>
+            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Build your own loadout.</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Telegram Stars · прямі покупки · косметика без рандому. Обирай предмет, переглядай його preview та купуй саме те, що хочеш.</div>
           </section>
 
           <section style={{ marginBottom: 24 }}>
@@ -3392,7 +3429,8 @@ function App() {
                     <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
-                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame"].includes(item.product_id) && (
+                    {(item.category === "PROFILE" || item.category === "COSMETICS") &&
+                      Object.prototype.hasOwnProperty.call(PROFILE_FRAME_EMOJI, item.product_id) && (
                       <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
                         {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
                       </button>
@@ -3406,7 +3444,7 @@ function App() {
           {categories.map((category) => (
             <section key={category} style={{ marginBottom: 24 }}>
               <div className="section-title" style={{ marginBottom: 11 }}>
-                <h2>{category === "PROFILE" ? "👤 Profile" : category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"}</h2>
+                <h2>{category === "PROFILE" ? "👤 Profile" : category === "COSMETICS" ? "✨ Cosmetics" : category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"}</h2>
                 <span>⭐ Stars</span>
               </div>
 
@@ -3424,8 +3462,8 @@ function App() {
                       {showOwned ? (
                         <div style={{ marginTop: 11, padding: "8px 7px", borderRadius: 11, background: "rgba(124,77,255,0.13)", border: "1px solid rgba(124,77,255,0.2)", textAlign: "center", fontSize: 10, fontWeight: 900 }}>OWNED · x{item?.quantity || 0}</div>
                       ) : (
-                        <button type="button" disabled={shopBusy === product.id} onClick={() => buyProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: shopBusy === product.id ? "rgba(124,77,255,0.2)" : "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>
-                          {shopBusy === product.id ? "OPENING…" : `BUY · ${product.price_stars} ⭐`}
+                        <button type="button" disabled={shopBusy === product.id} onClick={() => setPreviewProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>
+                          PREVIEW · {product.price_stars} ⭐
                         </button>
                       )}
                     </div>
@@ -3439,6 +3477,70 @@ function App() {
             🔐 Покупка перевіряється сервером. Товар додається в D1 тільки після підтвердження успішного платежу Telegram.
           </div>
         </main>
+
+        {previewProduct && (
+          <div
+            onClick={() => setPreviewProduct(null)}
+            style={{
+              position:"fixed", inset:0, zIndex:1100,
+              background:"rgba(4,3,10,.72)", backdropFilter:"blur(7px)",
+              display:"grid", placeItems:"center", padding:18
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width:"min(360px,100%)", borderRadius:26, padding:20,
+                background:"linear-gradient(160deg,rgba(29,24,55,.99),rgba(15,13,28,.99))",
+                border:"1px solid rgba(255,255,255,.11)",
+                boxShadow:"0 24px 80px rgba(0,0,0,.5)"
+              }}
+            >
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontSize:10,fontWeight:950,letterSpacing:1.4,opacity:.5}}>ITEM PREVIEW</div>
+                <button onClick={() => setPreviewProduct(null)} style={{border:0,background:"transparent",color:"inherit",fontSize:24,cursor:"pointer"}}>×</button>
+              </div>
+
+              <div style={{marginTop:18,padding:18,borderRadius:22,background:"rgba(255,255,255,.045)",border:"1px solid rgba(255,255,255,.07)",textAlign:"center"}}>
+                <div style={{
+                  width:92,height:92,margin:"0 auto",borderRadius:28,display:"grid",placeItems:"center",
+                  fontSize:45,background:"rgba(255,255,255,.06)",
+                  ...(PROFILE_FRAME_EMOJI[previewProduct.id]
+                    ? { boxShadow: "0 0 0 3px rgba(124,77,255,0.14), 0 0 28px rgba(124,77,255,0.28)" }
+                    : {})
+                }}>
+                  {previewProduct.icon || "✨"}
+                </div>
+                <div style={{fontSize:20,fontWeight:950,marginTop:12}}>{previewProduct.title}</div>
+                <div style={{fontSize:12,opacity:.6,lineHeight:1.5,marginTop:5}}>{previewProduct.description}</div>
+                {PROFILE_FRAME_EMOJI[previewProduct.id] && (
+                  <div style={{marginTop:10,fontSize:10,fontWeight:900,opacity:.45}}>PROFILE FRAME · COSMETIC</div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                disabled={shopBusy === previewProduct.id}
+                onClick={() => {
+                  const product = previewProduct;
+                  setPreviewProduct(null);
+                  void buyProduct(product);
+                }}
+                style={{
+                  width:"100%",marginTop:14,border:0,borderRadius:15,padding:"13px",
+                  background:"linear-gradient(135deg,#7c4dff,#b96cff)",color:"#fff",
+                  fontWeight:950,fontSize:12
+                }}
+              >
+                {shopBusy === previewProduct.id ? "OPENING…" : `BUY FOR ${previewProduct.price_stars} ⭐`}
+              </button>
+
+              <div style={{marginTop:9,textAlign:"center",fontSize:9,opacity:.38}}>
+                Direct purchase · no random rewards
+              </div>
+            </div>
+          </div>
+        )}
 
         {challengeNotice && (
           <div style={{ position: "fixed", left: 16, right: 16, bottom: 78, zIndex: 30, padding: "13px 15px", borderRadius: 15, background: "rgba(22,19,32,0.96)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 14px 40px rgba(0,0,0,0.35)", fontSize: 12, fontWeight: 800, textAlign: "center" }}>
