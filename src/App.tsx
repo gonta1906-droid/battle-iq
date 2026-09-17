@@ -19,7 +19,8 @@ type Screen =
   | "pvp"
   | "pvp_battle"
   | "pvp_result"
-  | "pvp_stats";
+  | "pvp_stats"
+  | "season";
 
 type Answer = {
   text: string;
@@ -54,6 +55,38 @@ type PvpMatch = {
   } | null;
 };
 
+
+type SeasonReward = {
+  level: number;
+  icon: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+};
+
+type SeasonData = {
+  id: number;
+  seasonNumber: number;
+  title: string;
+  description: string;
+  startsAt: string;
+  endsAt: string;
+  maxLevel: number;
+  xpPerLevel: number;
+  xp: number;
+  level: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  rewards: SeasonReward[];
+};
+
+type SeasonPlayer = {
+  userId: number;
+  firstName?: string | null;
+  username?: string | null;
+  seasonXp: number;
+  seasonLevel: number;
+};
 
 type PlayerData = {
   xp: number;
@@ -701,6 +734,13 @@ function App() {
   const [globalRank, setGlobalRank] =
     useState<number | null>(null);
 
+  const [season, setSeason] = useState<SeasonData | null>(null);
+  const [seasonPlayers, setSeasonPlayers] = useState<SeasonPlayer[]>([]);
+  const [seasonRank, setSeasonRank] = useState<number | null>(null);
+  const [seasonLoading, setSeasonLoading] = useState(false);
+  const [seasonError, setSeasonError] = useState("");
+  const [seasonNow, setSeasonNow] = useState(Date.now());
+
   const currentQuestion =
     gameQuestions[questionIndex];
 
@@ -1055,6 +1095,73 @@ function App() {
       console.warn("BATTLE IQ: achievement reward claim failed", error);
     }
   };
+
+  // ==========================================
+  // SEASON 1
+  // ==========================================
+
+  const loadSeason = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+
+    setSeasonLoading(true);
+    setSeasonError("");
+
+    try {
+      const headers = {
+        Authorization: `tma ${tg.initData}`,
+        Accept: "application/json",
+      };
+
+      const [seasonResponse, leaderboardResponse] = await Promise.all([
+        fetch(`${API_BASE}/api/season`, { headers }),
+        fetch(`${API_BASE}/api/season/leaderboard?limit=50`, { headers }),
+      ]);
+
+      const seasonData = await seasonResponse.json();
+      const leaderboardData = await leaderboardResponse.json();
+
+      if (!seasonResponse.ok || !seasonData?.ok) {
+        throw new Error(seasonData?.error || "Не вдалося завантажити сезон");
+      }
+
+      setSeason(seasonData.season || null);
+
+      if (leaderboardResponse.ok && leaderboardData?.ok) {
+        setSeasonPlayers(Array.isArray(leaderboardData.players) ? leaderboardData.players : []);
+        setSeasonRank(leaderboardData.myRank != null ? Number(leaderboardData.myRank) : null);
+      }
+    } catch (error) {
+      console.warn("BATTLE IQ: season load failed", error);
+      setSeasonError("Не вдалося завантажити Season 1. Спробуй ще раз.");
+    } finally {
+      setSeasonLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (screen !== "season") return;
+    void loadSeason();
+
+    const timer = window.setInterval(() => {
+      setSeasonNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [screen]);
+
+  const seasonTimeLeft = useMemo(() => {
+    if (!season?.endsAt) return null;
+    const diff = Math.max(0, new Date(season.endsAt).getTime() - seasonNow);
+    const totalSeconds = Math.floor(diff / 1000);
+    return {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+      totalSeconds,
+    };
+  }, [season?.endsAt, seasonNow]);
 
   // ==========================================
   // TIMER
@@ -2303,6 +2410,20 @@ function App() {
 
             <button
               className="quick-card"
+              onClick={() => setScreen("season")}
+            >
+              <div className="quick-icon" style={{ background: "linear-gradient(135deg, rgba(124,77,255,0.20), rgba(70,160,255,0.14))" }}>
+                🏅
+              </div>
+              <div>
+                <strong>SEASON</strong>
+                <span>{season ? `Level ${season.level} · ${season.xp} XP` : "Season 1 progression"}</span>
+              </div>
+              <b>→</b>
+            </button>
+
+            <button
+              className="quick-card"
               onClick={() =>
                 setScreen(
                   "ranking"
@@ -2981,6 +3102,158 @@ function App() {
             </div>
           </section>
         </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ==========================================
+  // SEASON
+  // ==========================================
+
+  if (screen === "season") {
+    const seasonProgress = season
+      ? season.level >= season.maxLevel
+        ? 100
+        : Math.min(100, (season.currentLevelXp / season.xpPerLevel) * 100)
+      : 0;
+
+    const formatTime = (value: number) => String(value).padStart(2, "0");
+
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+
+        <Header />
+
+        <main style={{ padding: "12px 14px 100px", overflowX: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900, letterSpacing: "0.1em" }}>COMPETITIVE PROGRESSION</div>
+              <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 950 }}>SEASON 1</h1>
+            </div>
+            <button type="button" onClick={() => void loadSeason()} disabled={seasonLoading} style={{ border: 0, borderRadius: 11, padding: "9px 11px", background: "rgba(255,255,255,0.07)", color: "inherit", fontSize: 10, fontWeight: 900 }}>
+              {seasonLoading ? "…" : "↻ REFRESH"}
+            </button>
+          </div>
+
+          {seasonError && (
+            <div style={{ padding: 12, borderRadius: 13, background: "rgba(255,90,90,0.10)", border: "1px solid rgba(255,90,90,0.18)", fontSize: 11, fontWeight: 800, marginBottom: 12 }}>
+              ⚠️ {seasonError}
+            </div>
+          )}
+
+          {!season && !seasonLoading && !seasonError && (
+            <section style={{ padding: 20, borderRadius: 18, background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.07)", textAlign: "center" }}>
+              <div style={{ fontSize: 42 }}>🏁</div>
+              <strong style={{ display: "block", marginTop: 8, fontSize: 16 }}>No active season</strong>
+              <span style={{ display: "block", marginTop: 5, fontSize: 11, opacity: 0.55 }}>Season 1 is not active right now.</span>
+            </section>
+          )}
+
+          {season && (
+            <>
+              <section style={{ padding: 16, borderRadius: 20, background: "linear-gradient(145deg, rgba(124,77,255,0.20), rgba(50,130,255,0.08))", border: "1px solid rgba(124,77,255,0.24)", textAlign: "left" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontSize: 11, opacity: 0.6, fontWeight: 800 }}>{season.title}</div>
+                    <strong style={{ display: "block", marginTop: 4, fontSize: 25 }}>LEVEL {season.level}</strong>
+                    <div style={{ marginTop: 4, fontSize: 11, opacity: 0.62 }}>{season.description}</div>
+                  </div>
+                  <div style={{ width: 54, height: 54, borderRadius: 16, display: "grid", placeItems: "center", fontSize: 29, background: "rgba(255,255,255,0.08)" }}>🏅</div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 11, fontWeight: 900 }}>
+                  <span>⚡ {season.xp.toLocaleString()} SEASON XP</span>
+                  <span>{season.level >= season.maxLevel ? "MAX LEVEL" : `${season.currentLevelXp}/${season.xpPerLevel}`}</span>
+                </div>
+                <div style={{ marginTop: 8, height: 10, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
+                  <div style={{ width: `${seasonProgress}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #7c4dff, #38bdf8)", transition: "width .3s ease" }} />
+                </div>
+                <div style={{ marginTop: 6, textAlign: "right", fontSize: 9, opacity: 0.5 }}>{Math.round(seasonProgress)}% to next level</div>
+              </section>
+
+              <section style={{ marginTop: 12, padding: 14, borderRadius: 16, background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900 }}>SEASON ENDS IN</div>
+                    <strong style={{ display: "block", marginTop: 4, fontSize: 19 }}>
+                      {seasonTimeLeft && seasonTimeLeft.totalSeconds > 0
+                        ? `${seasonTimeLeft.days}d ${formatTime(seasonTimeLeft.hours)}:${formatTime(seasonTimeLeft.minutes)}:${formatTime(seasonTimeLeft.seconds)}`
+                        : "ENDED"}
+                    </strong>
+                  </div>
+                  <div style={{ fontSize: 28 }}>⏳</div>
+                </div>
+              </section>
+
+              <section style={{ marginTop: 12, padding: 14, borderRadius: 16, background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900 }}>YOUR SEASON RANK</div>
+                    <strong style={{ display: "block", marginTop: 3, fontSize: 24 }}>{seasonRank != null ? `#${seasonRank}` : "—"}</strong>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900 }}>REWARD LEVELS</div>
+                    <div style={{ marginTop: 4, fontSize: 12, fontWeight: 800 }}>5 → 50</div>
+                  </div>
+                </div>
+              </section>
+
+              <section style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
+                  <div>
+                    <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900 }}>SEASON REWARDS</div>
+                    <strong style={{ display: "block", marginTop: 3, fontSize: 15 }}>Climb to unlock rewards</strong>
+                  </div>
+                  <span style={{ fontSize: 20 }}>🎁</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {season.rewards.map((reward) => (
+                    <div key={reward.level} style={{ display: "flex", alignItems: "center", gap: 10, padding: 10, borderRadius: 13, background: reward.unlocked ? "rgba(124,77,255,0.11)" : "rgba(255,255,255,0.03)", border: reward.unlocked ? "1px solid rgba(124,77,255,0.22)" : "1px solid rgba(255,255,255,0.05)", opacity: reward.unlocked ? 1 : 0.58 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 11, display: "grid", placeItems: "center", background: "rgba(124,77,255,0.12)", fontSize: 20 }}>{reward.icon}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 900 }}>{reward.title}</div>
+                        <div style={{ marginTop: 2, fontSize: 9, opacity: 0.52 }}>LEVEL {reward.level} · {reward.description}</div>
+                      </div>
+                      <div style={{ fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{reward.unlocked ? "✓ UNLOCKED" : "🔒"}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section style={{ marginTop: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
+                  <div>
+                    <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900 }}>SEASON LEADERBOARD</div>
+                    <strong style={{ display: "block", marginTop: 3, fontSize: 15 }}>Top players this season</strong>
+                  </div>
+                  <span style={{ fontSize: 20 }}>🏆</span>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  {seasonPlayers.length ? seasonPlayers.map((entry, index) => (
+                    <div key={entry.userId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 11px", borderRadius: 13, background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ width: 25, textAlign: "center", fontSize: 13, fontWeight: 950 }}>{index < 3 ? ["🥇", "🥈", "🥉"][index] : `#${index + 1}`}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.firstName || entry.username || "BATTLE IQ PLAYER"}</div>
+                        <div style={{ marginTop: 2, fontSize: 9, opacity: 0.45 }}>LEVEL {entry.seasonLevel}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <strong style={{ display: "block", fontSize: 12 }}>{entry.seasonXp.toLocaleString()}</strong>
+                        <span style={{ fontSize: 8, opacity: 0.45 }}>SEASON XP</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div style={{ padding: 16, borderRadius: 13, background: "rgba(255,255,255,0.035)", textAlign: "center", fontSize: 11, opacity: 0.55 }}>Ще ніхто не набрав Season XP. Починай першим ⚡</div>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
+        </main>
+
         <BottomNav />
       </div>
     );
