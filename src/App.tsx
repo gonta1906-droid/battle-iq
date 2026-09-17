@@ -21,7 +21,8 @@ type Screen =
   | "pvp_result"
   | "pvp_stats"
   | "season"
-  | "referral";
+  | "referral"
+  | "daily_bonus";
 
 type Answer = {
   text: string;
@@ -110,6 +111,16 @@ type SeasonPassData = {
   level: number;
   premiumOwned: boolean;
   rewards: SeasonPassReward[];
+};
+
+type DailyBonusReward = {
+  day: number; code: string; title: string; icon: string; type: string;
+  amount: number; claimed: boolean; available: boolean;
+};
+
+type DailyBonusData = {
+  today: string; currentDay: number; claimedToday: boolean;
+  claimedDay: number | null; rewards: DailyBonusReward[];
 };
 
 type ReferralData = {
@@ -481,6 +492,11 @@ function App() {
   const [referral, setReferral] = useState<ReferralData | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralNotice, setReferralNotice] = useState("");
+  const [dailyBonus, setDailyBonus] = useState<DailyBonusData | null>(null);
+  const [dailyBonusLoading, setDailyBonusLoading] = useState(false);
+  const [dailyBonusClaiming, setDailyBonusClaiming] = useState(false);
+  const [dailyBonusNotice, setDailyBonusNotice] = useState("");
+
 
 
   useEffect(() => {
@@ -581,6 +597,60 @@ function App() {
   }, []);
 
   // ==========================================
+  const loadDailyBonus = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    setDailyBonusLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/daily-bonus`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok) setDailyBonus(data.dailyBonus || null);
+    } catch (error) {
+      console.warn("BATTLE IQ: daily bonus load failed", error);
+    } finally {
+      setDailyBonusLoading(false);
+    }
+  };
+
+  const claimDailyBonus = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData || !dailyBonus || dailyBonus.claimedToday) return;
+    setDailyBonusClaiming(true);
+    setDailyBonusNotice("");
+    try {
+      const response = await fetch(`${API_BASE}/api/daily-bonus/claim`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ day: dailyBonus.currentDay }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        setDailyBonusNotice(data?.error || "Не вдалося забрати бонус");
+        if (data?.dailyBonus) setDailyBonus(data.dailyBonus);
+        return;
+      }
+      setDailyBonus(data.dailyBonus || null);
+      setDailyBonusNotice(`🎉 ${data.reward?.title || "Daily Bonus отримано!"}`);
+      tg.HapticFeedback?.notificationOccurred("success");
+      window.setTimeout(() => setDailyBonusNotice(""), 3000);
+    } catch (error) {
+      console.warn("BATTLE IQ: daily bonus claim failed", error);
+      setDailyBonusNotice("Не вдалося забрати бонус. Спробуй ще раз.");
+    } finally {
+      setDailyBonusClaiming(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadDailyBonus();
+  }, []);
+
   const loadReferral = async () => {
     const tg = getTelegramWebApp();
     if (!tg?.initData) return;
@@ -2554,6 +2624,38 @@ function App() {
               <b>→</b>
             </button>
 
+            <section
+              onClick={() => setScreen("daily_bonus")}
+              style={{
+                marginBottom: 12, padding: 16, cursor: "pointer", borderRadius: 20,
+                background: "linear-gradient(135deg, rgba(255,190,70,0.16), rgba(255,90,150,0.10))",
+                border: "1px solid rgba(255,190,70,0.18)",
+              }}
+            >
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.55 }}>DAILY BONUS</div>
+                  <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>
+                    {dailyBonus?.claimedToday
+                      ? "✅ Already claimed"
+                      : `Day ${dailyBonus?.currentDay ?? 1} · ${dailyBonus?.rewards?.find((r) => r.day === (dailyBonus?.currentDay ?? 1))?.title ?? "Bonus"}`}
+                  </div>
+                  <div style={{ fontSize:12, opacity:.55, marginTop:3 }}>7-day reward cycle</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); void claimDailyBonus(); }}
+                  disabled={dailyBonusLoading || dailyBonusClaiming || !dailyBonus || dailyBonus.claimedToday}
+                  style={{ border:0, borderRadius:14, padding:"11px 14px", fontWeight:950,
+                    background: dailyBonus?.claimedToday ? "rgba(255,255,255,.08)" : "linear-gradient(135deg,#ffb43d,#ff5e9b)",
+                    color:"#fff", whiteSpace:"nowrap" }}
+                >
+                  {dailyBonusClaiming ? "..." : dailyBonus?.claimedToday ? "CLAIMED" : "CLAIM"}
+                </button>
+              </div>
+              {dailyBonusNotice && <div style={{ marginTop:10, fontSize:12, fontWeight:800 }}>{dailyBonusNotice}</div>}
+            </section>
+
             <button
               className="quick-card"
               onClick={() => setScreen("season")}
@@ -3270,6 +3372,54 @@ function App() {
   // ==========================================
   // SEASON
   // ==========================================
+
+  if (screen === "daily_bonus") {
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <div className="section-title" style={{ marginBottom:18 }}>
+            <h1 style={{ margin:0 }}>Daily Bonus</h1>
+            <button type="button" onClick={loadDailyBonus} style={{ border:0, borderRadius:12, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:800 }}>↻</button>
+          </div>
+          <section style={{ padding:20, borderRadius:24, background:"linear-gradient(135deg, rgba(255,190,70,.16), rgba(255,90,150,.10))", border:"1px solid rgba(255,190,70,.18)", marginBottom:16 }}>
+            <div style={{ fontSize:40 }}>🎁</div>
+            <h2 style={{ margin:"8px 0 4px" }}>7-Day Streak</h2>
+            <p style={{ margin:0, opacity:.65 }}>Claim one reward each day. Missing a day resets the cycle.</p>
+          </section>
+          {dailyBonusNotice && <div style={{ marginBottom:14, padding:"12px 14px", borderRadius:14, background:"rgba(80,220,150,.12)", fontWeight:800 }}>{dailyBonusNotice}</div>}
+          <section style={{ display:"grid", gap:10 }}>
+            {(dailyBonus?.rewards ?? []).map((reward) => {
+              const active = reward.day === dailyBonus?.currentDay && !dailyBonus?.claimedToday;
+              const claimed = reward.claimed || (dailyBonus?.claimedToday && reward.day === dailyBonus?.claimedDay);
+              return (
+                <div key={reward.day} style={{
+                  display:"flex", alignItems:"center", gap:12, padding:14, borderRadius:18,
+                  background:active ? "rgba(255,190,70,.13)" : "rgba(255,255,255,.045)",
+                  border:active ? "1px solid rgba(255,190,70,.25)" : "1px solid rgba(255,255,255,.06)"
+                }}>
+                  <div style={{ width:42,height:42,borderRadius:14,display:"grid",placeItems:"center",background:"rgba(255,255,255,.07)",fontSize:22 }}>{reward.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:11,fontWeight:900,opacity:.45 }}>DAY {reward.day}</div>
+                    <strong>{reward.title}</strong>
+                  </div>
+                  {claimed ? <span style={{ fontWeight:900,opacity:.55 }}>CLAIMED</span>
+                    : active ? <button type="button" onClick={claimDailyBonus} disabled={dailyBonusClaiming} style={{ border:0,borderRadius:12,padding:"9px 12px",fontWeight:900,background:"linear-gradient(135deg,#ffb43d,#ff5e9b)",color:"#fff" }}>{dailyBonusClaiming ? "..." : "CLAIM"}</button>
+                    : <span style={{ opacity:.3 }}>🔒</span>}
+                </div>
+              );
+            })}
+          </section>
+          <button className="quick-card" onClick={() => setScreen("home")} style={{ width:"100%",border:0,marginTop:14 }}>
+            <div className="quick-icon purple">⌂</div><div><strong>BACK HOME</strong><span>Return to BATTLE IQ</span></div><b>→</b>
+          </button>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (screen === "referral") {
     return (
