@@ -208,12 +208,18 @@ const PROFILE_FRAME_EMOJI: Record<string, string> = {
   neon_frame: "🟣",
   fire_frame: "🔥",
   legendary_frame: "👑",
+  ice_frame: "❄️",
+  galaxy_frame: "🌌",
+  diamond_frame: "💎",
 };
 
 const FRAME_STYLES: Record<string, CSSProperties> = {
   neon_frame: { border: "2px solid rgba(124,77,255,0.95)", boxShadow: "0 0 0 3px rgba(124,77,255,0.16), 0 0 24px rgba(124,77,255,0.42)" },
   fire_frame: { border: "2px solid rgba(255,110,60,0.95)", boxShadow: "0 0 0 3px rgba(255,110,60,0.14), 0 0 24px rgba(255,110,60,0.34)" },
   legendary_frame: { border: "2px solid rgba(255,205,70,0.95)", boxShadow: "0 0 0 3px rgba(255,205,70,0.14), 0 0 28px rgba(255,205,70,0.36)" },
+  ice_frame: { border: "2px solid rgba(120,210,255,0.95)", boxShadow: "0 0 0 3px rgba(120,210,255,0.14), 0 0 28px rgba(120,210,255,0.34)" },
+  galaxy_frame: { border: "2px solid rgba(180,120,255,0.95)", boxShadow: "0 0 0 3px rgba(180,120,255,0.14), 0 0 32px rgba(180,120,255,0.38)" },
+  diamond_frame: { border: "2px solid rgba(180,245,255,0.98)", boxShadow: "0 0 0 3px rgba(180,245,255,0.14), 0 0 30px rgba(180,245,255,0.40)" },
 };
 
 const ACHIEVEMENTS = [
@@ -3288,7 +3294,7 @@ function App() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
-              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 2.0</h1>
+              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 3.0</h1>
             </div>
             <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
           </div>
@@ -3296,8 +3302,23 @@ function App() {
           <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 18 }}>
             <div style={{ position: "absolute", width: 150, height: 150, right: -55, top: -65, borderRadius: "50%", background: "rgba(124,77,255,0.18)", filter: "blur(8px)" }} />
             <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>PREMIUM ITEMS</div>
-            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Buy exactly what you want.</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Оплата проходить через офіційний Telegram Stars. Куплені предмети зберігаються в твоєму інвентарі.</div>
+            <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Build your own loadout.</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Оплата через Telegram Stars. Обирай косметику та Battle-утиліти без рандомних кейсів — усе, що купуєш, потрапляє в інвентар.</div>
+          </section>
+
+          <section style={{ marginBottom: 16 }}>
+            <div style={{
+              display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,
+              padding:"12px 14px",borderRadius:16,
+              background:"linear-gradient(135deg,rgba(130,100,255,.12),rgba(90,210,255,.08))",
+              border:"1px solid rgba(130,100,255,.16)"
+            }}>
+              <div>
+                <div style={{fontSize:10,fontWeight:950,letterSpacing:1,opacity:.5}}>NEW ARRIVALS</div>
+                <div style={{fontSize:14,fontWeight:900,marginTop:3}}>❄️ Ice · 🌌 Galaxy · 💎 Diamond</div>
+              </div>
+              <div style={{fontSize:22}}>✨</div>
+            </div>
           </section>
 
           <section style={{ marginBottom: 24 }}>
@@ -3316,7 +3337,7 @@ function App() {
                     <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
-                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame"].includes(item.product_id) && (
+                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame", "ice_frame", "galaxy_frame", "diamond_frame"].includes(item.product_id) && (
                       <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
                         {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
                       </button>
@@ -3330,7 +3351,7 @@ function App() {
           {categories.map((category) => (
             <section key={category} style={{ marginBottom: 24 }}>
               <div className="section-title" style={{ marginBottom: 11 }}>
-                <h2>{category === "PROFILE" ? "👤 Profile" : category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"}</h2>
+                <h2>{category === "PROFILE" ? "👤 Profile Cosmetics" : category === "BATTLE" ? "⚔️ Battle Utilities" : "🎟️ Season"}</h2>
                 <span>⭐ Stars</span>
               </div>
 
