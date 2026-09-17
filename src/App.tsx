@@ -23,7 +23,8 @@ type Screen =
   | "season"
   | "referral"
   | "daily_bonus"
-  | "social";
+  | "social"
+  | "collection";
 
 type Answer = {
   text: string;
@@ -156,6 +157,7 @@ type PlayerData = {
   profileTitle?: string | null;
   victoryEffect?: string | null;
   profileBackground?: string | null;
+  profileAnimation?: string | null;
 };
 
 type ShopProduct = {
@@ -232,6 +234,15 @@ const SHOP_FALLBACK: ShopProduct[] = [
   { id: "matrix_background", icon: "💚", title: "Matrix", description: "Digital green profile background", price_stars: 75, category: "BACKGROUNDS" },
   { id: "aurora_background", icon: "🌈", title: "Aurora", description: "Northern-light profile background", price_stars: 85, category: "BACKGROUNDS" },
   { id: "deep_space_background", icon: "🪐", title: "Deep Space", description: "Deep cosmic profile background", price_stars: 100, category: "BACKGROUNDS" },
+  { id: "eclipse_frame", icon: "🌘", title: "Eclipse Frame", description: "Ultra-premium black-and-gold profile frame", price_stars: 225, category: "LEGENDARY" },
+  { id: "infinity_frame", icon: "♾️", title: "Infinity Frame", description: "Infinite-energy profile frame", price_stars: 280, category: "LEGENDARY" },
+  { id: "royal_frame", icon: "👑", title: "Royal Frame", description: "Royal crown frame for elite profiles", price_stars: 350, category: "LEGENDARY" },
+  { id: "grandmaster_title", icon: "🏆", title: "GRANDMASTER", description: "Top-tier title for dedicated BATTLE IQ players", price_stars: 180, category: "LEGENDARY" },
+  { id: "nova_effect", icon: "🌟", title: "Nova", description: "Starburst victory effect for battle results", price_stars: 220, category: "LEGENDARY" },
+  { id: "singularity_background", icon: "🕳️", title: "Singularity", description: "Deep gravitational profile background", price_stars: 260, category: "LEGENDARY" },
+  { id: "pulse_animation", icon: "💓", title: "Pulse", description: "Subtle animated pulse around your profile", price_stars: 90, category: "ANIMATIONS" },
+  { id: "orbit_animation", icon: "🪐", title: "Orbit", description: "Animated orbital motion for your profile card", price_stars: 120, category: "ANIMATIONS" },
+  { id: "scanline_animation", icon: "📡", title: "Scanline", description: "Animated cyber scanline profile effect", price_stars: 145, category: "ANIMATIONS" },
 ];
 
 const PROFILE_FRAME_EMOJI: Record<string, string> = {
@@ -251,6 +262,9 @@ const PROFILE_FRAME_EMOJI: Record<string, string> = {
   solar_frame: "☀️",
   frostbite_frame: "🧊",
   cosmic_frame: "🪐",
+  eclipse_frame: "🌘",
+  infinity_frame: "♾️",
+  royal_frame: "👑",
 };
 
 const FRAME_STYLES: Record<string, CSSProperties> = {
@@ -270,6 +284,9 @@ const FRAME_STYLES: Record<string, CSSProperties> = {
   solar_frame: { border: "2px solid rgba(255,215,90,0.98)", boxShadow: "0 0 0 3px rgba(255,215,90,0.12), 0 0 32px rgba(255,215,90,0.38)" },
   frostbite_frame: { border: "2px solid rgba(175,235,255,0.98)", boxShadow: "0 0 0 3px rgba(175,235,255,0.12), 0 0 32px rgba(175,235,255,0.40)" },
   cosmic_frame: { border: "2px solid rgba(150,110,255,0.98)", boxShadow: "0 0 0 3px rgba(150,110,255,0.12), 0 0 36px rgba(150,110,255,0.42)" },
+  eclipse_frame: { border: "2px solid rgba(255,210,120,0.98)", boxShadow: "0 0 0 3px rgba(20,20,35,0.55), 0 0 42px rgba(255,200,95,0.42)" },
+  infinity_frame: { border: "2px solid rgba(205,165,255,0.98)", boxShadow: "0 0 0 3px rgba(200,140,255,0.12), 0 0 48px rgba(125,95,255,0.46)" },
+  royal_frame: { border: "2px solid rgba(255,225,120,0.99)", boxShadow: "0 0 0 3px rgba(255,205,70,0.16), 0 0 52px rgba(255,215,90,0.50)" },
 };
 
 const VICTORY_EFFECT_EMOJI: Record<string, string> = {
@@ -278,6 +295,7 @@ const VICTORY_EFFECT_EMOJI: Record<string, string> = {
   frost: "❄️",
   neon_burst: "💥",
   cosmic: "🌌",
+  nova: "🌟",
 };
 
 const VICTORY_EFFECT_LABEL: Record<string, string> = {
@@ -286,6 +304,7 @@ const VICTORY_EFFECT_LABEL: Record<string, string> = {
   frost: "FROST",
   neon_burst: "NEON BURST",
   cosmic: "COSMIC",
+  nova: "NOVA",
 };
 
 const PROFILE_BACKGROUND_STYLES: Record<string, CSSProperties> = {
@@ -304,9 +323,12 @@ const PROFILE_BACKGROUND_STYLES: Record<string, CSSProperties> = {
   deep_space: {
     background: "radial-gradient(circle at 50% 10%, rgba(80,80,190,0.24), transparent 40%), linear-gradient(145deg, rgba(8,10,30,0.98), rgba(3,4,14,1))",
   },
+  singularity: {
+    background: "radial-gradient(circle at 50% 40%, rgba(255,90,160,0.12), transparent 22%), radial-gradient(circle at 48% 42%, rgba(30,30,35,0.98), rgba(3,3,10,1) 48%, rgba(20,10,35,0.98) 100%)",
+  },
 };
 
-const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "background"; value: string }> = {
+const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "background" | "animation"; value: string }> = {
   rookie_title: { kind: "title", value: "ROOKIE" },
   quiz_master_title: { kind: "title", value: "QUIZ MASTER" },
   speed_demon_title: { kind: "title", value: "SPEED DEMON" },
@@ -322,7 +344,51 @@ const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "backgr
   matrix_background: { kind: "background", value: "matrix" },
   aurora_background: { kind: "background", value: "aurora" },
   deep_space_background: { kind: "background", value: "deep_space" },
+  grandmaster_title: { kind: "title", value: "GRANDMASTER" },
+  nova_effect: { kind: "effect", value: "nova" },
+  singularity_background: { kind: "background", value: "singularity" },
+  pulse_animation: { kind: "animation", value: "pulse" },
+  orbit_animation: { kind: "animation", value: "orbit" },
+  scanline_animation: { kind: "animation", value: "scanline" },
 };
+
+const PROFILE_ANIMATION_LABEL: Record<string, string> = {
+  pulse: "PULSE",
+  orbit: "ORBIT",
+  scanline: "SCANLINE",
+};
+
+const PROFILE_ANIMATION_EMOJI: Record<string, string> = {
+  pulse: "💓",
+  orbit: "🪐",
+  scanline: "📡",
+};
+
+const PROFILE_ANIMATION_STYLES: Record<string, CSSProperties> = {
+  pulse: { animation: "biqProfilePulse 2.1s ease-in-out infinite" },
+  orbit: { animation: "biqProfileOrbit 3.4s ease-in-out infinite" },
+  scanline: {
+    backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(120,220,255,0.17) 50%, rgba(255,255,255,0.05) 52%, rgba(255,255,255,0.05) 100%)",
+    backgroundSize: "100% 220%",
+    animation: "biqProfileScanline 2.2s linear infinite",
+  },
+};
+
+const PROFILE_ANIMATION_KEYFRAMES = `
+@keyframes biqProfilePulse {
+  0%,100% { box-shadow: 0 12px 35px rgba(124,77,255,.18), 0 0 0 0 rgba(124,77,255,.00); }
+  50% { box-shadow: 0 16px 48px rgba(124,77,255,.28), 0 0 0 7px rgba(124,77,255,.08); }
+}
+@keyframes biqProfileOrbit {
+  0%,100% { box-shadow: 10px -3px 24px rgba(120,210,255,.30), -10px 6px 24px rgba(180,110,255,.18); }
+  25% { box-shadow: -6px -9px 24px rgba(120,210,255,.34), -2px 10px 30px rgba(180,110,255,.24); }
+  50% { box-shadow: -12px 4px 28px rgba(120,210,255,.22), 10px 4px 30px rgba(180,110,255,.30); }
+  75% { box-shadow: 4px 10px 24px rgba(120,210,255,.26), 8px -6px 28px rgba(180,110,255,.30); }
+}
+@keyframes biqProfileScanline {
+  0% { background-position: 0 -100%; }
+  100% { background-position: 0 100%; }
+}`;
 
 const ACHIEVEMENTS = [
   {
@@ -1049,6 +1115,7 @@ function App() {
       profileTitle: null,
       victoryEffect: null,
       profileBackground: null,
+      profileAnimation: null,
     });
 
   const [shopProducts, setShopProducts] =
@@ -1267,6 +1334,7 @@ function App() {
           profileTitle: remote.profile_title ?? current.profileTitle ?? null,
           victoryEffect: remote.victory_effect ?? current.victoryEffect ?? null,
           profileBackground: remote.profile_background ?? current.profileBackground ?? null,
+          profileAnimation: remote.profile_animation ?? current.profileAnimation ?? null,
         }));
 
         if (remote.frame) {
@@ -3396,7 +3464,7 @@ function App() {
   // ==========================================
 
   if (screen === "shop") {
-    const categories = ["PROFILE", "COSMETICS", "TITLES", "EFFECTS", "BACKGROUNDS", "BATTLE", "PASS"];
+    const categories = ["PROFILE", "COSMETICS", "TITLES", "EFFECTS", "BACKGROUNDS", "LEGENDARY", "ANIMATIONS", "BATTLE", "PASS"];
     const owned = (id: string) => inventory.find((item) => item.product_id === id);
 
     const buyProduct = async (product: ShopProduct) => {
@@ -3512,7 +3580,8 @@ function App() {
           if (!meta) return current;
           if (meta.kind === "title") return { ...current, profileTitle: meta.value };
           if (meta.kind === "effect") return { ...current, victoryEffect: meta.value };
-          return { ...current, profileBackground: meta.value };
+          if (meta.kind === "background") return { ...current, profileBackground: meta.value };
+          return { ...current, profileAnimation: meta.value };
         });
 
         tg.HapticFeedback?.notificationOccurred("success");
@@ -3530,7 +3599,8 @@ function App() {
       if (!meta) return false;
       if (meta.kind === "title") return player.profileTitle === meta.value;
       if (meta.kind === "effect") return player.victoryEffect === meta.value;
-      return player.profileBackground === meta.value;
+      if (meta.kind === "background") return player.profileBackground === meta.value;
+      return player.profileAnimation === meta.value;
     };
 
     return (
@@ -3543,7 +3613,7 @@ function App() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
-              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 4.0</h1>
+              <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 4.2</h1>
             </div>
             <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
           </div>
@@ -3552,7 +3622,7 @@ function App() {
             <div style={{ position: "absolute", width: 150, height: 150, right: -55, top: -65, borderRadius: "50%", background: "rgba(124,77,255,0.18)", filter: "blur(8px)" }} />
             <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>PREMIUM ITEMS</div>
             <div style={{ fontSize: 22, fontWeight: 950, marginTop: 7 }}>Build your own loadout.</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Telegram Stars · прямі покупки · косметика без рандому. Обирай предмет, переглядай його preview та купуй саме те, що хочеш.</div>
+            <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62, maxWidth: 310, marginTop: 6 }}>Telegram Stars · прямі покупки · легендарна косметика · анімовані профілі. Обирай предмет, дивись preview та збирай власну колекцію.</div>
           </section>
 
           <section style={{ marginBottom: 24 }}>
@@ -3612,6 +3682,8 @@ function App() {
                   category === "TITLES" ? "🏷️ Titles" :
                   category === "EFFECTS" ? "✨ Victory Effects" :
                   category === "BACKGROUNDS" ? "🎨 Profile Backgrounds" :
+                  category === "LEGENDARY" ? "👑 Legendary" :
+                  category === "ANIMATIONS" ? "🎞️ Profile Animations" :
                   category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"
                 }</h2>
                 <span>⭐ Stars</span>
@@ -3625,6 +3697,7 @@ function App() {
                   return (
                     <div key={product.id} style={{ position: "relative", padding: 14, minHeight: 178, borderRadius: 20, background: product.featured ? "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.045))" : "rgba(255,255,255,0.045)", border: product.featured ? "1px solid rgba(145,110,255,0.28)" : "1px solid rgba(255,255,255,0.07)", boxSizing: "border-box" }}>
                       {product.featured && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(124,77,255,0.28)", color: "#cfc1ff" }}>FEATURED</div>}
+                      {product.category === "LEGENDARY" && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(255,205,70,0.16)", color: "#ffe89b" }}>LEGENDARY</div>}
                       <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 15, background: "rgba(255,255,255,0.07)", fontSize: 25, marginBottom: 12 }}>{product.icon || "🎁"}</div>
                       <div style={{ fontWeight: 900, fontSize: 14 }}>{product.title}</div>
                       <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.description || "Premium BATTLE IQ item"}</div>
@@ -3665,6 +3738,7 @@ function App() {
                 boxShadow:"0 24px 80px rgba(0,0,0,.5)"
               }}
             >
+              <style>{PROFILE_ANIMATION_KEYFRAMES}</style>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div style={{fontSize:10,fontWeight:950,letterSpacing:1.4,opacity:.5}}>ITEM PREVIEW</div>
                 <button onClick={() => setPreviewProduct(null)} style={{border:0,background:"transparent",color:"inherit",fontSize:24,cursor:"pointer"}}>×</button>
@@ -3676,7 +3750,9 @@ function App() {
                   const previewTitle = meta?.kind === "title" ? meta.value : (player.profileTitle || levelTitle);
                   const previewEffect = meta?.kind === "effect" ? meta.value : player.victoryEffect;
                   const previewBackground = meta?.kind === "background" ? meta.value : player.profileBackground;
+                  const previewAnimation = meta?.kind === "animation" ? meta.value : player.profileAnimation;
                   const previewFrame = PROFILE_FRAME_EMOJI[previewProduct.id] ? previewProduct.id : (equippedFrame || "");
+                  const previewAnimationStyle = PROFILE_ANIMATION_STYLES[previewAnimation || ""] || {};
                   return (
                     <div style={{
                       padding:18,borderRadius:20,textAlign:"center",
@@ -3684,7 +3760,7 @@ function App() {
                       ...(FRAME_STYLES[previewFrame] || {}),
                     }}>
                       <div style={{fontSize:10,fontWeight:950,letterSpacing:1.2,opacity:.5}}>PROFILE PREVIEW</div>
-                      <div style={{width:74,height:74,margin:"12px auto 9px",borderRadius:22,display:"grid",placeItems:"center",background:"rgba(255,255,255,.08)",fontSize:34,...(FRAME_STYLES[previewFrame] || {})}}>
+                      <div style={{width:74,height:74,margin:"12px auto 9px",borderRadius:22,display:"grid",placeItems:"center",background:"rgba(255,255,255,.08)",fontSize:34,...(FRAME_STYLES[previewFrame] || {}),...(previewAnimationStyle || {})}}>
                         😎
                       </div>
                       <div style={{fontSize:18,fontWeight:950}}>{telegramUser?.first_name || "BATTLE IQ PLAYER"}</div>
@@ -3692,6 +3768,11 @@ function App() {
                       {previewEffect && (
                         <div style={{marginTop:10,padding:"7px 10px",display:"inline-flex",gap:6,alignItems:"center",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>
                           {VICTORY_EFFECT_EMOJI[previewEffect] || "✨"} {VICTORY_EFFECT_LABEL[previewEffect] || "VICTORY EFFECT"}
+                        </div>
+                      )}
+                      {previewAnimation && (
+                        <div style={{marginTop:8,padding:"7px 10px",display:"inline-flex",gap:6,alignItems:"center",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>
+                          {PROFILE_ANIMATION_EMOJI[previewAnimation] || "🎞️"} {PROFILE_ANIMATION_LABEL[previewAnimation] || "ANIMATION"}
                         </div>
                       )}
                       <div style={{marginTop:10,display:"inline-flex",alignItems:"center",gap:7,padding:"7px 10px",borderRadius:999,background:"rgba(255,255,255,.07)",fontSize:10,fontWeight:900}}>
@@ -3734,6 +3815,89 @@ function App() {
           </div>
         )}
 
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ==========================================
+  // COLLECTION 1.0
+  // ==========================================
+
+  if (screen === "collection") {
+    const ownedIds = new Set(
+      inventory.filter((item) => Number(item.quantity || 0) > 0).map((item) => item.product_id)
+    );
+    const cosmeticProducts = shopProducts.filter((p) => !["BATTLE", "PASS"].includes(p.category));
+    const ownedUnique = cosmeticProducts.filter((product) => ownedIds.has(product.id)).length;
+    const activeLabel = (product: ShopProduct) => {
+      if (PROFILE_FRAME_EMOJI[product.id]) return equippedFrame === product.id;
+      const meta = COSMETIC_PRODUCT_META[product.id];
+      if (!meta) return false;
+      if (meta.kind === "title") return player.profileTitle === meta.value;
+      if (meta.kind === "effect") return player.victoryEffect === meta.value;
+      if (meta.kind === "background") return player.profileBackground === meta.value;
+      return player.profileAnimation === meta.value;
+    };
+    const categoryLabel = (category: string) =>
+      category === "PROFILE" ? "👤 PROFILE" :
+      category === "COSMETICS" ? "✨ FRAMES" :
+      category === "TITLES" ? "🏷️ TITLES" :
+      category === "EFFECTS" ? "💥 EFFECTS" :
+      category === "BACKGROUNDS" ? "🎨 BACKGROUNDS" :
+      category === "LEGENDARY" ? "👑 LEGENDARY" :
+      category === "ANIMATIONS" ? "🎞️ ANIMATIONS" : category;
+    const collectionCategories = ["LEGENDARY", "ANIMATIONS", "PROFILE", "COSMETICS", "TITLES", "EFFECTS", "BACKGROUNDS"];
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content" style={{ paddingBottom: 100 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:12, marginBottom:18 }}>
+            <div>
+              <div style={{ fontSize:11, letterSpacing:1.8, fontWeight:900, opacity:.5 }}>BATTLE IQ COLLECTION</div>
+              <h1 style={{ margin:"4px 0 0", fontSize:30, lineHeight:1.05 }}>Your Vault</h1>
+            </div>
+            <button type="button" onClick={() => setScreen("shop")} style={{ border:0, borderRadius:13, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:900, fontSize:10, cursor:"pointer" }}>SHOP</button>
+          </div>
+          <section style={{ padding:18, borderRadius:22, background:"linear-gradient(145deg,rgba(124,77,255,.18),rgba(255,255,255,.035))", border:"1px solid rgba(255,255,255,.08)", marginBottom:18 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
+              <div>
+                <div style={{ fontSize:10, opacity:.5, fontWeight:900, letterSpacing:1.2 }}>COLLECTION PROGRESS</div>
+                <div style={{ marginTop:5, fontSize:23, fontWeight:950 }}>{ownedUnique}/{cosmeticProducts.length}</div>
+                <div style={{ marginTop:2, fontSize:10, opacity:.48 }}>unique cosmetics owned</div>
+              </div>
+              <div style={{ width:76, height:76, borderRadius:"50%", display:"grid", placeItems:"center", background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.08)", fontSize:20, fontWeight:950 }}>{cosmeticProducts.length ? Math.round((ownedUnique / cosmeticProducts.length) * 100) : 0}%</div>
+            </div>
+            <div style={{ height:8, borderRadius:999, background:"rgba(255,255,255,.07)", overflow:"hidden", marginTop:15 }}>
+              <div style={{ width:`${cosmeticProducts.length ? Math.max(3, Math.min(100, Math.round((ownedUnique / cosmeticProducts.length) * 100))) : 0}%`, height:"100%", borderRadius:999, background:"linear-gradient(90deg,#7c4dff,#cf7bff)" }} />
+            </div>
+          </section>
+          {collectionCategories.map((category) => {
+            const products = shopProducts.filter((p) => p.category === category);
+            if (!products.length) return null;
+            return (
+              <section key={category} style={{ marginBottom:20 }}>
+                <div className="section-title" style={{ marginBottom:10 }}><h2>{categoryLabel(category)}</h2><span>{products.filter((p) => ownedIds.has(p.id)).length}/{products.length}</span></div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:9 }}>
+                  {products.map((product) => {
+                    const owned = ownedIds.has(product.id);
+                    const active = activeLabel(product);
+                    return (
+                      <div key={product.id} style={{ position:"relative", minHeight:115, padding:12, borderRadius:17, background: active ? "rgba(124,77,255,.15)" : owned ? "rgba(255,255,255,.055)" : "rgba(255,255,255,.025)", border: active ? "1px solid rgba(145,110,255,.35)" : "1px solid rgba(255,255,255,.06)", opacity: owned ? 1 : .55 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", gap:8, alignItems:"flex-start" }}><div style={{ fontSize:22 }}>{product.icon || "🎁"}</div>{active && <span style={{ padding:"4px 6px", borderRadius:8, background:"rgba(124,77,255,.22)", fontSize:7.5, fontWeight:950 }}>ACTIVE</span>}</div>
+                        <div style={{ marginTop:7, fontSize:11, fontWeight:900 }}>{product.title}</div>
+                        <div style={{ marginTop:3, fontSize:8.5, opacity:.45 }}>{owned ? `OWNED · x${inventory.find((item) => item.product_id === product.id)?.quantity || 0}` : "LOCKED · SHOP"}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+          <button type="button" onClick={() => setScreen("profile")} style={{ width:"100%", border:0, borderRadius:14, padding:"12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:950, fontSize:11, cursor:"pointer" }}>← BACK TO PROFILE</button>
+        </main>
         <BottomNav />
       </div>
     );
@@ -4349,6 +4513,7 @@ function App() {
             overflowX: "hidden",
           }}
         >
+          <style>{PROFILE_ANIMATION_KEYFRAMES}</style>
           {/* PROFILE HERO */}
           <section
             className="profile-hero"
@@ -4380,6 +4545,7 @@ function App() {
                   "1px solid rgba(168,85,247,0.30)",
                 boxShadow:
                   "0 12px 35px rgba(124,77,255,0.18)",
+                ...(PROFILE_ANIMATION_STYLES[player.profileAnimation || ""] || {}),
               }}
             >
               <span style={{ display: "grid", placeItems: "center", width: "100%", height: "100%", borderRadius: "inherit", ...((equippedFrame && FRAME_STYLES[equippedFrame]) || {}) }}>😎</span>
@@ -4433,6 +4599,7 @@ function App() {
               {player.profileTitle && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>🏷️ {player.profileTitle}</span>}
               {player.victoryEffect && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>{VICTORY_EFFECT_EMOJI[player.victoryEffect] || "✨"} {VICTORY_EFFECT_LABEL[player.victoryEffect] || "EFFECT"}</span>}
               {player.profileBackground && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>🎨 {player.profileBackground.replace("_"," ").toUpperCase()}</span>}
+              {player.profileAnimation && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>{PROFILE_ANIMATION_EMOJI[player.profileAnimation] || "🎞️"} {PROFILE_ANIMATION_LABEL[player.profileAnimation] || "ANIMATION"}</span>}
             </div>
 
             <div
@@ -4661,10 +4828,15 @@ function App() {
                 <div style={{ fontSize: 9, opacity: 0.5, fontWeight: 900 }}>ACHIEVEMENTS</div>
                 <strong style={{ display: "block", marginTop: 4, fontSize: 14 }}>{unlockedAchievements}/{achievements.length} unlocked</strong>
               </div>
-              <div style={{ padding: "10px 11px", borderRadius: 12, background: "rgba(255,255,255,0.035)" }}>
-                <div style={{ fontSize: 9, opacity: 0.5, fontWeight: 900 }}>COLLECTION</div>
-                <strong style={{ display: "block", marginTop: 4, fontSize: 14 }}>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items</strong>
-              </div>
+              <button type="button" onClick={() => setScreen("collection")} style={{ padding: "10px 11px", borderRadius: 12, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)", color: "inherit", textAlign: "left", cursor: "pointer" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", gap:8, alignItems:"center" }}>
+                  <div>
+                    <div style={{ fontSize: 9, opacity: 0.5, fontWeight: 900 }}>COLLECTION</div>
+                    <strong style={{ display: "block", marginTop: 4, fontSize: 14 }}>{inventory.filter((item) => Number(item.quantity || 0) > 0).length} unique</strong>
+                  </div>
+                  <span style={{ fontSize: 16 }}>→</span>
+                </div>
+              </button>
             </div>
           </section>
 
