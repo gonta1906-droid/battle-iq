@@ -1019,6 +1019,43 @@ function App() {
     return () => { cancelled = true; };
   }, [telegramUser?.id, player.battles, player.bestCombo, player.xp, player.bestBattleXp, dailyMissions.claimed.length, levelInfo.level]);
 
+  const claimAchievementReward = async (achievementId: string) => {
+    try {
+      const tg = getTelegramWebApp();
+      if (!tg?.initData) return;
+      const response = await fetch(`${API_BASE}/api/achievements/claim`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ achievementId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) {
+        console.warn("BATTLE IQ: achievement reward claim failed", data?.error);
+        return;
+      }
+      if (data.profile) {
+        setPlayer((prev) => ({
+          ...prev,
+          xp: Number(data.profile.xp ?? prev.xp),
+        }));
+      }
+      setAchievementToast({ icon: "🎁", title: `+${Number(data.reward?.amount || 0)} XP Reward` });
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+      window.setTimeout(() => setAchievementToast(null), 3500);
+      // Refresh achievements so the claim button becomes completed.
+      const refresh = await fetch(`${API_BASE}/api/achievements`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const refreshed = await refresh.json();
+      if (refresh.ok && refreshed?.ok) setServerAchievements(Array.isArray(refreshed.achievements) ? refreshed.achievements : []);
+    } catch (error) {
+      console.warn("BATTLE IQ: achievement reward claim failed", error);
+    }
+  };
+
   // ==========================================
   // TIMER
   // ==========================================
@@ -3582,6 +3619,18 @@ function App() {
                         {achievement.text}
                       </span>
 
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: "5px",
+                          fontSize: "9px",
+                          fontWeight: 800,
+                          color: achievement.unlocked ? "#c4b5fd" : "rgba(255,255,255,0.42)",
+                        }}
+                      >
+                        🎁 Reward: +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} XP
+                      </span>
+
                       {!achievement.unlocked && (
                         <>
                           <div
@@ -3622,14 +3671,38 @@ function App() {
                     </div>
 
                     {achievement.unlocked && (
-                      <div
-                        style={{
-                          flex: "0 0 auto",
-                          fontSize: "18px",
-                        }}
-                      >
-                        ✓
-                      </div>
+                      achievement.rewardClaimed ? (
+                        <div
+                          style={{
+                            flex: "0 0 auto",
+                            padding: "6px 8px",
+                            borderRadius: "9px",
+                            background: "rgba(34,197,94,0.12)",
+                            color: "#86efac",
+                            fontSize: "9px",
+                            fontWeight: 900,
+                          }}
+                        >
+                          ✓ CLAIMED
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => void claimAchievementReward(achievement.id)}
+                          style={{
+                            flex: "0 0 auto",
+                            border: 0,
+                            borderRadius: "9px",
+                            padding: "7px 10px",
+                            background: "linear-gradient(135deg,#7c4dff,#a855f7)",
+                            color: "white",
+                            fontSize: "9px",
+                            fontWeight: 900,
+                            cursor: "pointer",
+                          }}
+                        >
+                          CLAIM +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} XP
+                        </button>
+                      )
                     )}
                   </div>
                 );
