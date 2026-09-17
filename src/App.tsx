@@ -86,6 +86,24 @@ type InventoryItem = {
   price_stars: number;
 };
 
+type LevelReward = {
+  id: string;
+  level: number;
+  icon: string;
+  title: string;
+  description: string;
+  claimed: boolean;
+};
+
+const LEVEL_REWARDS: LevelReward[] = [
+  { id: "level_5_badge", level: 5, icon: "🎖️", title: "Learner Badge", description: "Badge for reaching Level 5.", claimed: false },
+  { id: "level_10_frame", level: 10, icon: "🟣", title: "Special Profile Frame", description: "Profile reward for reaching Level 10.", claimed: false },
+  { id: "level_15_effect", level: 15, icon: "⚡", title: "Victory Effect", description: "Special victory effect unlock.", claimed: false },
+  { id: "level_20_badge", level: 20, icon: "🔥", title: "Exclusive Badge", description: "Rare badge for reaching Level 20.", claimed: false },
+  { id: "level_30_badge", level: 30, icon: "👑", title: "Elite Profile Badge", description: "Elite badge for reaching Level 30.", claimed: false },
+  { id: "level_50_badge", level: 50, icon: "💎", title: "Mastermind Badge", description: "Ultimate progression badge.", claimed: false },
+];
+
 const SHOP_FALLBACK: ShopProduct[] = [
   { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", description: "Use your own profile picture", price_stars: 50, category: "PROFILE", featured: true },
   { id: "neon_frame", icon: "🟣", title: "Neon Frame", description: "Stand out in the ranking", price_stars: 25, category: "PROFILE" },
@@ -587,6 +605,18 @@ function App() {
   const [inventory, setInventory] =
     useState<InventoryItem[]>([]);
 
+  const [levelRewards, setLevelRewards] =
+    useState<LevelReward[]>(LEVEL_REWARDS);
+
+  const [rewardsLoading, setRewardsLoading] =
+    useState(false);
+
+  const [rewardBusy, setRewardBusy] =
+    useState<string | null>(null);
+
+  const [rewardNotice, setRewardNotice] =
+    useState("");
+
   const [shopLoading, setShopLoading] =
     useState(false);
 
@@ -693,6 +723,51 @@ function App() {
     ? getMilestoneReward(nextMilestone)
     : "💎 All major milestones reached";
 
+  const loadLevelRewards = async () => {
+    const webApp = getTelegramWebApp();
+    if (!webApp?.initData) return;
+    setRewardsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/rewards`, {
+        headers: { Authorization: `tma ${webApp.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) return;
+      setLevelRewards(Array.isArray(data.rewards) ? data.rewards : LEVEL_REWARDS);
+    } catch (error) {
+      console.warn("BATTLE IQ: rewards load failed", error);
+    } finally {
+      setRewardsLoading(false);
+    }
+  };
+
+  const claimLevelReward = async (rewardId: string) => {
+    const webApp = getTelegramWebApp();
+    if (!webApp?.initData) return;
+    setRewardBusy(rewardId);
+    setRewardNotice("");
+    try {
+      const response = await fetch(`${API_BASE}/api/rewards/claim`, {
+        method: "POST",
+        headers: { Authorization: `tma ${webApp.initData}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ rewardId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) {
+        setRewardNotice(data?.error || "Reward unavailable");
+        return;
+      }
+      setRewardNotice(`🎉 ${data.reward?.title || "Reward unlocked"}`);
+      await loadLevelRewards();
+      webApp.HapticFeedback?.notificationOccurred?.("success");
+    } catch (error) {
+      console.warn("BATTLE IQ: reward claim failed", error);
+      setRewardNotice("Could not claim reward");
+    } finally {
+      setRewardBusy(null);
+    }
+  };
+
   // ==========================================
   // SYNC PLAYER PROFILE WITH D1
   // ==========================================
@@ -743,6 +818,7 @@ function App() {
     };
 
     syncProfile();
+    void loadLevelRewards();
 
     return () => {
       cancelled = true;
@@ -3166,6 +3242,44 @@ function App() {
               {nextMilestone
                 ? `🎁 ${milestoneReward} · ${nextMilestone - levelInfo.level} levels to go`
                 : milestoneReward}
+            </div>
+          </section>
+
+          {/* LEVEL REWARDS */}
+          <section
+            style={{
+              marginTop: "14px",
+              padding: "14px",
+              borderRadius: "16px",
+              background: "rgba(255,255,255,0.045)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>LEVEL REWARDS</div>
+                <strong style={{ display: "block", marginTop: 4, fontSize: 15 }}>Unlock as you level up</strong>
+              </div>
+              <div style={{ fontSize: 24 }}>🎁</div>
+            </div>
+            {rewardNotice && <div style={{ marginTop: 10, padding: "9px 10px", borderRadius: 10, background: "rgba(124,77,255,0.14)", border: "1px solid rgba(124,77,255,0.24)", fontSize: 11, fontWeight: 800 }}>{rewardNotice}</div>}
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 9 }}>
+              {levelRewards.map((reward) => {
+                const unlocked = levelInfo.level >= reward.level;
+                return (
+                  <div key={reward.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px", borderRadius: 13, background: unlocked ? "rgba(124,77,255,0.10)" : "rgba(255,255,255,0.025)", border: unlocked ? "1px solid rgba(124,77,255,0.20)" : "1px solid rgba(255,255,255,0.05)", opacity: unlocked ? 1 : 0.58 }}>
+                    <div style={{ width: 38, height: 38, flex: "0 0 38px", borderRadius: 11, display: "grid", placeItems: "center", fontSize: 20, background: "rgba(124,77,255,0.14)" }}>{reward.icon}</div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 900 }}>{reward.title}</div>
+                      <div style={{ marginTop: 2, fontSize: 9, opacity: 0.52 }}>LEVEL {reward.level} · {reward.description}</div>
+                    </div>
+                    <button disabled={!unlocked || reward.claimed || rewardsLoading || rewardBusy === reward.id} onClick={() => void claimLevelReward(reward.id)} style={{ border: 0, borderRadius: 9, padding: "8px 10px", background: reward.claimed ? "rgba(255,255,255,0.07)" : unlocked ? "#7c4dff" : "rgba(255,255,255,0.05)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: unlocked && !reward.claimed ? "pointer" : "default", whiteSpace: "nowrap" }}>
+                      {reward.claimed ? "✓ UNLOCKED" : unlocked ? (rewardBusy === reward.id ? "…" : "CLAIM") : "🔒"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
