@@ -88,6 +88,29 @@ type SeasonPlayer = {
   seasonLevel: number;
 };
 
+type SeasonPassReward = {
+  level: number;
+  tier: "free" | "premium";
+  icon: string;
+  title: string;
+  description: string;
+  code: string;
+  unlocked: boolean;
+  claimed: boolean;
+};
+
+type SeasonPassData = {
+  id: number;
+  seasonNumber: number;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  xp: number;
+  level: number;
+  premiumOwned: boolean;
+  rewards: SeasonPassReward[];
+};
+
 type PlayerData = {
   xp: number;
   streak: number;
@@ -740,6 +763,9 @@ function App() {
   const [seasonLoading, setSeasonLoading] = useState(false);
   const [seasonError, setSeasonError] = useState("");
   const [seasonNow, setSeasonNow] = useState(Date.now());
+  const [seasonPass, setSeasonPass] = useState<SeasonPassData | null>(null);
+  const [seasonPassClaiming, setSeasonPassClaiming] = useState<string | null>(null);
+  const [seasonPassNotice, setSeasonPassNotice] = useState("");
 
   const currentQuestion =
     gameQuestions[questionIndex];
@@ -1113,13 +1139,15 @@ function App() {
         Accept: "application/json",
       };
 
-      const [seasonResponse, leaderboardResponse] = await Promise.all([
+      const [seasonResponse, leaderboardResponse, passResponse] = await Promise.all([
         fetch(`${API_BASE}/api/season`, { headers }),
         fetch(`${API_BASE}/api/season/leaderboard?limit=50`, { headers }),
+        fetch(`${API_BASE}/api/season/pass`, { headers }),
       ]);
 
       const seasonData = await seasonResponse.json();
       const leaderboardData = await leaderboardResponse.json();
+      const passData = await passResponse.json();
 
       if (!seasonResponse.ok || !seasonData?.ok) {
         throw new Error(seasonData?.error || "Не вдалося завантажити сезон");
@@ -1131,11 +1159,48 @@ function App() {
         setSeasonPlayers(Array.isArray(leaderboardData.players) ? leaderboardData.players : []);
         setSeasonRank(leaderboardData.myRank != null ? Number(leaderboardData.myRank) : null);
       }
+
+      if (passResponse.ok && passData?.ok) {
+        setSeasonPass(passData.season || null);
+      }
     } catch (error) {
       console.warn("BATTLE IQ: season load failed", error);
       setSeasonError("Не вдалося завантажити Season 1. Спробуй ще раз.");
     } finally {
       setSeasonLoading(false);
+    }
+  };
+
+  const claimSeasonPassReward = async (rewardCode: string) => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+
+    setSeasonPassClaiming(rewardCode);
+    setSeasonPassNotice("");
+    try {
+      const response = await fetch(`${API_BASE}/api/season/pass/claim`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ rewardCode }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) {
+        setSeasonPassNotice(data?.error || "Не вдалося забрати нагороду");
+        return;
+      }
+      setSeasonPassNotice(`🎉 ${data.reward?.title || "Нагороду отримано"}`);
+      tg.HapticFeedback?.notificationOccurred?.("success");
+      await loadSeason();
+    } catch (error) {
+      console.warn("BATTLE IQ: season pass claim failed", error);
+      setSeasonPassNotice("Не вдалося забрати нагороду. Спробуй ще раз.");
+    } finally {
+      setSeasonPassClaiming(null);
+      window.setTimeout(() => setSeasonPassNotice(""), 2800);
     }
   };
 
@@ -3222,6 +3287,64 @@ function App() {
                   ))}
                 </div>
               </section>
+
+              {seasonPass && (
+                <section style={{ marginTop: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
+                    <div>
+                      <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900 }}>SEASON PASS</div>
+                      <strong style={{ display: "block", marginTop: 3, fontSize: 15 }}>Free + Premium rewards</strong>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 10, fontWeight: 900, opacity: 0.55 }}>299 ⭐</div>
+                      <div style={{ fontSize: 8, opacity: 0.4 }}>BATTLE PASS</div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: 13, borderRadius: 16, background: seasonPass.premiumOwned ? "rgba(255,205,70,0.09)" : "rgba(124,77,255,0.08)", border: seasonPass.premiumOwned ? "1px solid rgba(255,205,70,0.20)" : "1px solid rgba(124,77,255,0.16)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                      <div>
+                        <strong style={{ fontSize: 13 }}>{seasonPass.premiumOwned ? "✨ PREMIUM ACTIVE" : "🎟️ PREMIUM LOCKED"}</strong>
+                        <div style={{ marginTop: 3, fontSize: 9, opacity: 0.55 }}>
+                          {seasonPass.premiumOwned ? "Premium rewards are available when you reach their levels." : "Unlock the premium track with the Battle Pass."}
+                        </div>
+                      </div>
+                      {!seasonPass.premiumOwned && (
+                        <button type="button" onClick={() => setScreen("shop")} style={{ border: 0, borderRadius: 10, padding: "9px 10px", background: "#7c4dff", color: "white", fontSize: 9, fontWeight: 950, whiteSpace: "nowrap" }}>GET PASS</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {seasonPassNotice && (
+                    <div style={{ marginTop: 8, padding: 10, borderRadius: 11, background: "rgba(50,220,150,0.09)", border: "1px solid rgba(50,220,150,0.16)", fontSize: 10, fontWeight: 800 }}>
+                      {seasonPassNotice}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 9, display: "flex", flexDirection: "column", gap: 7 }}>
+                    {seasonPass.rewards.map((reward) => {
+                      const canClaim = reward.unlocked && !reward.claimed && (reward.tier === "free" || seasonPass.premiumOwned);
+                      const lockedPremium = reward.tier === "premium" && !seasonPass.premiumOwned;
+                      return (
+                        <div key={reward.code} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 10px", borderRadius: 13, background: reward.unlocked ? (reward.tier === "premium" ? "rgba(255,205,70,0.08)" : "rgba(124,77,255,0.09)") : "rgba(255,255,255,0.025)", border: reward.unlocked ? (reward.tier === "premium" ? "1px solid rgba(255,205,70,0.16)" : "1px solid rgba(124,77,255,0.16)") : "1px solid rgba(255,255,255,0.05)", opacity: reward.unlocked ? 1 : 0.56 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, display: "grid", placeItems: "center", background: reward.tier === "premium" ? "rgba(255,205,70,0.10)" : "rgba(124,77,255,0.10)", fontSize: 19 }}>{reward.icon}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 10, fontWeight: 950 }}>LVL {reward.level}</span>
+                              <span style={{ fontSize: 8, fontWeight: 900, opacity: 0.55 }}>{reward.tier === "premium" ? "PREMIUM" : "FREE"}</span>
+                            </div>
+                            <div style={{ marginTop: 2, fontSize: 11, fontWeight: 850 }}>{reward.title}</div>
+                            <div style={{ marginTop: 2, fontSize: 8, opacity: 0.48 }}>{reward.description}</div>
+                          </div>
+                          <button type="button" disabled={!canClaim || seasonPassClaiming === reward.code} onClick={() => void claimSeasonPassReward(reward.code)} style={{ border: 0, borderRadius: 9, padding: "7px 9px", background: reward.claimed ? "rgba(255,255,255,0.06)" : canClaim ? (reward.tier === "premium" ? "#b98900" : "#7c4dff") : "rgba(255,255,255,0.04)", color: "inherit", fontSize: 8, fontWeight: 950, whiteSpace: "nowrap", opacity: reward.claimed ? 0.55 : 1 }}>
+                            {reward.claimed ? "✓ CLAIMED" : lockedPremium ? "🎟️" : reward.unlocked ? (seasonPassClaiming === reward.code ? "…" : "CLAIM") : "🔒"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
               <section style={{ marginTop: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 9 }}>
