@@ -322,6 +322,32 @@ function getLevelInfo(totalXp: number) {
   };
 }
 
+function getLevelTitle(level: number) {
+  if (level >= 50) return "MASTERMIND";
+  if (level >= 30) return "GENIUS";
+  if (level >= 20) return "BRAIN";
+  if (level >= 10) return "THINKER";
+  if (level >= 5) return "LEARNER";
+  return "ROOKIE";
+}
+
+function getNextMilestone(level: number) {
+  const milestones = [5, 10, 15, 20, 30, 50];
+  return milestones.find((item) => item > level) ?? null;
+}
+
+function getMilestoneReward(level: number) {
+  const rewards: Record<number, string> = {
+    5: "🎖️ Learner Badge",
+    10: "🟣 Special Profile Frame",
+    15: "⚡ XP Boost",
+    20: "🔥 Exclusive Badge",
+    30: "👑 Elite Profile Badge",
+    50: "💎 Mastermind Badge",
+  };
+  return rewards[level] ?? "🎁 Progression Reward";
+}
+
 type DailyMissionStats = {
   date: string;
   battles: number;
@@ -712,6 +738,12 @@ function App() {
     (levelInfo.currentXp /
       levelInfo.requiredXp) *
     100;
+
+  const levelTitle = getLevelTitle(levelInfo.level);
+  const nextMilestone = getNextMilestone(levelInfo.level);
+  const milestoneReward = nextMilestone
+    ? getMilestoneReward(nextMilestone)
+    : "💎 All major milestones reached";
 
   // ==========================================
   // SYNC PLAYER PROFILE WITH D1
@@ -3188,7 +3220,7 @@ function App() {
                 letterSpacing: "0.06em",
               }}
             >
-              LEVEL {levelInfo.level}
+              LEVEL {levelInfo.level} · {levelTitle}
             </div>
 
             <div
@@ -3263,6 +3295,81 @@ function App() {
               >
                 {Math.round(levelProgress)}% to next level
               </div>
+            </div>
+          </section>
+
+          {/* PROGRESSION */}
+          <section
+            style={{
+              marginTop: "12px",
+              padding: "14px",
+              borderRadius: "16px",
+              background: "rgba(124,77,255,0.10)",
+              border: "1px solid rgba(124,77,255,0.18)",
+              textAlign: "left",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>PROGRESSION</div>
+                <strong style={{ display: "block", marginTop: "4px", fontSize: "15px" }}>
+                  {levelTitle}
+                </strong>
+              </div>
+              <div style={{ fontSize: "24px" }}>🏅</div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "11px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+                fontSize: "10px",
+                fontWeight: 800,
+              }}
+            >
+              <span style={{ opacity: 0.58 }}>NEXT MILESTONE</span>
+              <span>{nextMilestone ? `LEVEL ${nextMilestone}` : "MAX"}</span>
+            </div>
+
+            <div
+              style={{
+                marginTop: "7px",
+                height: "6px",
+                borderRadius: "999px",
+                overflow: "hidden",
+                background: "rgba(255,255,255,0.07)",
+              }}
+            >
+              <div
+                style={{
+                  width: `${levelProgress}%`,
+                  height: "100%",
+                  borderRadius: "999px",
+                  background: "linear-gradient(90deg, #7c4dff, #a855f7)",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                marginTop: "9px",
+                fontSize: "10px",
+                opacity: 0.6,
+              }}
+            >
+              {nextMilestone
+                ? `🎁 ${milestoneReward} · ${nextMilestone - levelInfo.level} levels to go`
+                : milestoneReward}
             </div>
           </section>
 
@@ -4492,6 +4599,28 @@ function App() {
               <span>day streak</span>
             </div>
           </div>
+
+          {leveledUp && (
+            <section
+              style={{
+                width: "100%",
+                marginTop: "12px",
+                padding: "14px",
+                borderRadius: "16px",
+                background: "rgba(124,77,255,0.12)",
+                border: "1px solid rgba(124,77,255,0.22)",
+                textAlign: "left",
+              }}
+            >
+              <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>NEW RANK</div>
+              <strong style={{ display: "block", marginTop: "4px", fontSize: "18px" }}>
+                LEVEL {newLevelInfo.level} · {getLevelTitle(newLevelInfo.level)}
+              </strong>
+              <div style={{ marginTop: "6px", fontSize: "11px", opacity: 0.62 }}>
+                🎁 Next milestone: {getNextMilestone(newLevelInfo.level) ? `Level ${getNextMilestone(newLevelInfo.level)}` : "All major milestones reached"}
+              </div>
+            </section>
+          )}
 
           <section
             style={{
