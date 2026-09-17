@@ -3291,6 +3291,51 @@ function App() {
             </div>
           </section>
 
+          {/* PLAYER SNAPSHOT 2.0 */}
+          <section
+            style={{
+              marginTop: "14px",
+              padding: "14px",
+              borderRadius: "16px",
+              background: "rgba(255,255,255,0.045)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>PLAYER SNAPSHOT</div>
+                <strong style={{ display: "block", marginTop: 4, fontSize: 15 }}>Your BATTLE IQ profile</strong>
+              </div>
+              <div style={{ fontSize: 23 }}>{equippedFrame ? (PROFILE_FRAME_EMOJI[equippedFrame] || "✨") : "🧠"}</div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginTop: 12 }}>
+              {[
+                ["⚔️", player.battles.toLocaleString(), "BATTLES"],
+                ["🎯", player.battles > 0 ? `${Math.round((player.totalCorrect / (player.battles * 10)) * 100)}%` : "0%", "ACCURACY"],
+                ["🔥", player.bestCombo.toLocaleString(), "BEST COMBO"],
+              ].map(([icon, value, label]) => (
+                <div key={label} style={{ padding: "11px 8px", borderRadius: 13, background: "rgba(124,77,255,0.08)", border: "1px solid rgba(124,77,255,0.12)", textAlign: "center", minWidth: 0 }}>
+                  <div style={{ fontSize: 16 }}>{icon}</div>
+                  <strong style={{ display: "block", marginTop: 4, fontSize: 16 }}>{value}</strong>
+                  <div style={{ marginTop: 3, fontSize: 8, opacity: 0.48, fontWeight: 900, whiteSpace: "nowrap" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, marginTop: 8 }}>
+              <div style={{ padding: "10px 11px", borderRadius: 12, background: "rgba(255,255,255,0.035)" }}>
+                <div style={{ fontSize: 9, opacity: 0.5, fontWeight: 900 }}>ACHIEVEMENTS</div>
+                <strong style={{ display: "block", marginTop: 4, fontSize: 14 }}>{unlockedAchievements}/{achievements.length} unlocked</strong>
+              </div>
+              <div style={{ padding: "10px 11px", borderRadius: 12, background: "rgba(255,255,255,0.035)" }}>
+                <div style={{ fontSize: 9, opacity: 0.5, fontWeight: 900 }}>COLLECTION</div>
+                <strong style={{ display: "block", marginTop: 4, fontSize: 14 }}>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items</strong>
+              </div>
+            </div>
+          </section>
+
           {/* STATS */}
           <section
             className="stats-grid"
