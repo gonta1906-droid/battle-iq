@@ -22,7 +22,8 @@ type Screen =
   | "pvp_stats"
   | "season"
   | "referral"
-  | "daily_bonus";
+  | "daily_bonus"
+  | "social";
 
 type Answer = {
   text: string;
@@ -651,6 +652,32 @@ function App() {
   useEffect(() => {
     void loadDailyBonus();
   }, []);
+
+  const openSocial = () => {
+    setScreen("social");
+  };
+
+  const inviteFriendFromSocial = async () => {
+    const tg = getTelegramWebApp();
+    const myId = telegramUser?.id;
+    if (!myId) {
+      setChallengeNotice("⚠️ Відкрий BATTLE IQ через Telegram.");
+      window.setTimeout(() => setChallengeNotice(""), 2600);
+      return;
+    }
+
+    const inviteUrl = `https://t.me/battleiqbot?startapp=friend_${myId}`;
+    const text = "⚔️ Приєднуйся до BATTLE IQ! Додамося в друзі та порівняємо результат.";
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "BATTLE IQ", text, url: inviteUrl });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteUrl);
+        setChallengeNotice("🔗 Invite link copied!");
+      }
+      tg?.HapticFeedback?.impactOccurred("medium");
+    } catch {}
+  };
 
   const loadReferral = async () => {
     const tg = getTelegramWebApp();
@@ -2626,6 +2653,24 @@ function App() {
             </button>
 
             <section
+              onClick={openSocial}
+              style={{
+                marginBottom: 12, padding: 16, cursor: "pointer", borderRadius: 20,
+                background: "linear-gradient(135deg, rgba(60,170,255,0.15), rgba(130,100,255,0.11))",
+                border: "1px solid rgba(90,180,255,0.18)",
+              }}
+            >
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                <div>
+                  <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.55 }}>SOCIAL</div>
+                  <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>👥 Friends Hub</div>
+                  <div style={{ fontSize:12, opacity:.55, marginTop:3 }}>{friends.length} friends · compare your stats</div>
+                </div>
+                <div style={{ fontSize:28 }}>👥</div>
+              </div>
+            </section>
+
+            <section
               onClick={() => setScreen("daily_bonus")}
               style={{
                 marginBottom: 12, padding: 16, cursor: "pointer", borderRadius: 20,
@@ -3373,6 +3418,124 @@ function App() {
   // ==========================================
   // SEASON
   // ==========================================
+
+  if (screen === "social") {
+    const currentStats = {
+      name: telegramUser?.first_name || telegramUser?.username || "You",
+      xp: Number(player.xp || 0),
+      level: Number(levelInfo.level || 1),
+      battles: Number(player.battles || 0),
+      bestCombo: Number(player.bestCombo || 0),
+      bestBattleXp: Number(player.bestBattleXp || 0),
+    };
+
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <div className="section-title" style={{ marginBottom:18 }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.45 }}>SOCIAL</div>
+              <h1 style={{ margin:"3px 0 0" }}>Friends Hub</h1>
+            </div>
+            <button type="button" onClick={inviteFriendFromSocial} style={{ border:0,borderRadius:12,padding:"9px 12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:900 }}>➕</button>
+          </div>
+
+          <section style={{
+            padding:18,borderRadius:22,marginBottom:14,
+            background:"linear-gradient(135deg,rgba(60,170,255,.15),rgba(130,100,255,.12))",
+            border:"1px solid rgba(90,180,255,.18)"
+          }}>
+            <div style={{ fontSize:11,fontWeight:900,letterSpacing:1,opacity:.5 }}>YOUR SNAPSHOT</div>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginTop:12 }}>
+              <div><strong style={{fontSize:18}}>{currentStats.level}</strong><div style={{fontSize:9,opacity:.45}}>LEVEL</div></div>
+              <div><strong style={{fontSize:18}}>{currentStats.xp.toLocaleString()}</strong><div style={{fontSize:9,opacity:.45}}>XP</div></div>
+              <div><strong style={{fontSize:18}}>{currentStats.bestCombo}</strong><div style={{fontSize:9,opacity:.45}}>COMBO</div></div>
+              <div><strong style={{fontSize:18}}>{currentStats.battles}</strong><div style={{fontSize:9,opacity:.45}}>BATTLES</div></div>
+            </div>
+          </section>
+
+          {challengeNotice && (
+            <div style={{ marginBottom:12,padding:"11px 13px",borderRadius:14,background:"rgba(80,220,150,.12)",fontWeight:800 }}>
+              {challengeNotice}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={inviteFriendFromSocial}
+            style={{
+              width:"100%",border:0,borderRadius:16,padding:"13px 14px",marginBottom:14,
+              background:"linear-gradient(135deg,rgba(124,77,255,.22),rgba(60,170,255,.16))",
+              color:"inherit",fontWeight:950
+            }}
+          >
+            ➕ INVITE A FRIEND · COMPARE STATS
+          </button>
+
+          <div style={{ display:"grid",gap:10 }}>
+            {friends.length === 0 ? (
+              <section style={{ padding:22,borderRadius:18,background:"rgba(255,255,255,.045)",textAlign:"center" }}>
+                <div style={{fontSize:34}}>👥</div>
+                <strong>No friends yet</strong>
+                <p style={{margin:"7px 0 0",opacity:.55,fontSize:12}}>Invite a friend and compare XP, level, battles and combo.</p>
+              </section>
+            ) : friends.map((friend:any) => {
+              const friendXp = Number(friend.xp || 0);
+              const friendLevel = Number(friend.level || 1);
+              const friendBattles = Number(friend.battles || 0);
+              const friendCombo = Number(friend.best_combo || 0);
+              const friendBestXp = Number(friend.best_battle_xp || 0);
+              const friendCorrect = Number(friend.totalCorrect || 0);
+              const activeAt = friend.updated_at ? new Date(friend.updated_at).getTime() : 0;
+              const activeRecently = activeAt > 0 && Date.now() - activeAt < 24 * 60 * 60 * 1000;
+
+              return (
+                <section key={String(friend.id)} style={{
+                  padding:16,borderRadius:20,
+                  background:"rgba(255,255,255,.045)",
+                  border:"1px solid rgba(255,255,255,.07)"
+                }}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:46,height:46,borderRadius:15,display:"grid",placeItems:"center",fontSize:22,background:"rgba(130,100,255,.15)"}}>
+                      {friend.avatar || "👤"}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:7}}>
+                        <strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{friend.first_name || friend.username || "Player"}</strong>
+                        {activeRecently && <span style={{fontSize:9,fontWeight:900,color:"#6ee7b7"}}>● ACTIVE</span>}
+                      </div>
+                      <div style={{fontSize:11,opacity:.45}}>Global #{Number(friend.globalRank || 0)} · Lv {friendLevel}</div>
+                    </div>
+                  </div>
+
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginTop:14}}>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendXp.toLocaleString()}</strong><div style={{fontSize:8,opacity:.4}}>XP</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBattles}</strong><div style={{fontSize:8,opacity:.4}}>BATTLES</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendCombo}</strong><div style={{fontSize:8,opacity:.4}}>BEST COMBO</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBestXp}</strong><div style={{fontSize:8,opacity:.4}}>BEST XP</div></div>
+                  </div>
+
+                  <div style={{marginTop:10,fontSize:11,opacity:.5}}>
+                    ✅ {friendCorrect} correct answers
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+
+          <button className="quick-card" onClick={() => setScreen("home")} style={{ width:"100%",border:0,marginTop:14 }}>
+            <div className="quick-icon purple">⌂</div>
+            <div><strong>BACK HOME</strong><span>Return to BATTLE IQ</span></div>
+            <b>→</b>
+          </button>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (screen === "daily_bonus") {
     return (
