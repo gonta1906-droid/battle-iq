@@ -584,6 +584,8 @@ function App() {
       title: string;
     } | null>(null);
 
+  const [serverAchievements, setServerAchievements] = useState<any[]>([]);
+
   const [battleCombo, setBattleCombo] =
     useState(0);
 
@@ -981,63 +983,41 @@ function App() {
   }, [telegramUser?.id]);
 
   useEffect(() => {
-    const unlocked = ACHIEVEMENTS.filter(
-      (achievement) =>
-        achievement.getProgress(
-          player,
-          dailyMissions,
-          levelInfo.level
-        ).unlocked
-    );
-
-    let seen: string[] = [];
-
-    try {
-      const saved = localStorage.getItem(
-        "battle_iq_seen_achievements"
-      );
-
-      if (saved) {
-        seen = JSON.parse(saved);
+    let cancelled = false;
+    const loadAchievements = async () => {
+      try {
+        const tg = getTelegramWebApp();
+        if (!tg?.initData) return;
+        const response = await fetch(`${API_BASE}/api/achievements`, {
+          headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+        });
+        const data = await response.json();
+        if (cancelled || !response.ok || !data?.ok) return;
+        setServerAchievements(Array.isArray(data.achievements) ? data.achievements : []);
+        const firstNew = Array.isArray(data.newlyUnlocked) ? data.newlyUnlocked[0] : null;
+        if (firstNew) {
+          const achievement = (data.achievements || []).find((item: any) => item.id === firstNew);
+          if (achievement) {
+            setAchievementToast({ icon: achievement.icon, title: achievement.title });
+            getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+            await fetch(`${API_BASE}/api/achievements/seen`, {
+              method: "POST",
+              headers: {
+                Authorization: `tma ${tg.initData}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ achievementId: achievement.id }),
+            });
+            window.setTimeout(() => setAchievementToast(null), 3500);
+          }
+        }
+      } catch (error) {
+        console.warn("BATTLE IQ: achievements sync failed", error);
       }
-    } catch {}
-
-    const newlyUnlocked =
-      unlocked.find(
-        (achievement) =>
-          !seen.includes(achievement.id)
-      );
-
-    if (newlyUnlocked) {
-      const updatedSeen = [
-        ...seen,
-        newlyUnlocked.id,
-      ];
-
-      localStorage.setItem(
-        "battle_iq_seen_achievements",
-        JSON.stringify(updatedSeen)
-      );
-
-      setAchievementToast({
-        icon: newlyUnlocked.icon,
-        title: newlyUnlocked.title,
-      });
-
-      getTelegramWebApp()
-        ?.HapticFeedback?.notificationOccurred(
-          "success"
-        );
-
-      window.setTimeout(() => {
-        setAchievementToast(null);
-      }, 3500);
-    }
-  }, [
-    player,
-    dailyMissions,
-    levelInfo.level,
-  ]);
+    };
+    loadAchievements();
+    return () => { cancelled = true; };
+  }, [telegramUser?.id, player.battles, player.bestCombo, player.xp, player.bestBattleXp, dailyMissions.claimed.length, levelInfo.level]);
 
   // ==========================================
   // TIMER
@@ -2974,21 +2954,12 @@ function App() {
   // ==========================================
 
   if (screen === "profile") {
-    const achievements = ACHIEVEMENTS.map(
-      (achievement) => {
-        const progress =
-          achievement.getProgress(
-            player,
-            dailyMissions,
-            levelInfo.level
-          );
-
-        return {
+    const achievements = serverAchievements.length
+      ? serverAchievements
+      : ACHIEVEMENTS.map((achievement) => ({
           ...achievement,
-          ...progress,
-        };
-      }
-    );
+          ...achievement.getProgress(player, dailyMissions, levelInfo.level),
+        }));
 
     const unlockedAchievements =
       achievements.filter(
