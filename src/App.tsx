@@ -20,7 +20,8 @@ type Screen =
   | "pvp_battle"
   | "pvp_result"
   | "pvp_stats"
-  | "season";
+  | "season"
+  | "referral";
 
 type Answer = {
   text: string;
@@ -111,6 +112,14 @@ type SeasonPassData = {
   rewards: SeasonPassReward[];
 };
 
+type ReferralData = {
+  code: string;
+  link: string;
+  referrals: number;
+  earnedCoins: number;
+  rewardCoins: number;
+};
+
 type PlayerData = {
   xp: number;
   streak: number;
@@ -175,16 +184,12 @@ const PROFILE_FRAME_EMOJI: Record<string, string> = {
   neon_frame: "🟣",
   fire_frame: "🔥",
   legendary_frame: "👑",
-  season_s1_free_25: "💠",
-  season_s1_premium_25: "💜",
 };
 
 const FRAME_STYLES: Record<string, CSSProperties> = {
   neon_frame: { border: "2px solid rgba(124,77,255,0.95)", boxShadow: "0 0 0 3px rgba(124,77,255,0.16), 0 0 24px rgba(124,77,255,0.42)" },
   fire_frame: { border: "2px solid rgba(255,110,60,0.95)", boxShadow: "0 0 0 3px rgba(255,110,60,0.14), 0 0 24px rgba(255,110,60,0.34)" },
   legendary_frame: { border: "2px solid rgba(255,205,70,0.95)", boxShadow: "0 0 0 3px rgba(255,205,70,0.14), 0 0 28px rgba(255,205,70,0.36)" },
-  season_s1_free_25: { border: "2px solid rgba(80,210,255,0.95)", boxShadow: "0 0 0 3px rgba(80,210,255,0.16), 0 0 26px rgba(80,210,255,0.35)" },
-  season_s1_premium_25: { border: "2px solid rgba(205,110,255,0.95)", boxShadow: "0 0 0 3px rgba(205,110,255,0.16), 0 0 28px rgba(205,110,255,0.38)" },
 };
 
 const ACHIEVEMENTS = [
@@ -473,6 +478,10 @@ function App() {
 
   const [telegramUser, setTelegramUser] =
     useState<TelegramUser | null>(null);
+  const [referral, setReferral] = useState<ReferralData | null>(null);
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralNotice, setReferralNotice] = useState("");
+
 
   useEffect(() => {
     const webApp = getTelegramWebApp();
@@ -572,6 +581,74 @@ function App() {
   }, []);
 
   // ==========================================
+  const loadReferral = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) return;
+    setReferralLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/referral`, {
+        headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok) setReferral(data.referral || null);
+    } catch (error) {
+      console.warn("BATTLE IQ: referral load failed", error);
+    } finally {
+      setReferralLoading(false);
+    }
+  };
+
+  const activateReferralFromTelegram = async () => {
+    const tg:any = getTelegramWebApp();
+    const code = String(tg?.initDataUnsafe?.start_param || "");
+    if (!tg?.initData || !/^ref_\d+$/.test(code)) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/referral/activate`, {
+        method: "POST",
+        headers: {
+          Authorization: `tma ${tg.initData}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ code }),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok && data?.activated) {
+        setReferralNotice("🎉 Referral activated! +500 coins");
+        window.setTimeout(() => setReferralNotice(""), 3000);
+        getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+        await loadReferral();
+      }
+    } catch (error) {
+      console.warn("BATTLE IQ: referral activation failed", error);
+    }
+  };
+
+  const openReferral = async () => {
+    setScreen("referral");
+    await loadReferral();
+  };
+
+  const shareReferral = async () => {
+    const tg = getTelegramWebApp();
+    if (!referral?.link) return;
+    const text = `🧠 BATTLE IQ — грай батли, прокачуй IQ і змагайся з друзями!\n\n🎁 Приєднуйся за моїм запрошенням: ${referral.link}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "BATTLE IQ", text });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        setReferralNotice("✅ Invite copied!");
+        window.setTimeout(() => setReferralNotice(""), 2500);
+      }
+      tg?.HapticFeedback?.impactOccurred("medium");
+    } catch {}
+  };
+
+  useEffect(() => {
+    void activateReferralFromTelegram();
+  }, []);
+
   // GAME STATE
   // ==========================================
 
@@ -768,7 +845,6 @@ function App() {
   const [seasonError, setSeasonError] = useState("");
   const [seasonNow, setSeasonNow] = useState(Date.now());
   const [seasonPass, setSeasonPass] = useState<SeasonPassData | null>(null);
-  const [seasonPassLoading, setSeasonPassLoading] = useState(false);
   const [seasonPassClaiming, setSeasonPassClaiming] = useState<string | null>(null);
   const [seasonPassNotice, setSeasonPassNotice] = useState("");
 
@@ -878,7 +954,7 @@ function App() {
         }));
 
         if (remote.frame) {
-          const frameId = remote.frame === "neon" ? "neon_frame" : remote.frame === "fire" ? "fire_frame" : remote.frame === "legendary" ? "legendary_frame" : remote.frame === "season_1_free" ? "season_s1_free_25" : remote.frame === "season_1_premium" ? "season_s1_premium_25" : null;
+          const frameId = remote.frame === "neon" ? "neon_frame" : remote.frame === "fire" ? "fire_frame" : remote.frame === "legendary" ? "legendary_frame" : null;
           setEquippedFrame(frameId);
         }
 
@@ -1199,7 +1275,6 @@ function App() {
       }
       setSeasonPassNotice(`🎉 ${data.reward?.title || "Нагороду отримано"}`);
       tg.HapticFeedback?.notificationOccurred?.("success");
-      await refreshInventory();
       await loadSeason();
     } catch (error) {
       console.warn("BATTLE IQ: season pass claim failed", error);
@@ -2495,6 +2570,20 @@ function App() {
 
             <button
               className="quick-card"
+              onClick={openReferral}
+            >
+              <div className="quick-icon" style={{ background: "linear-gradient(135deg, rgba(80,220,150,0.20), rgba(40,160,255,0.14))" }}>
+                🎁
+              </div>
+              <div>
+                <strong>INVITE FRIENDS</strong>
+                <span>+500 coins for each referral</span>
+              </div>
+              <b>→</b>
+            </button>
+
+            <button
+              className="quick-card"
               onClick={() =>
                 setScreen(
                   "ranking"
@@ -2993,7 +3082,7 @@ function App() {
                     <div style={{ fontSize: 23 }}>{item.icon || "🎁"}</div>
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
-                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame", "season_s1_free_25", "season_s1_premium_25"].includes(item.product_id) && (
+                    {item.category === "PROFILE" && ["neon_frame", "fire_frame", "legendary_frame"].includes(item.product_id) && (
                       <button type="button" disabled={shopBusy === item.product_id} onClick={() => equipFrame(item.product_id)} style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: item.equipped ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
                         {item.equipped ? "EQUIPPED ✓" : "EQUIP"}
                       </button>
@@ -3181,6 +3270,52 @@ function App() {
   // ==========================================
   // SEASON
   // ==========================================
+
+  if (screen === "referral") {
+    return (
+      <div className="app">
+        <div className="glow glow-one" />
+        <div className="glow glow-two" />
+        <Header />
+        <main className="content">
+          <div className="section-title" style={{ marginBottom: 18 }}>
+            <h1 style={{ margin: 0 }}>Invite Friends</h1>
+            <button type="button" onClick={loadReferral} style={{ border: 0, borderRadius: 12, padding: "9px 12px", background: "rgba(255,255,255,0.07)", color: "inherit", fontWeight: 800 }}>↻</button>
+          </div>
+
+          <section style={{ padding: 22, borderRadius: 24, background: "linear-gradient(135deg, rgba(80,220,150,0.18), rgba(70,120,255,0.14))", border: "1px solid rgba(120,220,180,0.20)", marginBottom: 18 }}>
+            <div style={{ fontSize: 42 }}>🎁</div>
+            <h2 style={{ margin: "8px 0 6px" }}>Bring your squad.</h2>
+            <p style={{ margin: 0, opacity: 0.68, lineHeight: 1.5 }}>
+              Invite a friend to BATTLE IQ. When they join through your link, both players receive <strong>+500 coins</strong>.
+            </p>
+          </section>
+
+          <section className="stats-grid">
+            <div className="stat-card"><span>👥</span><strong>{referral?.referrals ?? 0}</strong><small>REFERRALS</small></div>
+            <div className="stat-card"><span>🪙</span><strong>{(referral?.earnedCoins ?? 0).toLocaleString()}</strong><small>COINS EARNED</small></div>
+          </section>
+
+          {referralNotice && (
+            <div style={{ margin: "14px 0", padding: "12px 14px", borderRadius: 14, background: "rgba(80,220,150,0.12)", border: "1px solid rgba(80,220,150,0.22)", fontWeight: 800 }}>
+              {referralNotice}
+            </div>
+          )}
+
+          <button className="play-button" onClick={shareReferral} disabled={referralLoading || !referral?.link} style={{ width: "100%", marginBottom: 12 }}>
+            🎁 INVITE FRIEND <span className="arrow">→</span>
+          </button>
+
+          <button className="quick-card" onClick={() => setScreen("home")} style={{ width: "100%", border: 0 }}>
+            <div className="quick-icon purple">⌂</div>
+            <div><strong>BACK HOME</strong><span>Return to BATTLE IQ</span></div>
+            <b>→</b>
+          </button>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (screen === "season") {
     const seasonProgress = season
