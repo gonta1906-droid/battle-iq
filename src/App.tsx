@@ -150,6 +150,7 @@ type ReferralData = {
 
 type PlayerData = {
   xp: number;
+  coins: number;
   streak: number;
   battles: number;
   totalCorrect: number;
@@ -168,6 +169,7 @@ type ShopProduct = {
   icon?: string;
   category: string;
   price_stars: number;
+  price_coins?: number;
   enabled?: number;
   featured?: boolean;
 };
@@ -181,6 +183,7 @@ type InventoryItem = {
   icon?: string;
   category: string;
   price_stars: number;
+  price_coins?: number;
 };
 
 type LevelReward = {
@@ -206,9 +209,9 @@ const SHOP_FALLBACK: ShopProduct[] = [
   { id: "neon_frame", icon: "🟣", title: "Neon Frame", description: "Stand out in the ranking", price_stars: 25, category: "PROFILE" },
   { id: "fire_frame", icon: "🔥", title: "Fire Frame", description: "Bring the heat to your profile", price_stars: 50, category: "PROFILE" },
   { id: "legendary_frame", icon: "👑", title: "Legendary Frame", description: "Premium profile frame", price_stars: 100, category: "PROFILE" },
-  { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, category: "BATTLE" },
-  { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, category: "BATTLE" },
-  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, category: "BATTLE" },
+  { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, price_coins: 300, category: "BATTLE" },
+  { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, price_coins: 1000, category: "BATTLE" },
+  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, price_coins: 2000, category: "BATTLE" },
   { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
   { id: "aurora_frame", icon: "🌈", title: "Aurora Frame", description: "Northern-light inspired profile frame", price_stars: 65, category: "COSMETICS" },
   { id: "cyber_frame", icon: "🧬", title: "Cyber Frame", description: "Neon cyber profile frame", price_stars: 85, category: "COSMETICS" },
@@ -1175,6 +1178,7 @@ function App() {
   const [player, setPlayer] =
     useState<PlayerData>({
       xp: 0,
+      coins: 0,
       streak: 0,
       battles: 0,
       totalCorrect: 0,
@@ -1394,6 +1398,7 @@ function App() {
         setPlayer((current) => ({
           ...current,
           xp: Number(remote.xp ?? current.xp),
+          coins: Number(remote.coins ?? current.coins),
           streak: Number(remote.streak ?? current.streak),
           battles: Number(remote.battles ?? current.battles),
           totalCorrect: Number(remote.totalCorrect ?? current.totalCorrect),
@@ -3625,6 +3630,59 @@ function App() {
       }
     };
 
+    const buyProductForCoins = async (product: ShopProduct) => {
+      const tg = getTelegramWebApp();
+      if (!tg?.initData) {
+        setChallengeNotice("⚠️ Відкрий BATTLE IQ через Telegram.");
+        window.setTimeout(() => setChallengeNotice(""), 2600);
+        return;
+      }
+
+      const price = Number(product.price_coins || 0);
+      if (price <= 0) {
+        setChallengeNotice("Цей предмет продається тільки за ⭐ Stars.");
+        window.setTimeout(() => setChallengeNotice(""), 2600);
+        return;
+      }
+      if (player.coins < price) {
+        setChallengeNotice(`🪙 Потрібно ${price.toLocaleString()} 🪙. У тебе ${player.coins.toLocaleString()} 🪙.`);
+        window.setTimeout(() => setChallengeNotice(""), 2800);
+        return;
+      }
+
+      setShopBusy(`${product.id}:coins`);
+      tg.HapticFeedback?.impactOccurred("medium");
+
+      try {
+        const response = await fetch(`${API_BASE}/api/shop/buy-coins`, {
+          method: "POST",
+          headers: {
+            Authorization: `tma ${tg.initData}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ productId: product.id }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.error || "Не вдалося купити предмет");
+        }
+
+        setPlayer((current) => ({
+          ...current,
+          coins: Number(data.coins ?? Math.max(0, current.coins - price)),
+        }));
+        await refreshInventory();
+        setChallengeNotice(`🎉 ${product.title} куплено за 🪙!`);
+        tg.HapticFeedback?.notificationOccurred("success");
+      } catch (error) {
+        setChallengeNotice(error instanceof Error ? `⚠️ ${error.message}` : "⚠️ Не вдалося купити предмет.");
+      } finally {
+        setShopBusy(null);
+        window.setTimeout(() => setChallengeNotice(""), 2800);
+      }
+    };
+
     const equipFrame = async (productId: string) => {
       const tg = getTelegramWebApp();
       if (!tg?.initData) return;
@@ -3711,7 +3769,10 @@ function App() {
               <div style={{ fontSize: 11, letterSpacing: 1.8, fontWeight: 900, opacity: 0.5 }}>BATTLE IQ STORE</div>
               <h1 style={{ margin: "4px 0 0", fontSize: 30, lineHeight: 1.05 }}>Shop 4.2</h1>
             </div>
-            <div style={{ padding: "9px 13px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 13 }}>⭐ Stars</div>
+            <div style={{ display:"flex", gap:7, alignItems:"center", flexWrap:"wrap", justifyContent:"flex-end" }}>
+              <div style={{ padding: "9px 12px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 12 }}>🪙 {player.coins.toLocaleString()}</div>
+              <div style={{ padding: "9px 12px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 900, fontSize: 12 }}>⭐ Stars</div>
+            </div>
           </div>
 
           <section style={{ position: "relative", overflow: "hidden", padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.22)", marginBottom: 18 }}>
@@ -3755,6 +3816,7 @@ function App() {
                               icon: item.icon,
                               category: item.category,
                               price_stars: item.price_stars,
+                              price_coins: (item as any).price_coins,
                             };
                             void equipCosmetic(product);
                           }
@@ -3782,7 +3844,7 @@ function App() {
                   category === "ANIMATIONS" ? "🎞️ Profile Animations" :
                   category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"
                 }</h2>
-                <span>⭐ Stars</span>
+                <span>{shopProducts.some((p) => p.category === category && Number(p.price_coins || 0) > 0) ? "🪙 Coins · ⭐ Stars" : "⭐ Stars"}</span>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
@@ -3801,7 +3863,7 @@ function App() {
                         <div style={{ marginTop: 11, padding: "8px 7px", borderRadius: 11, background: "rgba(124,77,255,0.13)", border: "1px solid rgba(124,77,255,0.2)", textAlign: "center", fontSize: 10, fontWeight: 900 }}>OWNED · x{item?.quantity || 0}</div>
                       ) : (
                         <button type="button" disabled={shopBusy === product.id} onClick={() => setPreviewProduct(product)} style={{ width: "100%", marginTop: 11, border: "none", borderRadius: 11, padding: "9px 8px", background: "rgba(255,255,255,0.09)", color: "inherit", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>
-                          PREVIEW · {product.price_stars} ⭐
+                          PREVIEW · {product.price_coins ? `${Number(product.price_coins).toLocaleString()} 🪙 · ${product.price_stars} ⭐` : `${product.price_stars} ⭐`}
                         </button>
                       )}
                     </div>
@@ -3897,6 +3959,24 @@ function App() {
               >
                 {shopBusy === previewProduct.id ? "OPENING…" : `BUY FOR ${previewProduct.price_stars} ⭐`}
               </button>
+              {Number(previewProduct.price_coins || 0) > 0 && (
+                <button
+                  type="button"
+                  disabled={shopBusy === `${previewProduct.id}:coins` || player.coins < Number(previewProduct.price_coins)}
+                  onClick={() => {
+                    const product = previewProduct;
+                    setPreviewProduct(null);
+                    void buyProductForCoins(product);
+                  }}
+                  style={{
+                    width:"100%",marginTop:9,border:"1px solid rgba(255,255,255,.10)",borderRadius:15,padding:"13px",
+                    background: player.coins >= Number(previewProduct.price_coins) ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.04)",
+                    color:"#fff",fontWeight:950,fontSize:12
+                  }}
+                >
+                  {shopBusy === `${previewProduct.id}:coins` ? "BUYING…" : `BUY FOR ${Number(previewProduct.price_coins).toLocaleString()} 🪙`}
+                </button>
+              )}
 
               <div style={{marginTop:9,textAlign:"center",fontSize:9,opacity:.38}}>
                 Direct purchase · no random rewards
