@@ -934,7 +934,7 @@ function App() {
       return;
     }
 
-    const inviteUrl = `https://t.me/batleiqbot?startapp=ref_${myId}`;
+    const inviteUrl = `https://t.me/battleiqbot?startapp=friend_${myId}`;
     const text = "⚔️ Приєднуйся до BATTLE IQ! Додамося в друзі та порівняємо результат.";
     try {
       if (navigator.share) {
@@ -945,6 +945,69 @@ function App() {
       }
       tg?.HapticFeedback?.impactOccurred("medium");
     } catch {}
+  };
+
+  const createFriendChallenge = async () => {
+    const tg = getTelegramWebApp();
+    if (!tg?.initData) {
+      setChallengeNotice("⚠️ Відкрий BATTLE IQ через Telegram.");
+      window.setTimeout(() => setChallengeNotice(""), 2600);
+      return;
+    }
+    setChallengeNotice("⚔️ Створюємо виклик...");
+    try {
+      const response = await fetch(`${API_BASE}/api/pvp/challenge`, {
+        method: "POST",
+        headers: { Authorization: `tma ${tg.initData}`, "Content-Type": "application/json", Accept: "application/json" },
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok || !data?.match?.matchId) throw new Error(data?.error || "Не вдалося створити виклик");
+      const matchId = Number(data.match.matchId);
+      const inviteUrl = `https://t.me/batleiqbot?startapp=challenge_${matchId}`;
+      const text = "⚔️ Я викликаю тебе на BATTLE IQ 1v1! Відкрий посилання та спробуй перемогти мене.";
+      if (navigator.share) {
+        await navigator.share({ title: "BATTLE IQ 1v1", text, url: inviteUrl });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${text}\n${inviteUrl}`);
+        setChallengeNotice("🔗 Виклик створено — посилання скопійовано!");
+      }
+      setPvpMatch(data.match);
+      setPvpSearching(true);
+      setScreen("pvp");
+      tg.HapticFeedback?.impactOccurred("medium");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setChallengeNotice(error instanceof Error ? error.message : "Не вдалося створити виклик");
+      window.setTimeout(() => setChallengeNotice(""), 3000);
+    }
+  };
+
+  const joinChallengeFromTelegram = async () => {
+    const tg:any = getTelegramWebApp();
+    const param = String(tg?.initDataUnsafe?.start_param || "");
+    const match = param.match(/^challenge_(\d+)$/);
+    if (!tg?.initData || !match) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/pvp/challenge/join`, {
+        method: "POST",
+        headers: { Authorization: `tma ${tg.initData}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ matchId: Number(match[1]) }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) {
+        setChallengeNotice(data?.error || "⚠️ Не вдалося приєднатися до виклику");
+        window.setTimeout(() => setChallengeNotice(""), 3000);
+        return;
+      }
+      setPvpMatch(data.match);
+      setPvpSearching(false);
+      setPvpError("");
+      setScreen("pvp");
+      tg.HapticFeedback?.notificationOccurred("success");
+    } catch {
+      setChallengeNotice("⚠️ Не вдалося приєднатися до виклику");
+      window.setTimeout(() => setChallengeNotice(""), 3000);
+    }
   };
 
   const loadReferral = async () => {
@@ -1013,6 +1076,7 @@ function App() {
 
   useEffect(() => {
     void activateReferralFromTelegram();
+    void joinChallengeFromTelegram();
   }, []);
 
   // GAME STATE
@@ -4109,17 +4173,14 @@ function App() {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={inviteFriendFromSocial}
-            style={{
-              width:"100%",border:0,borderRadius:16,padding:"13px 14px",marginBottom:14,
-              background:"linear-gradient(135deg,rgba(124,77,255,.22),rgba(60,170,255,.16))",
-              color:"inherit",fontWeight:950
-            }}
-          >
-            ➕ INVITE A FRIEND · COMPARE STATS
-          </button>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+            <button type="button" onClick={createFriendChallenge} style={{ width:"100%",border:0,borderRadius:16,padding:"13px 10px",background:"linear-gradient(135deg,rgba(124,77,255,.28),rgba(60,170,255,.20))",color:"inherit",fontWeight:950 }}>
+              ⚔️ CHALLENGE 1V1
+            </button>
+            <button type="button" onClick={inviteFriendFromSocial} style={{ width:"100%",border:0,borderRadius:16,padding:"13px 10px",background:"rgba(255,255,255,.06)",color:"inherit",fontWeight:950 }}>
+              ➕ INVITE FRIEND
+            </button>
+          </div>
 
           <div style={{ display:"grid",gap:10 }}>
             {friends.length === 0 ? (
@@ -4167,6 +4228,9 @@ function App() {
                   <div style={{marginTop:10,fontSize:11,opacity:.5}}>
                     ✅ {friendCorrect} correct answers
                   </div>
+                  <button type="button" onClick={createFriendChallenge} style={{ width:"100%",marginTop:12,border:0,borderRadius:12,padding:"10px 12px",background:"rgba(124,77,255,.16)",color:"inherit",fontWeight:900 }}>
+                    ⚔️ CHALLENGE {friend.first_name || friend.username || "FRIEND"}
+                  </button>
                 </section>
               );
             })}
@@ -5848,7 +5912,8 @@ function App() {
                   return;
                 }
 
-                const inviteUrl = `https://t.me/batleiqbot?startapp=ref_${myId}`;
+                const inviteUrl =
+                  `https://t.me/battleiqbot?startapp=friend_${myId}`;
 
                 try {
                   if (navigator.share) {
