@@ -937,7 +937,7 @@ function App() {
       return;
     }
 
-    const inviteUrl = `https://t.me/battleiqbot?startapp=friend_${myId}`;
+    const inviteUrl = `https://t.me/batleiqbot?startapp=friend_${myId}`;
     const text = "⚔️ Приєднуйся до BATTLE IQ! Додамося в друзі та порівняємо результат.";
     try {
       if (navigator.share) {
@@ -6006,7 +6006,7 @@ function App() {
                 }
 
                 const inviteUrl =
-                  `https://t.me/battleiqbot?startapp=friend_${myId}`;
+                  `https://t.me/batleiqbot?startapp=friend_${myId}`;
 
                 try {
                   if (navigator.share) {
