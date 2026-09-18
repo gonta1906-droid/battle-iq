@@ -3124,51 +3124,51 @@ function App() {
             <section
               onClick={openSocial}
               style={{
-                marginBottom: 12, padding: 16, cursor: "pointer", borderRadius: 20,
+                marginBottom: 8, padding: 10, cursor: "pointer", borderRadius: 14,
                 background: "linear-gradient(135deg, rgba(60,170,255,0.15), rgba(130,100,255,0.11))",
                 border: "1px solid rgba(90,180,255,0.18)",
               }}
             >
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
-                <div>
-                  <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.55 }}>SOCIAL</div>
-                  <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>👥 Friends Hub</div>
-                  <div style={{ fontSize:12, opacity:.55, marginTop:3 }}>{friends.length} friends · compare your stats</div>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+                <div style={{ minWidth:0 }}>
+                  <div style={{ fontSize:9, fontWeight:900, letterSpacing:.8, opacity:.55 }}>SOCIAL</div>
+                  <div style={{ fontSize:15, lineHeight:1.05, fontWeight:950, marginTop:2 }}>👥 Friends Hub</div>
+                  <div style={{ fontSize:10, lineHeight:1.15, opacity:.55, marginTop:3 }}>{friends.length} friends · compare stats</div>
                 </div>
-                <div style={{ fontSize:28 }}>👥</div>
+                <div style={{ fontSize:22, flexShrink:0 }}>👥</div>
               </div>
             </section>
 
             <section
               onClick={() => setScreen("daily_bonus")}
               style={{
-                marginBottom: 12, padding: 16, cursor: "pointer", borderRadius: 20,
+                marginBottom: 8, padding: 10, cursor: "pointer", borderRadius: 14,
                 background: "linear-gradient(135deg, rgba(255,190,70,0.16), rgba(255,90,150,0.10))",
                 border: "1px solid rgba(255,190,70,0.18)",
               }}
             >
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
-                <div>
-                  <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.55 }}>DAILY BONUS</div>
-                  <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+                <div style={{ minWidth:0 }}>
+                  <div style={{ fontSize:9, fontWeight:900, letterSpacing:.8, opacity:.55 }}>BONUS</div>
+                  <div style={{ fontSize:15, lineHeight:1.05, fontWeight:950, marginTop:2 }}>
                     {dailyBonus?.claimedToday
-                      ? "✅ Already claimed"
-                      : `Day ${dailyBonus?.currentDay ?? 1} · ${dailyBonus?.rewards?.find((r) => r.day === (dailyBonus?.currentDay ?? 1))?.title ?? "Bonus"}`}
+                      ? "✅ Уже забрано"
+                      : `День ${dailyBonus?.currentDay ?? 1} · ${dailyBonus?.rewards?.find((r) => r.day === (dailyBonus?.currentDay ?? 1))?.title ?? "Бонус"}`}
                   </div>
-                  <div style={{ fontSize:12, opacity:.55, marginTop:3 }}>7-day reward cycle</div>
+                  <div style={{ fontSize:10, lineHeight:1.15, opacity:.55, marginTop:3 }}>7-денний цикл</div>
                 </div>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); void claimDailyBonus(); }}
                   disabled={dailyBonusLoading || dailyBonusClaiming || !dailyBonus || dailyBonus.claimedToday}
-                  style={{ border:0, borderRadius:14, padding:"11px 14px", fontWeight:950,
+                  style={{ border:0, borderRadius:10, padding:"8px 10px", fontSize:11, fontWeight:950,
                     background: dailyBonus?.claimedToday ? "rgba(255,255,255,.08)" : "linear-gradient(135deg,#ffb43d,#ff5e9b)",
-                    color:"#fff", whiteSpace:"nowrap" }}
+                    color:"#fff", whiteSpace:"nowrap", flexShrink:0 }}
                 >
                   {dailyBonusClaiming ? "..." : dailyBonus?.claimedToday ? "ЗАБРАНО" : "ЗАБРАТИ"}
                 </button>
               </div>
-              {dailyBonusNotice && <div style={{ marginTop:10, fontSize:12, fontWeight:800 }}>{dailyBonusNotice}</div>}
+              {dailyBonusNotice && <div style={{ marginTop:6, fontSize:10, fontWeight:800 }}>{dailyBonusNotice}</div>}
             </section>
 
             <button
