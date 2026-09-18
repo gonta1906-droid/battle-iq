@@ -29,7 +29,7 @@ type Screen =
 
 type Answer = {
   text: string;
-  correct: boolean;
+  правильних: boolean;
 };
 
 type Question = {
@@ -39,7 +39,7 @@ type Question = {
   difficulty?: string;
 };
 
-type QuestionResult = "correct" | "wrong" | "timeout";
+type QuestionResult = "правильних" | "wrong" | "timeout";
 
 type PvpQuestion = {
   id: number;
@@ -63,7 +63,7 @@ type PvpMatch = {
 };
 
 
-type SeasonReward = {
+type СезонReward = {
   level: number;
   icon: string;
   title: string;
@@ -71,7 +71,7 @@ type SeasonReward = {
   unlocked: boolean;
 };
 
-type SeasonData = {
+type СезонData = {
   id: number;
   seasonNumber: number;
   title: string;
@@ -84,10 +84,10 @@ type SeasonData = {
   level: number;
   currentLevelXp: number;
   nextLevelXp: number;
-  rewards: SeasonReward[];
+  rewards: СезонReward[];
 };
 
-type SeasonPlayer = {
+type СезонГравець = {
   userId: number;
   firstName?: string | null;
   username?: string | null;
@@ -95,7 +95,7 @@ type SeasonPlayer = {
   seasonLevel: number;
 };
 
-type SeasonPassReward = {
+type СезонPassReward = {
   level: number;
   tier: "free" | "premium";
   icon: string;
@@ -106,7 +106,7 @@ type SeasonPassReward = {
   claimed: boolean;
 };
 
-type SeasonPassData = {
+type СезонPassData = {
   id: number;
   seasonNumber: number;
   title: string;
@@ -115,7 +115,7 @@ type SeasonPassData = {
   xp: number;
   level: number;
   premiumOwned: boolean;
-  rewards: SeasonPassReward[];
+  rewards: СезонPassReward[];
 };
 
 type ServerNotification = {
@@ -129,15 +129,15 @@ type ServerNotification = {
   createdAt: string;
 };
 
-type DailyBonusReward = {
+type DailyБонусReward = {
   day: number; code: string; title: string; icon: string; type: string;
   amount: number; claimed: boolean; available: boolean;
 };
 
-type DailyBonusData = {
-  today: string; currentDay: number; claimedToday: boolean;
+type DailyБонусData = {
+  today: string; currentDay: number; claimedСьогодні: boolean;
   claimedDay: number | null; streak: number; bestStreak: number;
-  totalClaims: number; rewards: DailyBonusReward[];
+  totalClaims: number; rewards: DailyБонусReward[];
 };
 
 type ReferralData = {
@@ -148,14 +148,14 @@ type ReferralData = {
   rewardCoins: number;
 };
 
-type PlayerData = {
+type ГравецьData = {
   xp: number;
   coins: number;
   streak: number;
-  battles: number;
+  боїв: number;
   totalCorrect: number;
   bestCombo: number;
-  bestBattleXp: number;
+  bestБійXp: number;
   profileTitle?: string | null;
   victoryEffect?: string | null;
   profileBackground?: string | null;
@@ -196,60 +196,60 @@ type LevelReward = {
 };
 
 const LEVEL_REWARDS: LevelReward[] = [
-  { id: "level_5_badge", level: 5, icon: "🎖️", title: "Learner Badge", description: "Badge for reaching Level 5.", claimed: false },
-  { id: "level_10_frame", level: 10, icon: "🟣", title: "Special Profile Frame", description: "Profile reward for reaching Level 10.", claimed: false },
-  { id: "level_15_effect", level: 15, icon: "⚡", title: "Victory Effect", description: "Special victory effect unlock.", claimed: false },
-  { id: "level_20_badge", level: 20, icon: "🔥", title: "Exclusive Badge", description: "Rare badge for reaching Level 20.", claimed: false },
-  { id: "level_30_badge", level: 30, icon: "👑", title: "Elite Profile Badge", description: "Elite badge for reaching Level 30.", claimed: false },
-  { id: "level_50_badge", level: 50, icon: "💎", title: "Mastermind Badge", description: "Ultimate progression badge.", claimed: false },
+  { id: "level_5_badge", level: 5, icon: "🎖️", title: "Значок учня", description: "Значок за досягнення 5 рівня.", claimed: false },
+  { id: "level_10_frame", level: 10, icon: "🟣", title: "Спеціальна рамка профілю", description: "Нагорода профілю за досягнення 10 рівня.", claimed: false },
+  { id: "level_15_effect", level: 15, icon: "⚡", title: "Ефект перемоги", description: "Спеціальний ефект перемоги.", claimed: false },
+  { id: "level_20_badge", level: 20, icon: "🔥", title: "Ексклюзивний значок", description: "Рідкісний значок за досягнення 20 рівня.", claimed: false },
+  { id: "level_30_badge", level: 30, icon: "👑", title: "Елітний значок профілю", description: "Елітний значок за досягнення 30 рівня.", claimed: false },
+  { id: "level_50_badge", level: 50, icon: "💎", title: "Значок генія", description: "Головна нагорода за прогрес.", claimed: false },
 ];
 
-const SHOP_FALLBACK: ShopProduct[] = [
-  { id: "custom_avatar", icon: "🖼️", title: "Custom Avatar", description: "Use your own profile picture", price_stars: 50, category: "PROFILE", featured: true },
-  { id: "neon_frame", icon: "🟣", title: "Neon Frame", description: "Stand out in the ranking", price_stars: 25, category: "PROFILE" },
-  { id: "fire_frame", icon: "🔥", title: "Fire Frame", description: "Bring the heat to your profile", price_stars: 50, category: "PROFILE" },
-  { id: "legendary_frame", icon: "👑", title: "Legendary Frame", description: "Premium profile frame", price_stars: 100, category: "PROFILE" },
-  { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, price_coins: 300, category: "BATTLE" },
-  { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, price_coins: 1000, category: "BATTLE" },
-  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, price_coins: 2000, category: "BATTLE" },
-  { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
-  { id: "aurora_frame", icon: "🌈", title: "Aurora Frame", description: "Northern-light inspired profile frame", price_stars: 65, category: "COSMETICS" },
-  { id: "cyber_frame", icon: "🧬", title: "Cyber Frame", description: "Neon cyber profile frame", price_stars: 85, category: "COSMETICS" },
-  { id: "plasma_frame", icon: "⚡", title: "Plasma Frame", description: "Electric plasma profile frame", price_stars: 95, category: "COSMETICS" },
-  { id: "ocean_frame", icon: "🌊", title: "Ocean Frame", description: "Deep-blue ocean profile frame", price_stars: 105, category: "COSMETICS" },
-  { id: "emerald_frame", icon: "💚", title: "Emerald Frame", description: "Emerald profile frame", price_stars: 115, category: "COSMETICS" },
-  { id: "sunset_frame", icon: "🌅", title: "Sunset Frame", description: "Warm sunset profile frame", price_stars: 125, category: "COSMETICS" },
-  { id: "shadow_frame", icon: "🌑", title: "Shadow Frame", description: "Dark shadow profile frame", price_stars: 135, category: "COSMETICS" },
-  { id: "solar_frame", icon: "☀️", title: "Solar Frame", description: "Bright solar profile frame", price_stars: 145, category: "COSMETICS" },
-  { id: "frostbite_frame", icon: "🧊", title: "Frostbite Frame", description: "Frozen crystal profile frame", price_stars: 165, category: "COSMETICS" },
-  { id: "cosmic_frame", icon: "🪐", title: "Cosmic Frame", description: "Deep-space cosmic profile frame", price_stars: 190, category: "COSMETICS" },
-  { id: "rookie_title", icon: "🏷️", title: "ROOKIE", description: "Clean starter title for your profile", price_stars: 35, category: "TITLES" },
-  { id: "quiz_master_title", icon: "🧠", title: "QUIZ MASTER", description: "For players who live for questions", price_stars: 55, category: "TITLES" },
-  { id: "speed_demon_title", icon: "⚡", title: "SPEED DEMON", description: "Fast answers. Faster bragging rights.", price_stars: 65, category: "TITLES" },
-  { id: "iq_hunter_title", icon: "🎯", title: "IQ HUNTER", description: "Show that you are chasing every point", price_stars: 80, category: "TITLES" },
-  { id: "battle_legend_title", icon: "👑", title: "BATTLE LEGEND", description: "Legendary title for your player card", price_stars: 110, category: "TITLES" },
-  { id: "lightning_effect", icon: "⚡", title: "Lightning", description: "Electric victory effect for battle results", price_stars: 65, category: "EFFECTS" },
-  { id: "fire_effect", icon: "🔥", title: "Fire", description: "Hot victory effect for battle results", price_stars: 75, category: "EFFECTS" },
-  { id: "frost_effect", icon: "❄️", title: "Frost", description: "Frozen victory effect for battle results", price_stars: 85, category: "EFFECTS" },
-  { id: "neon_burst_effect", icon: "💥", title: "Neon Burst", description: "Bright neon victory effect", price_stars: 95, category: "EFFECTS" },
-  { id: "cosmic_effect", icon: "🌌", title: "Cosmic", description: "Deep-space victory effect", price_stars: 110, category: "EFFECTS" },
-  { id: "neon_background", icon: "🟣", title: "Neon", description: "Neon profile background", price_stars: 45, category: "BACKGROUNDS" },
-  { id: "galaxy_background", icon: "🌌", title: "Galaxy", description: "Starfield profile background", price_stars: 70, category: "BACKGROUNDS" },
-  { id: "matrix_background", icon: "💚", title: "Matrix", description: "Digital green profile background", price_stars: 75, category: "BACKGROUNDS" },
-  { id: "aurora_background", icon: "🌈", title: "Aurora", description: "Northern-light profile background", price_stars: 85, category: "BACKGROUNDS" },
-  { id: "deep_space_background", icon: "🪐", title: "Deep Space", description: "Deep cosmic profile background", price_stars: 100, category: "BACKGROUNDS" },
-  { id: "eclipse_frame", icon: "🌘", title: "Eclipse Frame", description: "Ultra-premium black-and-gold profile frame", price_stars: 225, category: "LEGENDARY" },
-  { id: "infinity_frame", icon: "♾️", title: "Infinity Frame", description: "Infinite-energy profile frame", price_stars: 280, category: "LEGENDARY" },
+const МАГАЗИН_FALLНАЗАД: ShopProduct[] = [
+  { id: "custom_avatar", icon: "🖼️", title: "Власний аватар", description: "Використовуй власне фото профілю", price_stars: 50, category: "ПРОФІЛЬ", featured: true },
+  { id: "neon_frame", icon: "🟣", title: "Неонова рамка", description: "Виділяйся в рейтингу", price_stars: 25, category: "ПРОФІЛЬ" },
+  { id: "fire_frame", icon: "🔥", title: "Вогняна рамка", description: "Додай вогню профілю", price_stars: 50, category: "ПРОФІЛЬ" },
+  { id: "legendary_frame", icon: "👑", title: "Легендарна рамка", description: "Преміум-рамка профілю", price_stars: 100, category: "ПРОФІЛЬ" },
+  { id: "second_chance", icon: "❤️", title: "Другий шанс", description: "Одне додаткове життя в бою", price_stars: 15, price_coins: 300, category: "BATTLE" },
+  { id: "combo_shield", icon: "🛡️", title: "Щит серії", description: "Захисти серію від однієї помилки", price_stars: 30, price_coins: 1000, category: "BATTLE" },
+  { id: "xp_boost", icon: "⚡", title: "Буст XP", description: "Прискорює прогрес у боях", price_stars: 25, price_coins: 2000, category: "BATTLE" },
+  { id: "battle_pass", icon: "🎟️", title: "Бойовий пропуск", description: "Відкриває ексклюзивні нагороди сезону", price_stars: 299, category: "PASS", featured: true },
+  { id: "aurora_frame", icon: "🌈", title: "Рамка Аврора", description: "Рамка профілю в стилі північного сяйва", price_stars: 65, category: "COSMETICS" },
+  { id: "cyber_frame", icon: "🧬", title: "Кіберрамка", description: "Неонова кіберрамка профілю", price_stars: 85, category: "COSMETICS" },
+  { id: "plasma_frame", icon: "⚡", title: "Плазмова рамка", description: "Електрична плазмова рамка", price_stars: 95, category: "COSMETICS" },
+  { id: "ocean_frame", icon: "🌊", title: "Океанська рамка", description: "Океанська рамка глибокого синього кольору", price_stars: 105, category: "COSMETICS" },
+  { id: "emerald_frame", icon: "💚", title: "Смарагдова рамка", description: "Смарагдова рамка профілю", price_stars: 115, category: "COSMETICS" },
+  { id: "sunset_frame", icon: "🌅", title: "Рамка Захід сонця", description: "Тепла рамка в стилі заходу сонця", price_stars: 125, category: "COSMETICS" },
+  { id: "shadow_frame", icon: "🌑", title: "Тіньова рамка", description: "Темна тіньова рамка профілю", price_stars: 135, category: "COSMETICS" },
+  { id: "solar_frame", icon: "☀️", title: "Сонячна рамка", description: "Яскрава сонячна рамка профілю", price_stars: 145, category: "COSMETICS" },
+  { id: "frostbite_frame", icon: "🧊", title: "Крижана рамка", description: "Крижана кришталева рамка", price_stars: 165, category: "COSMETICS" },
+  { id: "cosmic_frame", icon: "🪐", title: "Космічна рамка", description: "Космічна рамка глибокого космосу", price_stars: 190, category: "COSMETICS" },
+  { id: "rookie_title", icon: "🏷️", title: "НОВИЧОК", description: "Стартове звання для профілю", price_stars: 35, category: "TITLES" },
+  { id: "quiz_master_title", icon: "🧠", title: "МАЙСТЕР ВІКТОРИН", description: "For players who live for questions", price_stars: 55, category: "TITLES" },
+  { id: "speed_demon_title", icon: "⚡", title: "СПРИНТЕР", description: "Fast answers. Faster bragging rights.", price_stars: 65, category: "TITLES" },
+  { id: "iq_hunter_title", icon: "🎯", title: "МИСЛИВЕЦЬ ЗА IQ", description: "Show that you are chasing every point", price_stars: 80, category: "TITLES" },
+  { id: "battle_legend_title", icon: "👑", title: "ЛЕГЕНДА БОЮ", description: "Легендарне звання для картки гравця", price_stars: 110, category: "TITLES" },
+  { id: "lightning_effect", icon: "⚡", title: "Блискавка", description: "Електричний ефект перемоги", price_stars: 65, category: "EFFECTS" },
+  { id: "fire_effect", icon: "🔥", title: "Вогонь", description: "Вогняний ефект перемоги", price_stars: 75, category: "EFFECTS" },
+  { id: "frost_effect", icon: "❄️", title: "Мороз", description: "Крижаний ефект перемоги", price_stars: 85, category: "EFFECTS" },
+  { id: "neon_burst_effect", icon: "💥", title: "Неоновий вибух", description: "Яскравий неоновий ефект", price_stars: 95, category: "EFFECTS" },
+  { id: "cosmic_effect", icon: "🌌", title: "Космос", description: "Deep-space victory effect", price_stars: 110, category: "EFFECTS" },
+  { id: "neon_background", icon: "🟣", title: "Неон", description: "Неоновий фон профілю", price_stars: 45, category: "НАЗАДGROUNDS" },
+  { id: "galaxy_background", icon: "🌌", title: "Галактика", description: "Зоряний фон профілю", price_stars: 70, category: "НАЗАДGROUNDS" },
+  { id: "matrix_background", icon: "💚", title: "Матриця", description: "Цифровий зелений фон профілю", price_stars: 75, category: "НАЗАДGROUNDS" },
+  { id: "aurora_background", icon: "🌈", title: "Аврора", description: "Northern-light profile background", price_stars: 85, category: "НАЗАДGROUNDS" },
+  { id: "deep_space_background", icon: "🪐", title: "Глибокий космос", description: "Глибокий космічний фон профілю", price_stars: 100, category: "НАЗАДGROUNDS" },
+  { id: "eclipse_frame", icon: "🌘", title: "Рамка Затемнення", description: "Ультрапреміальна чорно-золота рамка профілю", price_stars: 225, category: "LEGENDARY" },
+  { id: "infinity_frame", icon: "♾️", title: "Рамка Нескінченність", description: "Рамка нескінченної енергії профілю", price_stars: 280, category: "LEGENDARY" },
   { id: "royal_frame", icon: "👑", title: "Royal Frame", description: "Royal crown frame for elite profiles", price_stars: 350, category: "LEGENDARY" },
-  { id: "grandmaster_title", icon: "🏆", title: "GRANDMASTER", description: "Top-tier title for dedicated BATTLE IQ players", price_stars: 180, category: "LEGENDARY" },
-  { id: "nova_effect", icon: "🌟", title: "Nova", description: "Starburst victory effect for battle results", price_stars: 220, category: "LEGENDARY" },
-  { id: "singularity_background", icon: "🕳️", title: "Singularity", description: "Deep gravitational profile background", price_stars: 260, category: "LEGENDARY" },
-  { id: "pulse_animation", icon: "💓", title: "Pulse", description: "Subtle animated pulse around your profile", price_stars: 90, category: "ANIMATIONS" },
-  { id: "orbit_animation", icon: "🪐", title: "Orbit", description: "Animated orbital motion for your profile card", price_stars: 120, category: "ANIMATIONS" },
-  { id: "scanline_animation", icon: "📡", title: "Scanline", description: "Animated cyber scanline profile effect", price_stars: 145, category: "ANIMATIONS" },
+  { id: "grandmaster_title", icon: "🏆", title: "ГРАНДМАЙСТЕР", description: "Звання найвищого рівня для відданих гравців BATTLE IQ", price_stars: 180, category: "LEGENDARY" },
+  { id: "nova_effect", icon: "🌟", title: "Наднова", description: "Ефект зоряного спалаху", price_stars: 220, category: "LEGENDARY" },
+  { id: "singularity_background", icon: "🕳️", title: "Сингулярність", description: "Глибокий гравітаційний фон профілю", price_stars: 260, category: "LEGENDARY" },
+  { id: "pulse_animation", icon: "💓", title: "Пульс", description: "Плавна анімація пульсу навколо профілю", price_stars: 90, category: "ANIMATIONS" },
+  { id: "orbit_animation", icon: "🪐", title: "Орбіта", description: "Анімація орбітального руху картки профілю", price_stars: 120, category: "ANIMATIONS" },
+  { id: "scanline_animation", icon: "📡", title: "Сканлінія", description: "Анімований кіберефект сканування", price_stars: 145, category: "ANIMATIONS" },
 ];
 
-const PROFILE_FRAME_EMOJI: Record<string, string> = {
+const ПРОФІЛЬ_FRAME_EMOJI: Record<string, string> = {
   neon_frame: "🟣",
   fire_frame: "🔥",
   legendary_frame: "👑",
@@ -311,7 +311,7 @@ const VICTORY_EFFECT_LABEL: Record<string, string> = {
   nova: "NOVA",
 };
 
-const PROFILE_BACKGROUND_STYLES: Record<string, CSSProperties> = {
+const ПРОФІЛЬ_НАЗАДGROUND_STYLES: Record<string, CSSProperties> = {
   neon: {
     background: "linear-gradient(145deg, rgba(124,77,255,0.30), rgba(30,210,255,0.12))",
   },
@@ -333,11 +333,11 @@ const PROFILE_BACKGROUND_STYLES: Record<string, CSSProperties> = {
 };
 
 const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "background" | "animation"; value: string }> = {
-  rookie_title: { kind: "title", value: "ROOKIE" },
-  quiz_master_title: { kind: "title", value: "QUIZ MASTER" },
-  speed_demon_title: { kind: "title", value: "SPEED DEMON" },
-  iq_hunter_title: { kind: "title", value: "IQ HUNTER" },
-  battle_legend_title: { kind: "title", value: "BATTLE LEGEND" },
+  rookie_title: { kind: "title", value: "НОВИЧОК" },
+  quiz_master_title: { kind: "title", value: "МАЙСТЕР ВІКТОРИН" },
+  speed_demon_title: { kind: "title", value: "СПРИНТЕР" },
+  iq_hunter_title: { kind: "title", value: "МИСЛИВЕЦЬ ЗА IQ" },
+  battle_legend_title: { kind: "title", value: "ЛЕГЕНДА БОЮ" },
   lightning_effect: { kind: "effect", value: "lightning" },
   fire_effect: { kind: "effect", value: "fire" },
   frost_effect: { kind: "effect", value: "frost" },
@@ -348,7 +348,7 @@ const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "backgr
   matrix_background: { kind: "background", value: "matrix" },
   aurora_background: { kind: "background", value: "aurora" },
   deep_space_background: { kind: "background", value: "deep_space" },
-  grandmaster_title: { kind: "title", value: "GRANDMASTER" },
+  grandmaster_title: { kind: "title", value: "ГРАНДМАЙСТЕР" },
   nova_effect: { kind: "effect", value: "nova" },
   singularity_background: { kind: "background", value: "singularity" },
   pulse_animation: { kind: "animation", value: "pulse" },
@@ -356,40 +356,40 @@ const COSMETIC_PRODUCT_META: Record<string, { kind: "title" | "effect" | "backgr
   scanline_animation: { kind: "animation", value: "scanline" },
 };
 
-const PROFILE_ANIMATION_LABEL: Record<string, string> = {
+const ПРОФІЛЬ_ANIMATION_LABEL: Record<string, string> = {
   pulse: "PULSE",
   orbit: "ORBIT",
   scanline: "SCANLINE",
 };
 
-const PROFILE_ANIMATION_EMOJI: Record<string, string> = {
+const ПРОФІЛЬ_ANIMATION_EMOJI: Record<string, string> = {
   pulse: "💓",
   orbit: "🪐",
   scanline: "📡",
 };
 
-const PROFILE_ANIMATION_STYLES: Record<string, CSSProperties> = {
-  pulse: { animation: "biqProfilePulse 2.1s ease-in-out infinite" },
-  orbit: { animation: "biqProfileOrbit 3.4s ease-in-out infinite" },
+const ПРОФІЛЬ_ANIMATION_STYLES: Record<string, CSSProperties> = {
+  pulse: { animation: "biqПрофільПульс 2.1s ease-in-out infinite" },
+  orbit: { animation: "biqПрофільОрбіта 3.4s ease-in-out infinite" },
   scanline: {
     backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(120,220,255,0.17) 50%, rgba(255,255,255,0.05) 52%, rgba(255,255,255,0.05) 100%)",
     backgroundSize: "100% 220%",
-    animation: "biqProfileScanline 2.2s linear infinite",
+    animation: "biqПрофільСканлінія 2.2s linear infinite",
   },
 };
 
-const PROFILE_ANIMATION_KEYFRAMES = `
-@keyframes biqProfilePulse {
+const ПРОФІЛЬ_ANIMATION_KEYFRAMES = `
+@keyframes biqПрофільПульс {
   0%,100% { box-shadow: 0 12px 35px rgba(124,77,255,.18), 0 0 0 0 rgba(124,77,255,.00); }
   50% { box-shadow: 0 16px 48px rgba(124,77,255,.28), 0 0 0 7px rgba(124,77,255,.08); }
 }
-@keyframes biqProfileOrbit {
+@keyframes biqПрофільОрбіта {
   0%,100% { box-shadow: 10px -3px 24px rgba(120,210,255,.30), -10px 6px 24px rgba(180,110,255,.18); }
   25% { box-shadow: -6px -9px 24px rgba(120,210,255,.34), -2px 10px 30px rgba(180,110,255,.24); }
   50% { box-shadow: -12px 4px 28px rgba(120,210,255,.22), 10px 4px 30px rgba(180,110,255,.30); }
   75% { box-shadow: 4px 10px 24px rgba(120,210,255,.26), 8px -6px 28px rgba(180,110,255,.30); }
 }
-@keyframes biqProfileScanline {
+@keyframes biqПрофільСканлінія {
   0% { background-position: 0 -100%; }
   100% { background-position: 0 100%; }
 }`;
@@ -398,25 +398,25 @@ const ACHIEVEMENTS = [
   {
     id: "first_battle",
     icon: "🎯",
-    title: "First Battle",
-    text: "Complete your first battle",
+    title: "Перший бій",
+    text: "Заверши свій перший бій",
     getProgress: (
-      player: PlayerData,
+      player: ГравецьData,
       _missions: DailyMissionStats,
       _level: number
     ) => ({
-      value: Math.min(player.battles, 1),
+      value: Math.min(player.боїв, 1),
       target: 1,
-      unlocked: player.battles >= 1,
+      unlocked: player.боїв >= 1,
     }),
   },
   {
     id: "combo_5",
     icon: "🔥",
-    title: "On Fire",
-    text: "Reach a 5-answer combo",
+    title: "У вогні",
+    text: "Зроби серію з 5 правильних відповідей",
     getProgress: (
-      player: PlayerData,
+      player: ГравецьData,
       _missions: DailyMissionStats,
       _level: number
     ) => ({
@@ -428,10 +428,10 @@ const ACHIEVEMENTS = [
   {
     id: "level_5",
     icon: "⭐",
-    title: "Rising Star",
-    text: "Reach Level 5",
+    title: "Висхідна зірка",
+    text: "Досягни 5 рівня",
     getProgress: (
-      _player: PlayerData,
+      _player: ГравецьData,
       _missions: DailyMissionStats,
       level: number
     ) => ({
@@ -443,49 +443,49 @@ const ACHIEVEMENTS = [
   {
     id: "mission_master",
     icon: "🎯",
-    title: "Mission Master",
-    text: "Claim all daily missions",
+    title: "Майстер місій",
+    text: "Забери всі щоденні місії",
     getProgress: (
-      _player: PlayerData,
+      _player: ГравецьData,
       missions: DailyMissionStats,
       _level: number
     ) => ({
       value: Math.min(
         missions.claimed.length,
-        DAILY_MISSIONS.length
+        DAILY_МІСІЇ.length
       ),
-      target: DAILY_MISSIONS.length,
+      target: DAILY_МІСІЇ.length,
       unlocked:
         missions.claimed.length >=
-        DAILY_MISSIONS.length,
+        DAILY_МІСІЇ.length,
     }),
   },
   {
     id: "speed_demon",
     icon: "⚡",
-    title: "Speed Demon",
-    text: "Earn 300 XP in a single battle",
+    title: "Спринтер",
+    text: "Зароби 300 XP за один бій",
     getProgress: (
-      player: PlayerData,
+      player: ГравецьData,
       _missions: DailyMissionStats,
       _level: number
     ) => ({
       value: Math.min(
-        player.bestBattleXp,
+        player.bestБійXp,
         300
       ),
       target: 300,
       unlocked:
-        player.bestBattleXp >= 300,
+        player.bestБійXp >= 300,
     }),
   },
   {
     id: "iq_legend",
     icon: "👑",
-    title: "IQ Legend",
-    text: "Earn 5,000 total XP",
+    title: "Легенда IQ",
+    text: "Зароби 5 000 XP загалом",
     getProgress: (
-      player: PlayerData,
+      player: ГравецьData,
       _missions: DailyMissionStats,
       _level: number
     ) => ({
@@ -502,14 +502,14 @@ type ApiAnswer =
   | string
   | {
       text: string;
-      correct: boolean;
+      правильних: boolean;
     };
 
 type ApiQuestion = {
   id: number;
   question: string;
   answers: ApiAnswer[];
-  correctIndex?: number;
+  правильнихIndex?: number;
   category?: string;
   difficulty?: string;
 };
@@ -528,7 +528,7 @@ function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
           typeof answer === "object" &&
           answer !== null &&
           typeof answer.text === "string" &&
-          typeof answer.correct === "boolean"
+          typeof answer.правильних === "boolean"
       );
 
       if (objectAnswers) {
@@ -536,10 +536,10 @@ function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
           question: item.question,
           answers: (item.answers as {
             text: string;
-            correct: boolean;
+            правильних: boolean;
           }[]).map((answer) => ({
             text: answer.text,
-            correct: answer.correct,
+            правильних: answer.правильних,
           })),
           category: item.category,
           difficulty: item.difficulty,
@@ -552,16 +552,16 @@ function normalizeApiQuestions(items: ApiQuestion[]): Question[] {
 
       if (
         stringAnswers &&
-        Number.isInteger(item.correctIndex) &&
-        item.correctIndex! >= 0 &&
-        item.correctIndex! < item.answers.length
+        Number.isInteger(item.правильнихIndex) &&
+        item.правильнихIndex! >= 0 &&
+        item.правильнихIndex! < item.answers.length
       ) {
         return {
           question: item.question,
           answers: (item.answers as string[]).map(
             (text, index) => ({
               text,
-              correct: index === item.correctIndex,
+              правильних: index === item.правильнихIndex,
             })
           ),
           category: item.category,
@@ -617,7 +617,7 @@ function getLevelTitle(level: number) {
   if (level >= 20) return "BRAIN";
   if (level >= 10) return "THINKER";
   if (level >= 5) return "LEARNER";
-  return "ROOKIE";
+  return "НОВИЧОК";
 }
 
 function getNextMilestone(level: number) {
@@ -627,20 +627,20 @@ function getNextMilestone(level: number) {
 
 function getMilestoneReward(level: number) {
   const rewards: Record<number, string> = {
-    5: "🎖️ Learner Badge",
-    10: "🟣 Special Profile Frame",
-    15: "⚡ XP Boost",
-    20: "🔥 Exclusive Badge",
-    30: "👑 Elite Profile Badge",
-    50: "💎 Mastermind Badge",
+    5: "🎖️ Значок учня",
+    10: "🟣 Спеціальна рамка профілю",
+    15: "⚡ Буст XP",
+    20: "🔥 Ексклюзивний значок",
+    30: "👑 Елітний значок профілю",
+    50: "💎 Значок генія",
   };
-  return rewards[level] ?? "🎁 Progression Reward";
+  return rewards[level] ?? "🎁 Нагорода за прогрес";
 }
 
 type DailyMissionStats = {
   date: string;
-  battles: number;
-  correct: number;
+  боїв: number;
+  правильних: number;
   bestCombo: number;
   xpEarned: number;
   claimed: string[];
@@ -648,33 +648,33 @@ type DailyMissionStats = {
 
 type WeeklyMissionStats = {
   periodKey: string;
-  battles: number;
-  correct: number;
+  боїв: number;
+  правильних: number;
   bestCombo: number;
   xpEarned: number;
   claimed: string[];
 };
 
-const DAILY_MISSIONS = [
-  { id: "battle_1", icon: "⚔️", title: "Warm Up", description: "Complete 1 battle today", target: 1, reward: 50, getProgress: (s: DailyMissionStats) => s.battles },
-  { id: "correct_15", icon: "🧠", title: "Sharp Mind", description: "Answer 15 questions correctly", target: 15, reward: 75, getProgress: (s: DailyMissionStats) => s.correct },
-  { id: "combo_5", icon: "🔥", title: "On Fire", description: "Reach a 5-answer combo", target: 5, reward: 75, getProgress: (s: DailyMissionStats) => s.bestCombo },
-  { id: "xp_300", icon: "⚡", title: "XP Hunter", description: "Earn 300 XP from battles", target: 300, reward: 100, getProgress: (s: DailyMissionStats) => s.xpEarned },
+const DAILY_МІСІЇ = [
+  { id: "battle_1", icon: "⚔️", title: "Розминка", description: "Заверши 1 бій сьогодні", target: 1, reward: 50, getProgress: (s: DailyMissionStats) => s.боїв },
+  { id: "правильних_15", icon: "🧠", title: "Гострий розум", description: "Правильно відповідай на 15 питань", target: 15, reward: 75, getProgress: (s: DailyMissionStats) => s.правильних },
+  { id: "combo_5", icon: "🔥", title: "У вогні", description: "Зроби серію з 5 правильних відповідей", target: 5, reward: 75, getProgress: (s: DailyMissionStats) => s.bestCombo },
+  { id: "xp_300", icon: "⚡", title: "Мисливець за XP", description: "Зароби 300 XP у боях", target: 300, reward: 100, getProgress: (s: DailyMissionStats) => s.xpEarned },
 ];
 
-const WEEKLY_MISSIONS = [
-  { id: "battle_7", icon: "🏹", title: "Weekly Warrior", description: "Complete 7 battles this week", target: 7, reward: 250, getProgress: (s: WeeklyMissionStats) => s.battles },
-  { id: "correct_60", icon: "🧠", title: "Deep Thinker", description: "Answer 60 questions correctly", target: 60, reward: 300, getProgress: (s: WeeklyMissionStats) => s.correct },
+const WEEKLY_МІСІЇ = [
+  { id: "battle_7", icon: "🏹", title: "Воїн тижня", description: "Заверши 7 боїв цього тижня", target: 7, reward: 250, getProgress: (s: WeeklyMissionStats) => s.боїв },
+  { id: "правильних_60", icon: "🧠", title: "Deep Thinker", description: "Answer 60 questions правильнихly", target: 60, reward: 300, getProgress: (s: WeeklyMissionStats) => s.правильних },
   { id: "combo_8", icon: "🔥", title: "Combo Master", description: "Reach an 8-answer combo", target: 8, reward: 300, getProgress: (s: WeeklyMissionStats) => s.bestCombo },
-  { id: "xp_1500", icon: "⚡", title: "XP Machine", description: "Earn 1,500 XP from battles", target: 1500, reward: 400, getProgress: (s: WeeklyMissionStats) => s.xpEarned },
+  { id: "xp_1500", icon: "⚡", title: "XP Machine", description: "Earn 1,500 XP from боїв", target: 1500, reward: 400, getProgress: (s: WeeklyMissionStats) => s.xpEarned },
 ];
 
 function emptyDailyMissionStats(): DailyMissionStats {
-  return { date: "", battles: 0, correct: 0, bestCombo: 0, xpEarned: 0, claimed: [] };
+  return { date: "", боїв: 0, правильних: 0, bestCombo: 0, xpEarned: 0, claimed: [] };
 }
 
 function emptyWeeklyMissionStats(): WeeklyMissionStats {
-  return { periodKey: "", battles: 0, correct: 0, bestCombo: 0, xpEarned: 0, claimed: [] };
+  return { periodKey: "", боїв: 0, правильних: 0, bestCombo: 0, xpEarned: 0, claimed: [] };
 }
 
 function App() {
@@ -688,10 +688,10 @@ function App() {
   const [referral, setReferral] = useState<ReferralData | null>(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralNotice, setReferralNotice] = useState("");
-  const [dailyBonus, setDailyBonus] = useState<DailyBonusData | null>(null);
-  const [dailyBonusLoading, setDailyBonusLoading] = useState(false);
-  const [dailyBonusClaiming, setDailyBonusClaiming] = useState(false);
-  const [dailyBonusNotice, setDailyBonusNotice] = useState("");
+  const [dailyБонус, setDailyБонус] = useState<DailyБонусData | null>(null);
+  const [dailyБонусLoading, setDailyБонусLoading] = useState(false);
+  const [dailyБонусClaiming, setDailyБонусClaiming] = useState(false);
+  const [dailyБонусNotice, setDailyБонусNotice] = useState("");
 
 
 
@@ -870,28 +870,28 @@ function App() {
     void bootstrapNotifications().then(() => loadServerNotifications());
   }, []);
 
-  const loadDailyBonus = async () => {
+  const loadDailyБонус = async () => {
     const tg = getTelegramWebApp();
     if (!tg?.initData) return;
-    setDailyBonusLoading(true);
+    setDailyБонусLoading(true);
     try {
       const response = await fetch(`${API_BASE}/api/daily-bonus`, {
         headers: { Authorization: `tma ${tg.initData}`, Accept: "application/json" },
       });
       const data = await response.json().catch(() => null);
-      if (response.ok && data?.ok) setDailyBonus(data.dailyBonus || null);
+      if (response.ok && data?.ok) setDailyБонус(data.dailyБонус || null);
     } catch (error) {
       console.warn("BATTLE IQ: daily bonus load failed", error);
     } finally {
-      setDailyBonusLoading(false);
+      setDailyБонусLoading(false);
     }
   };
 
-  const claimDailyBonus = async () => {
+  const claimDailyБонус = async () => {
     const tg = getTelegramWebApp();
-    if (!tg?.initData || !dailyBonus || dailyBonus.claimedToday) return;
-    setDailyBonusClaiming(true);
-    setDailyBonusNotice("");
+    if (!tg?.initData || !dailyБонус || dailyБонус.claimedСьогодні) return;
+    setDailyБонусClaiming(true);
+    setDailyБонусNotice("");
     try {
       const response = await fetch(`${API_BASE}/api/daily-bonus/claim`, {
         method: "POST",
@@ -900,28 +900,28 @@ function App() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ day: dailyBonus.currentDay }),
+        body: JSON.stringify({ day: dailyБонус.currentDay }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.ok) {
-        setDailyBonusNotice(data?.error || "Не вдалося забрати бонус");
-        if (data?.dailyBonus) setDailyBonus(data.dailyBonus);
+        setDailyБонусNotice(data?.error || "Не вдалося забрати бонус");
+        if (data?.dailyБонус) setDailyБонус(data.dailyБонус);
         return;
       }
-      setDailyBonus(data.dailyBonus || null);
-      setDailyBonusNotice(`🎉 ${data.reward?.title || "Daily Bonus отримано!"}`);
+      setDailyБонус(data.dailyБонус || null);
+      setDailyБонусNotice(`🎉 ${data.reward?.title || "Daily Бонус отримано!"}`);
       tg.HapticFeedback?.notificationOccurred("success");
-      window.setTimeout(() => setDailyBonusNotice(""), 3000);
+      window.setTimeout(() => setDailyБонусNotice(""), 3000);
     } catch (error) {
       console.warn("BATTLE IQ: daily bonus claim failed", error);
-      setDailyBonusNotice("Не вдалося забрати бонус. Спробуй ще раз.");
+      setDailyБонусNotice("Не вдалося забрати бонус. Спробуй ще раз.");
     } finally {
-      setDailyBonusClaiming(false);
+      setDailyБонусClaiming(false);
     }
   };
 
   useEffect(() => {
-    void loadDailyBonus();
+    void loadDailyБонус();
   }, []);
 
   const openSocial = () => {
@@ -944,7 +944,7 @@ function App() {
         await navigator.share({ title: "BATTLE IQ", text, url: inviteUrl });
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(inviteUrl);
-        setChallengeNotice("🔗 Invite link copied!");
+        setChallengeNotice("🔗 Посилання на запрошення скопійовано!");
       }
       tg?.HapticFeedback?.impactOccurred("medium");
     } catch {}
@@ -1070,7 +1070,7 @@ function App() {
         await navigator.share({ title: "BATTLE IQ", text });
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(text);
-        setReferralNotice("✅ Invite copied!");
+        setReferralNotice("✅ Запрошення скопійовано!");
         window.setTimeout(() => setReferralNotice(""), 2500);
       }
       tg?.HapticFeedback?.impactOccurred("medium");
@@ -1134,9 +1134,9 @@ function App() {
   const [pvpHistory, setPvpHistory] = useState<any[]>([]);
   const [pvpLeaderboard, setPvpLeaderboard] = useState<any[]>([]);
   const [pvpStatsLoading, setPvpStatsLoading] = useState(false);
-  const [battleStats, setBattleStats] = useState<any>(null);
-  const [battleHistory, setBattleHistory] = useState<any[]>([]);
-  const [battleStatsLoading, setBattleStatsLoading] = useState(false);
+  const [battleStats, setБійStats] = useState<any>(null);
+  const [battleHistory, setБійHistory] = useState<any[]>([]);
+  const [battleStatsLoading, setБійStatsLoading] = useState(false);
 
   const [notificationsOpen, setNotificationsOpen] =
     useState(false);
@@ -1163,10 +1163,10 @@ function App() {
 
   const [serverAchievements, setServerAchievements] = useState<any[]>([]);
 
-  const [battleCombo, setBattleCombo] =
+  const [battleCombo, setБійCombo] =
     useState(0);
 
-  const [battleMilestone, setBattleMilestone] =
+  const [battleMilestone, setБійMilestone] =
     useState<{
       icon: string;
       title: string;
@@ -1174,16 +1174,16 @@ function App() {
     } | null>(null);
 
   // D1 is the source of truth for player progression.
-  // localStorage is intentionally not used for XP/level/battles.
-  const [player, setPlayer] =
-    useState<PlayerData>({
+  // localStorage is intentionally not used for XP/level/боїв.
+  const [player, setГравець] =
+    useState<ГравецьData>({
       xp: 0,
       coins: 0,
       streak: 0,
-      battles: 0,
+      боїв: 0,
       totalCorrect: 0,
       bestCombo: 0,
-      bestBattleXp: 0,
+      bestБійXp: 0,
       profileTitle: null,
       victoryEffect: null,
       profileBackground: null,
@@ -1191,7 +1191,7 @@ function App() {
     });
 
   const [shopProducts, setShopProducts] =
-    useState<ShopProduct[]>(SHOP_FALLBACK);
+    useState<ShopProduct[]>(МАГАЗИН_FALLНАЗАД);
 
   const [inventory, setInventory] =
     useState<InventoryItem[]>([]);
@@ -1235,10 +1235,10 @@ function App() {
   const [score, setScore] =
     useState(0);
 
-  const [battleXp, setBattleXp] =
+  const [battleXp, setБійXp] =
     useState(0);
 
-  const [eventBonusXp, setEventBonusXp] =
+  const [eventБонусXp, setEventБонусXp] =
     useState(0);
 
   const [selectedAnswer, setSelectedAnswer] =
@@ -1247,11 +1247,11 @@ function App() {
   const [timeLeft, setTimeLeft] =
     useState(90);
 
-  // Battle 3.0: per-question timer + lives.
+  // Бій 3.0: per-question timer + lives.
   const [questionTimeLeft, setQuestionTimeLeft] =
     useState(8);
 
-  const [battleLives, setBattleLives] =
+  const [battleLives, setБійLives] =
     useState(3);
 
   const [secondChanceAvailable, setSecondChanceAvailable] =
@@ -1281,7 +1281,7 @@ function App() {
   const [livesLost, setLivesLost] =
     useState(0);
 
-  const [battleFinished, setBattleFinished] =
+  const [battleFinished, setБійFinished] =
     useState(false);
 
   const [previousXp, setPreviousXp] =
@@ -1290,15 +1290,15 @@ function App() {
   const [globalRank, setGlobalRank] =
     useState<number | null>(null);
 
-  const [season, setSeason] = useState<SeasonData | null>(null);
-  const [seasonPlayers, setSeasonPlayers] = useState<SeasonPlayer[]>([]);
-  const [seasonRank, setSeasonRank] = useState<number | null>(null);
-  const [seasonLoading, setSeasonLoading] = useState(false);
-  const [seasonError, setSeasonError] = useState("");
-  const [seasonNow, setSeasonNow] = useState(Date.now());
-  const [seasonPass, setSeasonPass] = useState<SeasonPassData | null>(null);
-  const [seasonPassClaiming, setSeasonPassClaiming] = useState<string | null>(null);
-  const [seasonPassNotice, setSeasonPassNotice] = useState("");
+  const [season, setСезон] = useState<СезонData | null>(null);
+  const [seasonГравецьs, setСезонГравецьs] = useState<СезонГравець[]>([]);
+  const [seasonRank, setСезонRank] = useState<number | null>(null);
+  const [seasonLoading, setСезонLoading] = useState(false);
+  const [seasonError, setСезонError] = useState("");
+  const [seasonNow, setСезонNow] = useState(Date.now());
+  const [seasonPass, setСезонPass] = useState<СезонPassData | null>(null);
+  const [seasonPassClaiming, setСезонPassClaiming] = useState<string | null>(null);
+  const [seasonPassNotice, setСезонPassNotice] = useState("");
 
   const currentQuestion =
     gameQuestions[questionIndex];
@@ -1322,7 +1322,7 @@ function App() {
   const nextMilestone = getNextMilestone(levelInfo.level);
   const milestoneReward = nextMilestone
     ? getMilestoneReward(nextMilestone)
-    : "💎 All major milestones reached";
+    : "💎 Усі основні етапи досягнуті";
 
   const loadLevelRewards = async () => {
     const webApp = getTelegramWebApp();
@@ -1355,10 +1355,10 @@ function App() {
       });
       const data = await response.json();
       if (!response.ok || !data?.ok) {
-        setRewardNotice(data?.error || "Reward unavailable");
+        setRewardNotice(data?.error || "Нагорода недоступна");
         return;
       }
-      setRewardNotice(`🎉 ${data.reward?.title || "Reward unlocked"}`);
+      setRewardNotice(`🎉 ${data.reward?.title || "Нагороду відкрито"}`);
       await loadLevelRewards();
       webApp.HapticFeedback?.notificationOccurred?.("success");
     } catch (error) {
@@ -1370,13 +1370,13 @@ function App() {
   };
 
   // ==========================================
-  // SYNC PLAYER PROFILE WITH D1
+  // SYNC ГРАТИER ПРОФІЛЬ WITH D1
   // ==========================================
 
   useEffect(() => {
     let cancelled = false;
 
-    const syncProfile = async () => {
+    const syncПрофіль = async () => {
       const webApp = getTelegramWebApp();
       if (!webApp?.initData) return;
 
@@ -1395,15 +1395,15 @@ function App() {
 
         const remote = data.user;
 
-        setPlayer((current) => ({
+        setГравець((current) => ({
           ...current,
           xp: Number(remote.xp ?? current.xp),
           coins: Number(remote.coins ?? current.coins),
           streak: Number(remote.streak ?? current.streak),
-          battles: Number(remote.battles ?? current.battles),
+          боїв: Number(remote.боїв ?? current.боїв),
           totalCorrect: Number(remote.totalCorrect ?? current.totalCorrect),
           bestCombo: Number(remote.bestCombo ?? current.bestCombo),
-          bestBattleXp: Number(remote.bestBattleXp ?? current.bestBattleXp),
+          bestБійXp: Number(remote.bestБійXp ?? current.bestБійXp),
           profileTitle: remote.profile_title ?? current.profileTitle ?? null,
           victoryEffect: remote.victory_effect ?? current.victoryEffect ?? null,
           profileBackground: remote.profile_background ?? current.profileBackground ?? null,
@@ -1443,7 +1443,7 @@ function App() {
       }
     };
 
-    syncProfile();
+    syncПрофіль();
     void loadLevelRewards();
 
     return () => {
@@ -1452,7 +1452,7 @@ function App() {
   }, []);
 
   // ==========================================
-  // LOAD REAL GLOBAL RANKING
+  // LOAD REAL ГЛОБАЛЬНИЙ РЕЙТИНГING
   // ==========================================
 
   const [leaderboard, setLeaderboard] =
@@ -1463,7 +1463,7 @@ function App() {
   const [leaderboardMe, setLeaderboardMe] =
     useState<any | null>(null);
 
-  const [friends, setFriends] =
+  const [friends, setДрузі] =
     useState<any[]>([]);
 
   useEffect(() => {
@@ -1504,15 +1504,15 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [player.xp, player.battles]);
+  }, [player.xp, player.боїв]);
 
   // ==========================================
-  // LOAD REAL FRIENDS
+  // LOAD REAL ДРУЗІ
   // ==========================================
   useEffect(() => {
     let cancelled = false;
 
-    const loadFriends = async () => {
+    const loadДрузі = async () => {
       try {
         const tg = getTelegramWebApp();
         const initData = tg?.initData || "";
@@ -1529,21 +1529,21 @@ function App() {
         const data = await response.json();
         if (!response.ok || !data?.ok || cancelled) return;
 
-        setFriends(Array.isArray(data.friends) ? data.friends : []);
+        setДрузі(Array.isArray(data.friends) ? data.friends : []);
       } catch (error) {
         console.warn("BATTLE IQ: friends sync failed", error);
       }
     };
 
-    loadFriends();
+    loadДрузі();
 
     return () => {
       cancelled = true;
     };
-  }, [player.xp, player.battles]);
+  }, [player.xp, player.боїв]);
 
   // ==========================================
-  // SERVER-AUTHORITATIVE MISSIONS
+  // SERVER-AUTHORITATIVE МІСІЇ
   // ==========================================
   const loadMissions = async () => {
     const tg = getTelegramWebApp();
@@ -1566,10 +1566,10 @@ function App() {
 
   useEffect(() => {
     void loadMissions();
-  }, [telegramUser?.id, player.battles, player.xp]);
+  }, [telegramUser?.id, player.боїв, player.xp]);
 
   // ==========================================
-  // SHOP + INVENTORY
+  // МАГАЗИН + INVENTORY
   // ==========================================
   useEffect(() => {
     let cancelled = false;
@@ -1641,7 +1641,7 @@ function App() {
     };
     loadAchievements();
     return () => { cancelled = true; };
-  }, [telegramUser?.id, player.battles, player.bestCombo, player.xp, player.bestBattleXp, dailyMissions.claimed.length, levelInfo.level]);
+  }, [telegramUser?.id, player.боїв, player.bestCombo, player.xp, player.bestБійXp, dailyMissions.claimed.length, levelInfo.level]);
 
   const claimAchievementReward = async (achievementId: string) => {
     try {
@@ -1661,7 +1661,7 @@ function App() {
         return;
       }
       if (data.profile) {
-        setPlayer((prev) => ({
+        setГравець((prev) => ({
           ...prev,
           xp: Number(data.profile.xp ?? prev.xp),
         }));
@@ -1684,12 +1684,12 @@ function App() {
   // SEASON 1
   // ==========================================
 
-  const loadSeason = async () => {
+  const loadСезон = async () => {
     const tg = getTelegramWebApp();
     if (!tg?.initData) return;
 
-    setSeasonLoading(true);
-    setSeasonError("");
+    setСезонLoading(true);
+    setСезонError("");
 
     try {
       const headers = {
@@ -1711,30 +1711,30 @@ function App() {
         throw new Error(seasonData?.error || "Не вдалося завантажити сезон");
       }
 
-      setSeason(seasonData.season || null);
+      setСезон(seasonData.season || null);
 
       if (leaderboardResponse.ok && leaderboardData?.ok) {
-        setSeasonPlayers(Array.isArray(leaderboardData.players) ? leaderboardData.players : []);
-        setSeasonRank(leaderboardData.myRank != null ? Number(leaderboardData.myRank) : null);
+        setСезонГравецьs(Array.isArray(leaderboardData.players) ? leaderboardData.players : []);
+        setСезонRank(leaderboardData.myRank != null ? Number(leaderboardData.myRank) : null);
       }
 
       if (passResponse.ok && passData?.ok) {
-        setSeasonPass(passData.season || null);
+        setСезонPass(passData.season || null);
       }
     } catch (error) {
       console.warn("BATTLE IQ: season load failed", error);
-      setSeasonError("Не вдалося завантажити Season 1. Спробуй ще раз.");
+      setСезонError("Не вдалося завантажити Сезон 1. Спробуй ще раз.");
     } finally {
-      setSeasonLoading(false);
+      setСезонLoading(false);
     }
   };
 
-  const claimSeasonPassReward = async (rewardCode: string) => {
+  const claimСезонPassReward = async (rewardCode: string) => {
     const tg = getTelegramWebApp();
     if (!tg?.initData) return;
 
-    setSeasonPassClaiming(rewardCode);
-    setSeasonPassNotice("");
+    setСезонPassClaiming(rewardCode);
+    setСезонPassNotice("");
     try {
       const response = await fetch(`${API_BASE}/api/season/pass/claim`, {
         method: "POST",
@@ -1747,27 +1747,27 @@ function App() {
       });
       const data = await response.json();
       if (!response.ok || !data?.ok) {
-        setSeasonPassNotice(data?.error || "Не вдалося забрати нагороду");
+        setСезонPassNotice(data?.error || "Не вдалося забрати нагороду");
         return;
       }
-      setSeasonPassNotice(`🎉 ${data.reward?.title || "Нагороду отримано"}`);
+      setСезонPassNotice(`🎉 ${data.reward?.title || "Нагороду отримано"}`);
       tg.HapticFeedback?.notificationOccurred?.("success");
-      await loadSeason();
+      await loadСезон();
     } catch (error) {
       console.warn("BATTLE IQ: season pass claim failed", error);
-      setSeasonPassNotice("Не вдалося забрати нагороду. Спробуй ще раз.");
+      setСезонPassNotice("Не вдалося забрати нагороду. Спробуй ще раз.");
     } finally {
-      setSeasonPassClaiming(null);
-      window.setTimeout(() => setSeasonPassNotice(""), 2800);
+      setСезонPassClaiming(null);
+      window.setTimeout(() => setСезонPassNotice(""), 2800);
     }
   };
 
   useEffect(() => {
     if (screen !== "season") return;
-    void loadSeason();
+    void loadСезон();
 
     const timer = window.setInterval(() => {
-      setSeasonNow(Date.now());
+      setСезонNow(Date.now());
     }, 1000);
 
     return () => window.clearInterval(timer);
@@ -1796,7 +1796,7 @@ function App() {
     if (battleFinished) return;
 
     if (timeLeft <= 0) {
-      finishBattle();
+      finishБій();
       return;
     }
 
@@ -1892,25 +1892,25 @@ function App() {
   const isDoubleXpRound =
     questionIndex >= 7;
 
-  const showBattleMilestone = (
+  const showБійMilestone = (
     icon: string,
     title: string,
     subtitle: string
   ) => {
-    setBattleMilestone({ icon, title, subtitle });
+    setБійMilestone({ icon, title, subtitle });
 
     window.setTimeout(() => {
-      setBattleMilestone((current) =>
+      setБійMilestone((current) =>
         current?.title === title ? null : current
       );
     }, 1500);
   };
 
   // ==========================================
-  // START BATTLE
+  // ПОЧАТИ БІЙ
   // ==========================================
 
-  const launchBattle = async () => {
+  const launchБій = async () => {
     const webApp =
       getTelegramWebApp();
 
@@ -1975,17 +1975,17 @@ function App() {
 
     setQuestionIndex(0);
     setScore(0);
-    setBattleXp(0);
-    setEventBonusXp(0);
-    setBattleCombo(0);
-    setBattleMilestone(null);
+    setБійXp(0);
+    setEventБонусXp(0);
+    setБійCombo(0);
+    setБійMilestone(null);
     setSelectedAnswer(null);
     setTimeLeft(90);
     setQuestionTimeLeft(getQuestionTimeLimit(0));
-    setBattleLives(3);
+    setБійLives(3);
     setQuestionResults([]);
     setLivesLost(0);
-    setBattleFinished(false);
+    setБійFinished(false);
     setBoosterPickerOpen(false);
     setSelectedSecondChance(false);
     setSelectedComboShield(false);
@@ -1994,19 +1994,19 @@ function App() {
     setScreen("battle");
   };
 
-  const startBattle = () => {
+  const startБій = () => {
     const battleBoosters = [
       "second_chance",
       "combo_shield",
       "xp_boost",
     ];
 
-    const ownedBattleBoosters = inventory.filter((item) =>
+    const ownedБійBoosters = inventory.filter((item) =>
       battleBoosters.includes(item.product_id) && Number(item.quantity || 0) > 0
     );
 
-    if (ownedBattleBoosters.length === 0) {
-      void launchBattle();
+    if (ownedБійBoosters.length === 0) {
+      void launchБій();
       return;
     }
 
@@ -2020,10 +2020,10 @@ function App() {
   // FINISH BATTLE
   // ==========================================
 
-  const finishBattle = () => {
+  const finishБій = () => {
     if (battleFinished) return;
 
-    setBattleFinished(true);
+    setБійFinished(true);
     setPreviousXp(player.xp);
 
     const webApp =
@@ -2037,7 +2037,7 @@ function App() {
     if (webApp?.initData) {
       void (async () => {
         try {
-          const response = await fetch(`${API_BASE}/api/battles`, {
+          const response = await fetch(`${API_BASE}/api/боїв`, {
             method: "POST",
             headers: {
               Authorization: `tma ${webApp.initData}`,
@@ -2046,7 +2046,7 @@ function App() {
             },
             body: JSON.stringify({
               score: score * 10,
-              correctAnswers: score,
+              правильнихAnswers: score,
               xp: battleXp,
               durationSeconds: Math.max(0, 90 - timeLeft),
               bestCombo: battleCombo,
@@ -2055,21 +2055,26 @@ function App() {
 
           const data = await response.json().catch(() => null);
           if (!response.ok || !data?.ok) {
-            throw new Error(data?.error || `Battle sync failed (${response.status})`);
+            throw new Error(data?.error || `Бій sync failed (${response.status})`);
           }
 
           if (data.profile) {
-            setPlayer((current) => ({
+            setГравець((current) => ({
               ...current,
               xp: Number(data.profile.xp ?? current.xp),
               streak: Number(data.profile.streak ?? current.streak),
-              battles: Number(data.profile.battles ?? current.battles),
+              боїв: Number(data.profile.боїв ?? current.боїв),
               totalCorrect: Number(data.profile.totalCorrect ?? current.totalCorrect),
               bestCombo: Number(data.profile.bestCombo ?? current.bestCombo),
-              bestBattleXp: Number(
-                data.profile.bestBattleXp ?? current.bestBattleXp
+              bestБійXp: Number(
+                data.profile.bestБійXp ?? current.bestБійXp
               ),
+              coins: Number(data.profile.coins ?? current.coins),
             }));
+          }
+          if (Number(data.coinReward || 0) > 0) {
+            setChallengeNotice(`🪙 +${Number(data.coinReward)} за битву${Number(data.coinReward) === 120 ? " • PERFECT!" : ""}`);
+            window.setTimeout(() => setChallengeNotice(""), 2600);
           }
         } catch (error) {
           console.warn("BATTLE IQ: battle sync failed", error);
@@ -2092,7 +2097,7 @@ function App() {
       questionIndex + 1 >=
       gameQuestions.length
     ) {
-      finishBattle();
+      finishБій();
       return;
     }
 
@@ -2116,7 +2121,7 @@ function App() {
 
     webApp?.HapticFeedback?.notificationOccurred("error");
     setSelectedAnswer(-1);
-    setBattleCombo(0);
+    setБійCombo(0);
     setQuestionResults((current) => [...current, "timeout"]);
     setLivesLost((current) => current + 1);
 
@@ -2127,8 +2132,8 @@ function App() {
         const restored = await consumeInventoryItem("second_chance");
         if (restored) {
           setSecondChanceAvailable(false);
-          setBattleLives(1);
-          setChallengeNotice("❤️ SECOND CHANCE! +1 life");
+          setБійLives(1);
+          setChallengeNotice("❤️ ДРУГИЙ ШАНС! +1 життя");
           window.setTimeout(() => setChallengeNotice(""), 1500);
 
           window.setTimeout(() => {
@@ -2139,12 +2144,12 @@ function App() {
         setSecondChanceAvailable(false);
       }
 
-      setBattleLives(0);
-      window.setTimeout(() => finishBattle(), 350);
+      setБійLives(0);
+      window.setTimeout(() => finishБій(), 350);
       return;
     }
 
-    setBattleLives(nextLives);
+    setБійLives(nextLives);
 
     window.setTimeout(() => {
       nextQuestion();
@@ -2175,25 +2180,25 @@ function App() {
     const webApp =
       getTelegramWebApp();
 
-    if (answer.correct) {
+    if (answer.правильних) {
       webApp?.HapticFeedback?.notificationOccurred(
         "success"
       );
 
       setQuestionResults((current) => [
         ...current,
-        "correct",
+        "правильних",
       ]);
 
       setScore(
         (value) => value + 1
       );
 
-      setBattleCombo(
+      setБійCombo(
         (value) => value + 1
       );
 
-      const speedBonus =
+      const speedБонус =
         Math.floor(questionTimeLeft / 3);
 
       const nextCombo =
@@ -2217,7 +2222,7 @@ function App() {
 
       const baseEarnedXp =
         Math.ceil(
-          (50 + speedBonus) *
+          (50 + speedБонус) *
             comboMultiplier *
             difficultyMultiplier
         );
@@ -2235,36 +2240,36 @@ function App() {
       const eventExtra =
         Math.max(0, boostedBaseXp - baseEarnedXp);
 
-      setEventBonusXp((value) => value + eventExtra);
+      setEventБонусXp((value) => value + eventExtra);
 
-      setBattleXp(
+      setБійXp(
         (value) =>
           value + earnedXp
       );
 
       if (nextCombo === 3) {
-        showBattleMilestone(
+        showБійMilestone(
           "🔥",
           "COMBO x3",
           "Multiplier activated"
         );
       } else if (nextCombo === 5) {
-        showBattleMilestone(
+        showБійMilestone(
           "🔥",
-          "HOT STREAK x5",
+          "HOT СЕРІЯ x5",
           "Keep the run alive"
         );
       } else if (nextCombo === 8) {
-        showBattleMilestone(
+        showБійMilestone(
           "💥",
           "ON FIRE x8",
           "Maximum combo multiplier"
         );
       } else if (nextCombo === 10) {
-        showBattleMilestone(
+        showБійMilestone(
           "👑",
           "PERFECT COMBO x10",
-          "10 correct answers in a row"
+          "10 правильних answers in a row"
         );
       }
 
@@ -2273,7 +2278,7 @@ function App() {
           .toLowerCase()
           .includes("hard")
       ) {
-        showBattleMilestone(
+        showБійMilestone(
           "🔴",
           "HARD CLEAR",
           `+${earnedXp} XP`
@@ -2289,7 +2294,7 @@ function App() {
         "wrong",
       ]);
 
-      // Combo Shield is consumed only when a real mistake happens.
+      // Щит серії is consumed only when a real mistake happens.
       if (comboShieldAvailable) {
         const protectedCombo = await consumeInventoryItem("combo_shield");
         if (protectedCombo) {
@@ -2297,10 +2302,10 @@ function App() {
           setChallengeNotice("🛡️ COMBO SHIELD! Комбо збережено");
           window.setTimeout(() => setChallengeNotice(""), 1500);
         } else {
-          setBattleCombo(0);
+          setБійCombo(0);
         }
       } else {
-        setBattleCombo(0);
+        setБійCombo(0);
       }
 
       setLivesLost((current) => current + 1);
@@ -2312,22 +2317,22 @@ function App() {
           const restored = await consumeInventoryItem("second_chance");
           if (restored) {
             setSecondChanceAvailable(false);
-            setBattleLives(1);
-            setChallengeNotice("❤️ SECOND CHANCE! +1 life");
+            setБійLives(1);
+            setChallengeNotice("❤️ ДРУГИЙ ШАНС! +1 життя");
             window.setTimeout(() => setChallengeNotice(""), 1500);
           } else {
             setSecondChanceAvailable(false);
-            setBattleLives(0);
-            window.setTimeout(() => finishBattle(), 350);
+            setБійLives(0);
+            window.setTimeout(() => finishБій(), 350);
             return;
           }
         } else {
-          setBattleLives(0);
-          window.setTimeout(() => finishBattle(), 350);
+          setБійLives(0);
+          window.setTimeout(() => finishБій(), 350);
           return;
         }
       } else {
-        setBattleLives(nextLives);
+        setБійLives(nextLives);
       }
     }
 
@@ -2647,10 +2652,10 @@ function App() {
             ? "active"
             : ""
         }`}
-        onClick={startBattle}
+        onClick={startБій}
       >
         <span>⚔</span>
-        <small>Battle</small>
+        <small>Бій</small>
       </button>
 
       <button
@@ -2692,13 +2697,13 @@ function App() {
         }
       >
         <span>👤</span>
-        <small>Profile</small>
+        <small>Профіль</small>
       </button>
     </nav>
   );
 
   // ==========================================
-  // HOME
+  // ГОЛОВНА
   // ==========================================
 
   const startPvpSearch = async () => {
@@ -2758,32 +2763,32 @@ function App() {
     return () => window.clearInterval(poll);
   }, [screen, pvpMatch?.matchId, pvpMatch?.status]);
 
-  const loadBattleStats = async () => {
+  const loadБійStats = async () => {
     const tg = getTelegramWebApp();
     if (!tg?.initData) return;
-    setBattleStatsLoading(true);
+    setБійStatsLoading(true);
     try {
       const headers = { Authorization: `tma ${tg.initData}`, Accept: "application/json" };
       const [statsRes, historyRes] = await Promise.all([
-        fetch(`${API_BASE}/api/battles/stats`, { headers }),
-        fetch(`${API_BASE}/api/battles/history?limit=20`, { headers }),
+        fetch(`${API_BASE}/api/боїв/stats`, { headers }),
+        fetch(`${API_BASE}/api/боїв/history?limit=20`, { headers }),
       ]);
       const [statsData, historyData] = await Promise.all([
         statsRes.json().catch(() => null),
         historyRes.json().catch(() => null),
       ]);
-      if (statsRes.ok && statsData?.ok) setBattleStats(statsData.stats);
-      if (historyRes.ok && historyData?.ok) setBattleHistory(Array.isArray(historyData.battles) ? historyData.battles : []);
+      if (statsRes.ok && statsData?.ok) setБійStats(statsData.stats);
+      if (historyRes.ok && historyData?.ok) setБійHistory(Array.isArray(historyData.боїв) ? historyData.боїв : []);
     } catch (error) {
       console.warn("BATTLE IQ: battle stats load failed", error);
     } finally {
-      setBattleStatsLoading(false);
+      setБійStatsLoading(false);
     }
   };
 
-  const openBattleStats = async () => {
+  const openБійStats = async () => {
     setScreen("battle_stats");
-    await loadBattleStats();
+    await loadБійStats();
   };
 
   const loadPvpStats = async () => {
@@ -2833,7 +2838,7 @@ function App() {
           title: "BATTLE IQ",
           text: inviteText,
         });
-        setChallengeNotice("✅ Invite shared!");
+        setChallengeNotice("✅ Запрошення надіслано!");
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(inviteText);
         setChallengeNotice("✅ Invite text copied!");
@@ -2841,7 +2846,7 @@ function App() {
         setChallengeNotice(inviteText);
       }
     } catch {
-      setChallengeNotice("⚔️ Invite cancelled.");
+      setChallengeNotice("⚔️ Запрошення скасовано.");
     }
 
     window.setTimeout(() => {
@@ -2926,7 +2931,7 @@ function App() {
           <section className="profile-card">
             <div className="avatar" style={{ position: "relative", ...((equippedFrame && FRAME_STYLES[equippedFrame]) || {}) }}>
               😎
-              {equippedFrame && <span style={{ position: "absolute", right: -6, bottom: -6, width: 22, height: 22, borderRadius: "50%", display: "grid", placeItems: "center", background: "#171522", border: "1px solid rgba(255,255,255,0.12)", fontSize: 12 }}>{PROFILE_FRAME_EMOJI[equippedFrame]}</span>}
+              {equippedFrame && <span style={{ position: "absolute", right: -6, bottom: -6, width: 22, height: 22, borderRadius: "50%", display: "grid", placeItems: "center", background: "#171522", border: "1px solid rgba(255,255,255,0.12)", fontSize: 12 }}>{ПРОФІЛЬ_FRAME_EMOJI[equippedFrame]}</span>}
             </div>
 
             <div className="profile-info">
@@ -3013,11 +3018,11 @@ function App() {
 
             <button
               className="play-button"
-              onClick={startBattle}
+              onClick={startБій}
             >
               <span>⚔️</span>
 
-              PLAY NOW
+              ГРАТИ NOW
 
               <span className="arrow">
                 →
@@ -3060,11 +3065,11 @@ function App() {
 
           <div className="section-title">
             <h2>
-              Your progress
+              Тиr progress
             </h2>
 
             <span>
-              {player.battles} battles
+              {player.боїв} боїв
             </span>
           </div>
 
@@ -3080,7 +3085,7 @@ function App() {
               </div>
 
               <div>
-                <strong>SHOP</strong>
+                <strong>МАГАЗИН</strong>
                 <span>Avatars, frames & passes</span>
               </div>
 
@@ -3099,17 +3104,17 @@ function App() {
 
               <div>
                 <strong>
-                  MISSIONS
+                  МІСІЇ
                 </strong>
 
                 <span>
-                  {DAILY_MISSIONS.filter(
+                  {DAILY_МІСІЇ.filter(
                     (mission) =>
                       mission.getProgress(
                         dailyMissions
                       ) >= mission.target
                   ).length}
-                  /{DAILY_MISSIONS.length} complete
+                  /{DAILY_МІСІЇ.length} complete
                 </span>
               </div>
 
@@ -3127,7 +3132,7 @@ function App() {
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                 <div>
                   <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.55 }}>SOCIAL</div>
-                  <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>👥 Friends Hub</div>
+                  <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>👥 Друзі Hub</div>
                   <div style={{ fontSize:12, opacity:.55, marginTop:3 }}>{friends.length} friends · compare your stats</div>
                 </div>
                 <div style={{ fontSize:28 }}>👥</div>
@@ -3146,24 +3151,24 @@ function App() {
                 <div>
                   <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.55 }}>DAILY BONUS</div>
                   <div style={{ fontSize:18, fontWeight:950, marginTop:4 }}>
-                    {dailyBonus?.claimedToday
-                      ? "✅ Already claimed"
-                      : `Day ${dailyBonus?.currentDay ?? 1} · ${dailyBonus?.rewards?.find((r) => r.day === (dailyBonus?.currentDay ?? 1))?.title ?? "Bonus"}`}
+                    {dailyБонус?.claimedСьогодні
+                      ? "✅ Вже забрано"
+                      : `Day ${dailyБонус?.currentDay ?? 1} · ${dailyБонус?.rewards?.find((r) => r.day === (dailyБонус?.currentDay ?? 1))?.title ?? "Бонус"}`}
                   </div>
                   <div style={{ fontSize:12, opacity:.55, marginTop:3 }}>7-day reward cycle</div>
                 </div>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); void claimDailyBonus(); }}
-                  disabled={dailyBonusLoading || dailyBonusClaiming || !dailyBonus || dailyBonus.claimedToday}
+                  onClick={(e) => { e.stopPropagation(); void claimDailyБонус(); }}
+                  disabled={dailyБонусLoading || dailyБонусClaiming || !dailyБонус || dailyБонус.claimedСьогодні}
                   style={{ border:0, borderRadius:14, padding:"11px 14px", fontWeight:950,
-                    background: dailyBonus?.claimedToday ? "rgba(255,255,255,.08)" : "linear-gradient(135deg,#ffb43d,#ff5e9b)",
+                    background: dailyБонус?.claimedСьогодні ? "rgba(255,255,255,.08)" : "linear-gradient(135deg,#ffb43d,#ff5e9b)",
                     color:"#fff", whiteSpace:"nowrap" }}
                 >
-                  {dailyBonusClaiming ? "..." : dailyBonus?.claimedToday ? "CLAIMED" : "CLAIM"}
+                  {dailyБонусClaiming ? "..." : dailyБонус?.claimedСьогодні ? "ЗАБРАТО" : "ЗАБРАТИ"}
                 </button>
               </div>
-              {dailyBonusNotice && <div style={{ marginTop:10, fontSize:12, fontWeight:800 }}>{dailyBonusNotice}</div>}
+              {dailyБонусNotice && <div style={{ marginTop:10, fontSize:12, fontWeight:800 }}>{dailyБонусNotice}</div>}
             </section>
 
             <button
@@ -3175,7 +3180,7 @@ function App() {
               </div>
               <div>
                 <strong>SEASON</strong>
-                <span>{season ? `Level ${season.level} · ${season.xp} XP` : "Season 1 progression"}</span>
+                <span>{season ? `Level ${season.level} · ${season.xp} XP` : "Сезон 1 progression"}</span>
               </div>
               <b>→</b>
             </button>
@@ -3188,7 +3193,7 @@ function App() {
                 🎁
               </div>
               <div>
-                <strong>INVITE FRIENDS</strong>
+                <strong>INVITE ДРУЗІ</strong>
                 <span>+500 coins for each referral</span>
               </div>
               <b>→</b>
@@ -3208,11 +3213,11 @@ function App() {
 
               <div>
                 <strong>
-                  RANKING
+                  РЕЙТИНГ
                 </strong>
 
                 <span>
-                  You're #{globalRank?.toLocaleString() ?? "—"}
+                  Ти're #{globalRank?.toLocaleString() ?? "—"}
                 </span>
               </div>
 
@@ -3250,12 +3255,12 @@ function App() {
             <div className="challenge-left">
               <div className="mini-icon">🔥</div>
               <div>
-                <strong>PLAY PVP 1V1</strong>
+                <strong>ГРАТИ PvP 1V1</strong>
                 <span>Знайди суперника та зіграй онлайн</span>
               </div>
             </div>
             <button className="challenge-button" onClick={startPvpSearch} type="button">
-              FIND MATCH
+              ЗНАЙТИ СУПЕРНИКА
             </button>
           </section>
         </main>
@@ -3265,7 +3270,7 @@ function App() {
     );
   }
 
-  const startPvpBattle = async () => {
+  const startPvpБій = async () => {
     const tg = getTelegramWebApp();
     if (!tg?.initData || !pvpMatch?.matchId) return;
 
@@ -3319,10 +3324,18 @@ function App() {
       const data = await response.json();
       if (!response.ok || !data?.ok) throw new Error(data?.error || "Не вдалося надіслати відповідь");
 
-      if (data.correct) {
+      if (data.правильних) {
         tg.HapticFeedback?.notificationOccurred("success");
       } else {
         tg.HapticFeedback?.notificationOccurred("error");
+      }
+
+      if (data.coins !== null && data.coins !== undefined) {
+        setГравець((current) => ({ ...current, coins: Number(data.coins) }));
+      }
+      if (Number(data.coinReward || 0) > 0) {
+        setChallengeNotice(`🪙 +${Number(data.coinReward)} за PvP`);
+        window.setTimeout(() => setChallengeNotice(""), 2600);
       }
 
       setPvpScore(Number(data.score || 0));
@@ -3357,10 +3370,10 @@ function App() {
         <main className="content">
           <section className="hero-card" style={{ textAlign: "center" }}>
             <div className="hero-badge">⚔️ PVP 1V1</div>
-            <h1>{pvpMatch?.status === "ready" ? "MATCH FOUND!" : "Finding opponent..."}</h1>
+            <h1>{pvpMatch?.status === "ready" ? "СУПЕРНИКА ЗНАЙДЕНО!" : "Пошук суперника…"}</h1>
             <p>
               {pvpMatch?.status === "ready"
-                ? `Суперник: ${pvpMatch.opponent?.first_name || pvpMatch.opponent?.username || "Player"}`
+                ? `Суперник: ${pvpMatch.opponent?.first_name || pvpMatch.opponent?.username || "Гравець"}`
                 : "Шукаємо іншого гравця в черзі."}
             </p>
             <div style={{ margin: "24px auto", width: 110, height: 110, borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(122,72,255,.16)", border: "1px solid rgba(145,105,255,.35)", fontSize: 48 }}>
@@ -3373,12 +3386,12 @@ function App() {
             )}
             {pvpError && <div style={{ color: "#ff9b9b", marginBottom: 16 }}>{pvpError}</div>}
             {pvpMatch?.status === "ready" ? (
-              <button className="play-button" onClick={() => void startPvpBattle()}>
-                START MATCH ⚔️
+              <button className="play-button" onClick={() => void startPvpБій()}>
+                ПОЧАТИ МАТЧ ⚔️
               </button>
             ) : (
               <button className="challenge-button" onClick={() => { setPvpSearching(false); setScreen("home"); }}>
-                CANCEL
+                СКАСУВАТИ
               </button>
             )}
           </section>
@@ -3457,11 +3470,11 @@ function App() {
         <main className="content">
           <section className="hero-card">
             <div className="hero-badge">🏆 PVP STATS</div>
-            <h1>Your PvP</h1>
+            <h1>Тиr PvP</h1>
             <p style={{ opacity: .7 }}>Статистика, останні матчі та таблиця PvP.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 20 }}>
               {[
-                ["PLAYED", stats.played], ["WINS", stats.wins], ["LOSSES", stats.losses], ["DRAWS", stats.draws],
+                ["ГРАТИED", stats.played], ["ПЕРЕМОГАS", stats.wins], ["ПОРАЗКАES", stats.losses], ["НІЧИЯS", stats.draws],
               ].map(([label, value]) => (
                 <div className="info-card" key={String(label)} style={{ padding: 10 }}>
                   <strong style={{ fontSize: 11 }}>{label}</strong>
@@ -3470,7 +3483,7 @@ function App() {
               ))}
             </div>
             <div className="info-card" style={{ marginTop: 10 }}>
-              <strong>WIN RATE</strong>
+              <strong>ПЕРЕМОГА RATE</strong>
               <span style={{ fontSize: 26 }}>{Number(stats.winRate || 0).toFixed(0)}%</span>
             </div>
           </section>
@@ -3481,7 +3494,7 @@ function App() {
             {!pvpStatsLoading && pvpHistory.length === 0 && <p style={{ opacity: .65 }}>Ще немає завершених PvP матчів.</p>}
             {pvpHistory.map((match) => (
               <div key={match.matchId} className="info-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                <div><strong>{match.result === "win" ? "🏆 WIN" : match.result === "loss" ? "❌ LOSS" : "🤝 DRAW"}</strong><div style={{ opacity: .65, fontSize: 12 }}>vs {match.opponentName || "Opponent"}</div></div>
+                <div><strong>{match.result === "win" ? "🏆 ПЕРЕМОГА" : match.result === "loss" ? "❌ ПОРАЗКА" : "🤝 НІЧИЯ"}</strong><div style={{ opacity: .65, fontSize: 12 }}>vs {match.opponentName || "Суперник"}</div></div>
                 <strong>{match.myScore} : {match.opponentScore}</strong>
               </div>
             ))}
@@ -3491,13 +3504,13 @@ function App() {
             <div className="hero-badge">🏅 PVP LEADERBOARD</div>
             {pvpLeaderboard.map((player, index) => (
               <div key={player.userId} className="info-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                <div><strong>#{index + 1} {player.firstName || player.username || "Player"}</strong><div style={{ opacity: .65, fontSize: 12 }}>{player.wins} wins · {player.played} played</div></div>
+                <div><strong>#{index + 1} {player.firstName || player.username || "Гравець"}</strong><div style={{ opacity: .65, fontSize: 12 }}>{player.wins} wins · {player.played} played</div></div>
                 <strong>{player.points} PTS</strong>
               </div>
             ))}
           </section>
 
-          <button className="play-button" onClick={() => setScreen("home")}>BACK HOME</button>
+          <button className="play-button" onClick={() => setScreen("home")}>НАЗАД ГОЛОВНА</button>
         </main>
         <BottomNav />
       </div>
@@ -3520,8 +3533,8 @@ function App() {
         <main className="content">
           <section className="hero-card" style={{ textAlign: "center" }}>
             <div className="hero-badge">🏁 MATCH COMPLETE</div>
-            <h1>{isDraw ? "DRAW" : won ? "YOU WIN!" : "YOU LOSE"}</h1>
-            <p>{opponent?.first_name || opponent?.username || "Opponent"}</p>
+            <h1>{isDraw ? "НІЧИЯ" : won ? "ТИ ПЕРЕМІГ!" : "ТИ ПРОГРАВ"}</h1>
+            <p>{opponent?.first_name || opponent?.username || "Суперник"}</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10, margin: "24px 0" }}>
               <div className="info-card"><strong>YOU</strong><span style={{ fontSize: 28 }}>{myScore}</span></div>
               <strong style={{ fontSize: 22 }}>VS</strong>
@@ -3532,7 +3545,7 @@ function App() {
               🏆 PVP STATS
             </button>
             <button className="play-button" style={{ marginTop: 10 }} onClick={() => { setPvpMatch(null); setPvpQuestions([]); setPvpMyFinished(false); setPvpWinner(undefined); setScreen("home"); }}>
-              BACK HOME
+              НАЗАД ГОЛОВНА
             </button>
           </section>
         </main>
@@ -3561,11 +3574,11 @@ function App() {
     };
 
   // ==========================================
-  // SHOP 2.0
+  // МАГАЗИН 2.0
   // ==========================================
 
   if (screen === "shop") {
-    const categories = ["PROFILE", "COSMETICS", "TITLES", "EFFECTS", "BACKGROUNDS", "LEGENDARY", "ANIMATIONS", "BATTLE", "PASS"];
+    const categories = ["ПРОФІЛЬ", "COSMETICS", "TITLES", "EFFECTS", "НАЗАДGROUNDS", "LEGENDARY", "ANIMATIONS", "BATTLE", "PASS"];
     const owned = (id: string) => inventory.find((item) => item.product_id === id);
 
     const buyProduct = async (product: ShopProduct) => {
@@ -3668,7 +3681,7 @@ function App() {
           throw new Error(data?.error || "Не вдалося купити предмет");
         }
 
-        setPlayer((current) => ({
+        setГравець((current) => ({
           ...current,
           coins: Number(data.coins ?? Math.max(0, current.coins - price)),
         }));
@@ -3729,7 +3742,7 @@ function App() {
           throw new Error(data?.error || "Не вдалося активувати предмет");
         }
 
-        setPlayer((current) => {
+        setГравець((current) => {
           const meta = COSMETIC_PRODUCT_META[product.id];
           if (!meta) return current;
           if (meta.kind === "title") return { ...current, profileTitle: meta.value };
@@ -3785,11 +3798,11 @@ function App() {
           <section style={{ marginBottom: 24 }}>
             <div className="section-title" style={{ marginBottom: 11 }}>
               <h2>🎒 Inventory</h2>
-              <span>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items{equippedFrame ? ` · ${PROFILE_FRAME_EMOJI[equippedFrame]} active` : ""}</span>
+              <span>{inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0)} items{equippedFrame ? ` · ${ПРОФІЛЬ_FRAME_EMOJI[equippedFrame]} active` : ""}</span>
             </div>
             {inventory.length === 0 ? (
               <div style={{ padding: 16, borderRadius: 16, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 11, opacity: 0.55, textAlign: "center" }}>
-                {shopLoading ? "Loading inventory…" : "Твій інвентар поки порожній."}
+                {shopLoading ? "Завантаження інвентарю…" : "Твій інвентар поки порожній."}
               </div>
             ) : (
               <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
@@ -3799,14 +3812,14 @@ function App() {
                     <div style={{ fontSize: 11, fontWeight: 900, marginTop: 6 }}>{item.title}</div>
                     <div style={{ fontSize: 9, opacity: 0.5, marginTop: 3 }}>x{item.quantity}</div>
                     {(
-                      Object.prototype.hasOwnProperty.call(PROFILE_FRAME_EMOJI, item.product_id) ||
+                      Object.prototype.hasOwnProperty.call(ПРОФІЛЬ_FRAME_EMOJI, item.product_id) ||
                       Object.prototype.hasOwnProperty.call(COSMETIC_PRODUCT_META, item.product_id)
                     ) && (
                       <button
                         type="button"
                         disabled={shopBusy === item.product_id}
                         onClick={() => {
-                          if (Object.prototype.hasOwnProperty.call(PROFILE_FRAME_EMOJI, item.product_id)) {
+                          if (Object.prototype.hasOwnProperty.call(ПРОФІЛЬ_FRAME_EMOJI, item.product_id)) {
                             void equipFrame(item.product_id);
                           } else {
                             const product: ShopProduct = {
@@ -3822,7 +3835,7 @@ function App() {
                           }
                         }}
                         style={{ width: "100%", marginTop: 8, border: 0, borderRadius: 9, padding: "7px 5px", background: (item.equipped || cosmeticActive({ id: item.product_id, title: item.title, description: item.description, icon: item.icon, category: item.category, price_stars: item.price_stars })) ? "rgba(124,77,255,0.25)" : "rgba(255,255,255,0.08)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: "pointer" }}>
-                        {(item.equipped || cosmeticActive({ id: item.product_id, title: item.title, description: item.description, icon: item.icon, category: item.category, price_stars: item.price_stars })) ? "EQUIPPED ✓" : "EQUIP"}
+                        {(item.equipped || cosmeticActive({ id: item.product_id, title: item.title, description: item.description, icon: item.icon, category: item.category, price_stars: item.price_stars })) ? "ВИКОРИСТОВУЄТЬСЯ ✓" : "EQUIP"}
                       </button>
                     )}
                   </div>
@@ -3835,16 +3848,16 @@ function App() {
             <section key={category} style={{ marginBottom: 24 }}>
               <div className="section-title" style={{ marginBottom: 11 }}>
                 <h2>{
-                  category === "PROFILE" ? "👤 Profile" :
-                  category === "COSMETICS" ? "✨ Frames" :
-                  category === "TITLES" ? "🏷️ Titles" :
-                  category === "EFFECTS" ? "✨ Victory Effects" :
-                  category === "BACKGROUNDS" ? "🎨 Profile Backgrounds" :
-                  category === "LEGENDARY" ? "👑 Legendary" :
-                  category === "ANIMATIONS" ? "🎞️ Profile Animations" :
-                  category === "BATTLE" ? "⚔️ Battle" : "🎟️ Season"
+                  category === "ПРОФІЛЬ" ? "👤 Профіль" :
+                  category === "COSMETICS" ? "✨ Рамки" :
+                  category === "TITLES" ? "🏷️ Звання" :
+                  category === "EFFECTS" ? "✨ Ефекти перемоги" :
+                  category === "НАЗАДGROUNDS" ? "🎨 Фони профілю" :
+                  category === "LEGENDARY" ? "👑 Легендарні" :
+                  category === "ANIMATIONS" ? "🎞️ Анімації профілю" :
+                  category === "BATTLE" ? "⚔️ Бій" : "🎟️ Сезон"
                 }</h2>
-                <span>{shopProducts.some((p) => p.category === category && Number(p.price_coins || 0) > 0) ? "🪙 Coins · ⭐ Stars" : "⭐ Stars"}</span>
+                <span>{shopProducts.some((p) => p.category === category && Number(p.price_coins || 0) > 0) ? "🪙 Коїни · ⭐ Stars" : "⭐ Stars"}</span>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
@@ -3858,7 +3871,7 @@ function App() {
                       {product.category === "LEGENDARY" && <div style={{ position: "absolute", top: 10, right: 10, padding: "4px 7px", borderRadius: 8, fontSize: 8, fontWeight: 950, background: "rgba(255,205,70,0.16)", color: "#ffe89b" }}>LEGENDARY</div>}
                       <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 15, background: "rgba(255,255,255,0.07)", fontSize: 25, marginBottom: 12 }}>{product.icon || "🎁"}</div>
                       <div style={{ fontWeight: 900, fontSize: 14 }}>{product.title}</div>
-                      <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.description || "Premium BATTLE IQ item"}</div>
+                      <div style={{ fontSize: 10.5, lineHeight: 1.35, opacity: 0.55, marginTop: 4, minHeight: 29 }}>{product.description || "Преміальний предмет BATTLE IQ"}</div>
                       {showOwned ? (
                         <div style={{ marginTop: 11, padding: "8px 7px", borderRadius: 11, background: "rgba(124,77,255,0.13)", border: "1px solid rgba(124,77,255,0.2)", textAlign: "center", fontSize: 10, fontWeight: 900 }}>OWNED · x{item?.quantity || 0}</div>
                       ) : (
@@ -3896,7 +3909,7 @@ function App() {
                 boxShadow:"0 24px 80px rgba(0,0,0,.5)"
               }}
             >
-              <style>{PROFILE_ANIMATION_KEYFRAMES}</style>
+              <style>{ПРОФІЛЬ_ANIMATION_KEYFRAMES}</style>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div style={{fontSize:10,fontWeight:950,letterSpacing:1.4,opacity:.5}}>ITEM PREVIEW</div>
                 <button onClick={() => setPreviewProduct(null)} style={{border:0,background:"transparent",color:"inherit",fontSize:24,cursor:"pointer"}}>×</button>
@@ -3909,19 +3922,19 @@ function App() {
                   const previewEffect = meta?.kind === "effect" ? meta.value : player.victoryEffect;
                   const previewBackground = meta?.kind === "background" ? meta.value : player.profileBackground;
                   const previewAnimation = meta?.kind === "animation" ? meta.value : player.profileAnimation;
-                  const previewFrame = PROFILE_FRAME_EMOJI[previewProduct.id] ? previewProduct.id : (equippedFrame || "");
-                  const previewAnimationStyle = PROFILE_ANIMATION_STYLES[previewAnimation || ""] || {};
+                  const previewFrame = ПРОФІЛЬ_FRAME_EMOJI[previewProduct.id] ? previewProduct.id : (equippedFrame || "");
+                  const previewAnimationStyle = ПРОФІЛЬ_ANIMATION_STYLES[previewAnimation || ""] || {};
                   return (
                     <div style={{
                       padding:18,borderRadius:20,textAlign:"center",
-                      ...(PROFILE_BACKGROUND_STYLES[previewBackground || ""] || { background:"linear-gradient(145deg,rgba(124,77,255,.16),rgba(255,255,255,.04))" }),
+                      ...(ПРОФІЛЬ_НАЗАДGROUND_STYLES[previewBackground || ""] || { background:"linear-gradient(145deg,rgba(124,77,255,.16),rgba(255,255,255,.04))" }),
                       ...(FRAME_STYLES[previewFrame] || {}),
                     }}>
-                      <div style={{fontSize:10,fontWeight:950,letterSpacing:1.2,opacity:.5}}>PROFILE PREVIEW</div>
+                      <div style={{fontSize:10,fontWeight:950,letterSpacing:1.2,opacity:.5}}>ПРОФІЛЬ PREVIEW</div>
                       <div style={{width:74,height:74,margin:"12px auto 9px",borderRadius:22,display:"grid",placeItems:"center",background:"rgba(255,255,255,.08)",fontSize:34,...(FRAME_STYLES[previewFrame] || {}),...(previewAnimationStyle || {})}}>
                         😎
                       </div>
-                      <div style={{fontSize:18,fontWeight:950}}>{telegramUser?.first_name || "BATTLE IQ PLAYER"}</div>
+                      <div style={{fontSize:18,fontWeight:950}}>{telegramUser?.first_name || "BATTLE IQ ГРАТИER"}</div>
                       <div style={{marginTop:4,fontSize:10,fontWeight:900,opacity:.55}}>{previewTitle}</div>
                       {previewEffect && (
                         <div style={{marginTop:10,padding:"7px 10px",display:"inline-flex",gap:6,alignItems:"center",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>
@@ -3930,7 +3943,7 @@ function App() {
                       )}
                       {previewAnimation && (
                         <div style={{marginTop:8,padding:"7px 10px",display:"inline-flex",gap:6,alignItems:"center",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>
-                          {PROFILE_ANIMATION_EMOJI[previewAnimation] || "🎞️"} {PROFILE_ANIMATION_LABEL[previewAnimation] || "ANIMATION"}
+                          {ПРОФІЛЬ_ANIMATION_EMOJI[previewAnimation] || "🎞️"} {ПРОФІЛЬ_ANIMATION_LABEL[previewAnimation] || "ANIMATION"}
                         </div>
                       )}
                       <div style={{marginTop:10,display:"inline-flex",alignItems:"center",gap:7,padding:"7px 10px",borderRadius:999,background:"rgba(255,255,255,.07)",fontSize:10,fontWeight:900}}>
@@ -3957,7 +3970,7 @@ function App() {
                   fontWeight:950,fontSize:12
                 }}
               >
-                {shopBusy === previewProduct.id ? "OPENING…" : `BUY FOR ${previewProduct.price_stars} ⭐`}
+                {shopBusy === previewProduct.id ? "ВІДКРИВАЄМО…" : `КУПИТИ FOR ${previewProduct.price_stars} ⭐`}
               </button>
               {Number(previewProduct.price_coins || 0) > 0 && (
                 <button
@@ -3974,7 +3987,7 @@ function App() {
                     color:"#fff",fontWeight:950,fontSize:12
                   }}
                 >
-                  {shopBusy === `${previewProduct.id}:coins` ? "BUYING…" : `BUY FOR ${Number(previewProduct.price_coins).toLocaleString()} 🪙`}
+                  {shopBusy === `${previewProduct.id}:coins` ? "КУПУЄМО…" : `КУПИТИ FOR ${Number(previewProduct.price_coins).toLocaleString()} 🪙`}
                 </button>
               )}
 
@@ -4007,7 +4020,7 @@ function App() {
     const cosmeticProducts = shopProducts.filter((p) => !["BATTLE", "PASS"].includes(p.category));
     const ownedUnique = cosmeticProducts.filter((product) => ownedIds.has(product.id)).length;
     const activeLabel = (product: ShopProduct) => {
-      if (PROFILE_FRAME_EMOJI[product.id]) return equippedFrame === product.id;
+      if (ПРОФІЛЬ_FRAME_EMOJI[product.id]) return equippedFrame === product.id;
       const meta = COSMETIC_PRODUCT_META[product.id];
       if (!meta) return false;
       if (meta.kind === "title") return player.profileTitle === meta.value;
@@ -4016,14 +4029,14 @@ function App() {
       return player.profileAnimation === meta.value;
     };
     const categoryLabel = (category: string) =>
-      category === "PROFILE" ? "👤 PROFILE" :
-      category === "COSMETICS" ? "✨ FRAMES" :
-      category === "TITLES" ? "🏷️ TITLES" :
-      category === "EFFECTS" ? "💥 EFFECTS" :
-      category === "BACKGROUNDS" ? "🎨 BACKGROUNDS" :
-      category === "LEGENDARY" ? "👑 LEGENDARY" :
-      category === "ANIMATIONS" ? "🎞️ ANIMATIONS" : category;
-    const collectionCategories = ["LEGENDARY", "ANIMATIONS", "PROFILE", "COSMETICS", "TITLES", "EFFECTS", "BACKGROUNDS"];
+      category === "ПРОФІЛЬ" ? "👤 ПРОФІЛЬ" :
+      category === "COSMETICS" ? "✨ РАМКИ" :
+      category === "TITLES" ? "🏷️ ЗВАННЯ" :
+      category === "EFFECTS" ? "💥 ЕФЕКТИ" :
+      category === "НАЗАДGROUNDS" ? "🎨 ФОНИ" :
+      category === "LEGENDARY" ? "👑 ЛЕГЕНДАРНІ" :
+      category === "ANIMATIONS" ? "🎞️ АНІМАЦІЇ" : category;
+    const collectionCategories = ["LEGENDARY", "ANIMATIONS", "ПРОФІЛЬ", "COSMETICS", "TITLES", "EFFECTS", "НАЗАДGROUNDS"];
     return (
       <div className="app">
         <div className="glow glow-one" />
@@ -4033,9 +4046,9 @@ function App() {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:12, marginBottom:18 }}>
             <div>
               <div style={{ fontSize:11, letterSpacing:1.8, fontWeight:900, opacity:.5 }}>BATTLE IQ COLLECTION</div>
-              <h1 style={{ margin:"4px 0 0", fontSize:30, lineHeight:1.05 }}>Your Vault</h1>
+              <h1 style={{ margin:"4px 0 0", fontSize:30, lineHeight:1.05 }}>Тиr Vault</h1>
             </div>
-            <button type="button" onClick={() => setScreen("shop")} style={{ border:0, borderRadius:13, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:900, fontSize:10, cursor:"pointer" }}>SHOP</button>
+            <button type="button" onClick={() => setScreen("shop")} style={{ border:0, borderRadius:13, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:900, fontSize:10, cursor:"pointer" }}>МАГАЗИН</button>
           </div>
           <section style={{ padding:18, borderRadius:22, background:"linear-gradient(145deg,rgba(124,77,255,.18),rgba(255,255,255,.035))", border:"1px solid rgba(255,255,255,.08)", marginBottom:18 }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 }}>
@@ -4064,7 +4077,7 @@ function App() {
                       <div key={product.id} style={{ position:"relative", minHeight:115, padding:12, borderRadius:17, background: active ? "rgba(124,77,255,.15)" : owned ? "rgba(255,255,255,.055)" : "rgba(255,255,255,.025)", border: active ? "1px solid rgba(145,110,255,.35)" : "1px solid rgba(255,255,255,.06)", opacity: owned ? 1 : .55 }}>
                         <div style={{ display:"flex", justifyContent:"space-between", gap:8, alignItems:"flex-start" }}><div style={{ fontSize:22 }}>{product.icon || "🎁"}</div>{active && <span style={{ padding:"4px 6px", borderRadius:8, background:"rgba(124,77,255,.22)", fontSize:7.5, fontWeight:950 }}>ACTIVE</span>}</div>
                         <div style={{ marginTop:7, fontSize:11, fontWeight:900 }}>{product.title}</div>
-                        <div style={{ marginTop:3, fontSize:8.5, opacity:.45 }}>{owned ? `OWNED · x${inventory.find((item) => item.product_id === product.id)?.quantity || 0}` : "LOCKED · SHOP"}</div>
+                        <div style={{ marginTop:3, fontSize:8.5, opacity:.45 }}>{owned ? `OWNED · x${inventory.find((item) => item.product_id === product.id)?.quantity || 0}` : "ЗАБЛОКОВАНО · МАГАЗИН"}</div>
                       </div>
                     );
                   })}
@@ -4072,7 +4085,7 @@ function App() {
               </section>
             );
           })}
-          <button type="button" onClick={() => setScreen("profile")} style={{ width:"100%", border:0, borderRadius:14, padding:"12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:950, fontSize:11, cursor:"pointer" }}>← BACK TO PROFILE</button>
+          <button type="button" onClick={() => setScreen("profile")} style={{ width:"100%", border:0, borderRadius:14, padding:"12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:950, fontSize:11, cursor:"pointer" }}>← ПОВЕРНУТИСЯ ДО ПРОФІЛЮ</button>
         </main>
         <BottomNav />
       </div>
@@ -4080,7 +4093,7 @@ function App() {
   }
 
   // ==========================================
-  // MISSIONS 2.0
+  // МІСІЇ 2.0
   // ==========================================
 
   if (screen === "missions") {
@@ -4111,10 +4124,10 @@ function App() {
           body: JSON.stringify({ periodType, missionId }),
         });
         const data = await response.json();
-        if (!response.ok || !data?.ok) throw new Error(data?.error || "Could not claim mission");
+        if (!response.ok || !data?.ok) throw new Error(data?.error || "Не вдалося забрати нагороду місії");
 
         if (data.profile) {
-          setPlayer((current) => ({
+          setГравець((current) => ({
             ...current,
             xp: Number(data.profile.xp ?? current.xp),
           }));
@@ -4125,7 +4138,7 @@ function App() {
         window.setTimeout(() => setMissionNotice(""), 2500);
       } catch (error) {
         console.warn("BATTLE IQ: mission claim failed", error);
-        setMissionNotice(error instanceof Error ? error.message : "Could not claim mission");
+        setMissionNotice(error instanceof Error ? error.message : "Не вдалося забрати нагороду місії");
         window.setTimeout(() => setMissionNotice(""), 3000);
       } finally {
         setMissionsLoading(false);
@@ -4133,7 +4146,7 @@ function App() {
     };
 
     const renderMission = (
-      mission: typeof DAILY_MISSIONS[number],
+      mission: typeof DAILY_МІСІЇ[number],
       stats: DailyMissionStats | WeeklyMissionStats,
       periodType: "daily" | "weekly",
     ) => {
@@ -4161,15 +4174,15 @@ function App() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginTop: "9px" }}>
             <span style={{ fontSize: "11px", opacity: 0.6 }}>{progress}/{mission.target}</span>
             <button disabled={!completed || claimed || missionsLoading} onClick={() => void claimMission(periodType, mission.id, mission.target, mission.reward, progress)} style={{ border: 0, borderRadius: "10px", padding: "8px 12px", background: claimed ? "rgba(255,255,255,0.08)" : completed ? "#7c4dff" : "rgba(255,255,255,0.06)", color: "inherit", fontSize: "11px", fontWeight: 800, cursor: completed && !claimed ? "pointer" : "default", opacity: !completed || claimed ? 0.55 : 1 }}>
-              {claimed ? "✓ CLAIMED" : completed ? "CLAIM XP" : "LOCKED"}
+              {claimed ? "✓ ЗАБРАНО" : completed ? "ЗАБРАТИ XP" : "LOCKED"}
             </button>
           </div>
         </div>
       );
     };
 
-    const dailyCompleted = DAILY_MISSIONS.filter((m) => m.getProgress(dailyMissions) >= m.target).length;
-    const weeklyCompleted = WEEKLY_MISSIONS.filter((m) => m.getProgress(weeklyMissions) >= m.target).length;
+    const dailyCompleted = DAILY_МІСІЇ.filter((m) => m.getProgress(dailyMissions) >= m.target).length;
+    const weeklyCompleted = WEEKLY_МІСІЇ.filter((m) => m.getProgress(weeklyMissions) >= m.target).length;
 
     return (
       <div className="app">
@@ -4179,24 +4192,24 @@ function App() {
         <main className="profile-page">
           <section className="profile-hero">
             <div className="profile-big-avatar">🎯</div>
-            <h1>MISSIONS</h1>
-            <div className="profile-level">{dailyCompleted}/{DAILY_MISSIONS.length} DAILY · {weeklyCompleted}/{WEEKLY_MISSIONS.length} WEEKLY</div>
+            <h1>МІСІЇ</h1>
+            <div className="profile-level">{dailyCompleted}/{DAILY_МІСІЇ.length} DAILY · {weeklyCompleted}/{WEEKLY_МІСІЇ.length} WEEKLY</div>
             <p style={{ marginTop: "8px", opacity: 0.65, fontSize: "13px" }}>Complete missions and claim bonus XP.</p>
           </section>
 
           {missionNotice && <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 14, background: "rgba(124,77,255,0.16)", border: "1px solid rgba(124,77,255,0.3)", textAlign: "center", fontSize: 12, fontWeight: 800 }}>{missionNotice}</div>}
 
           <section>
-            <div className="section-title"><h2>DAILY</h2><span>{dailyMissions.date || "SYNCING…"}</span></div>
+            <div className="section-title"><h2>DAILY</h2><span>{dailyMissions.date || "СИНХРОНІЗАЦІЯ…"}</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {DAILY_MISSIONS.map((mission) => renderMission(mission, dailyMissions, "daily"))}
+              {DAILY_МІСІЇ.map((mission) => renderMission(mission, dailyMissions, "daily"))}
             </div>
           </section>
 
           <section style={{ marginTop: 22 }}>
             <div className="section-title"><h2>WEEKLY</h2><span>7 DAY GOALS</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {WEEKLY_MISSIONS.map((mission) => renderMission(mission as any, weeklyMissions, "weekly"))}
+              {WEEKLY_МІСІЇ.map((mission) => renderMission(mission as any, weeklyMissions, "weekly"))}
             </div>
           </section>
         </main>
@@ -4211,12 +4224,12 @@ function App() {
 
   if (screen === "social") {
     const currentStats = {
-      name: telegramUser?.first_name || telegramUser?.username || "You",
+      name: telegramUser?.first_name || telegramUser?.username || "Ти",
       xp: Number(player.xp || 0),
       level: Number(levelInfo.level || 1),
-      battles: Number(player.battles || 0),
+      боїв: Number(player.боїв || 0),
       bestCombo: Number(player.bestCombo || 0),
-      bestBattleXp: Number(player.bestBattleXp || 0),
+      bestБійXp: Number(player.bestБійXp || 0),
     };
 
     return (
@@ -4228,7 +4241,7 @@ function App() {
           <div className="section-title" style={{ marginBottom:18 }}>
             <div>
               <div style={{ fontSize:11, fontWeight:900, letterSpacing:1, opacity:.45 }}>SOCIAL</div>
-              <h1 style={{ margin:"3px 0 0" }}>Friends Hub</h1>
+              <h1 style={{ margin:"3px 0 0" }}>Друзі Hub</h1>
             </div>
             <button type="button" onClick={inviteFriendFromSocial} style={{ border:0,borderRadius:12,padding:"9px 12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:900 }}>➕</button>
           </div>
@@ -4243,7 +4256,7 @@ function App() {
               <div><strong style={{fontSize:18}}>{currentStats.level}</strong><div style={{fontSize:9,opacity:.45}}>LEVEL</div></div>
               <div><strong style={{fontSize:18}}>{currentStats.xp.toLocaleString()}</strong><div style={{fontSize:9,opacity:.45}}>XP</div></div>
               <div><strong style={{fontSize:18}}>{currentStats.bestCombo}</strong><div style={{fontSize:9,opacity:.45}}>COMBO</div></div>
-              <div><strong style={{fontSize:18}}>{currentStats.battles}</strong><div style={{fontSize:9,opacity:.45}}>BATTLES</div></div>
+              <div><strong style={{fontSize:18}}>{currentStats.боїв}</strong><div style={{fontSize:9,opacity:.45}}>BATTLES</div></div>
             </div>
           </section>
 
@@ -4267,12 +4280,12 @@ function App() {
               <section style={{ padding:22,borderRadius:18,background:"rgba(255,255,255,.045)",textAlign:"center" }}>
                 <div style={{fontSize:34}}>👥</div>
                 <strong>No friends yet</strong>
-                <p style={{margin:"7px 0 0",opacity:.55,fontSize:12}}>Invite a friend and compare XP, level, battles and combo.</p>
+                <p style={{margin:"7px 0 0",opacity:.55,fontSize:12}}>Invite a friend and compare XP, level, боїв and combo.</p>
               </section>
             ) : friends.map((friend:any) => {
               const friendXp = Number(friend.xp || 0);
               const friendLevel = Number(friend.level || 1);
-              const friendBattles = Number(friend.battles || 0);
+              const friendБійs = Number(friend.боїв || 0);
               const friendCombo = Number(friend.best_combo || 0);
               const friendBestXp = Number(friend.best_battle_xp || 0);
               const friendCorrect = Number(friend.totalCorrect || 0);
@@ -4291,7 +4304,7 @@ function App() {
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",alignItems:"center",gap:7}}>
-                        <strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{friend.first_name || friend.username || "Player"}</strong>
+                        <strong style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{friend.first_name || friend.username || "Гравець"}</strong>
                         {activeRecently && <span style={{fontSize:9,fontWeight:900,color:"#6ee7b7"}}>● ACTIVE</span>}
                       </div>
                       <div style={{fontSize:11,opacity:.45}}>Global #{Number(friend.globalRank || 0)} · Lv {friendLevel}</div>
@@ -4300,13 +4313,13 @@ function App() {
 
                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginTop:14}}>
                     <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendXp.toLocaleString()}</strong><div style={{fontSize:8,opacity:.4}}>XP</div></div>
-                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBattles}</strong><div style={{fontSize:8,opacity:.4}}>BATTLES</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendБійs}</strong><div style={{fontSize:8,opacity:.4}}>BATTLES</div></div>
                     <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendCombo}</strong><div style={{fontSize:8,opacity:.4}}>BEST COMBO</div></div>
                     <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBestXp}</strong><div style={{fontSize:8,opacity:.4}}>BEST XP</div></div>
                   </div>
 
                   <div style={{marginTop:10,fontSize:11,opacity:.5}}>
-                    ✅ {friendCorrect} correct answers
+                    ✅ {friendCorrect} правильних answers
                   </div>
                   <button type="button" onClick={createFriendChallenge} style={{ width:"100%",marginTop:12,border:0,borderRadius:12,padding:"10px 12px",background:"rgba(124,77,255,.16)",color:"inherit",fontWeight:900 }}>
                     ⚔️ CHALLENGE {friend.first_name || friend.username || "FRIEND"}
@@ -4318,7 +4331,7 @@ function App() {
 
           <button className="quick-card" onClick={() => setScreen("home")} style={{ width:"100%",border:0,marginTop:14 }}>
             <div className="quick-icon purple">⌂</div>
-            <div><strong>BACK HOME</strong><span>Return to BATTLE IQ</span></div>
+            <div><strong>НАЗАД ГОЛОВНА</strong><span>Return to BATTLE IQ</span></div>
             <b>→</b>
           </button>
         </main>
@@ -4335,8 +4348,8 @@ function App() {
         <Header />
         <main className="content">
           <div className="section-title" style={{ marginBottom:18 }}>
-            <h1 style={{ margin:0 }}>Daily Bonus</h1>
-            <button type="button" onClick={loadDailyBonus} style={{ border:0, borderRadius:12, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:800 }}>↻</button>
+            <h1 style={{ margin:0 }}>Daily Бонус</h1>
+            <button type="button" onClick={loadDailyБонус} style={{ border:0, borderRadius:12, padding:"9px 12px", background:"rgba(255,255,255,.07)", color:"inherit", fontWeight:800 }}>↻</button>
           </div>
           <section style={{ padding:20, borderRadius:24, background:"linear-gradient(135deg, rgba(255,190,70,.16), rgba(255,90,150,.10))", border:"1px solid rgba(255,190,70,.18)", marginBottom:16 }}>
             <div style={{ fontSize:40 }}>🔥</div>
@@ -4345,14 +4358,14 @@ function App() {
           </section>
 
           <section className="stats-grid" style={{ marginBottom:16 }}>
-            <div className="stat-card"><span>🔥</span><strong>{dailyBonus?.streak ?? 0}</strong><small>CURRENT STREAK</small></div>
-            <div className="stat-card"><span>🏆</span><strong>{dailyBonus?.bestStreak ?? 0}</strong><small>BEST STREAK</small></div>
+            <div className="stat-card"><span>🔥</span><strong>{dailyБонус?.streak ?? 0}</strong><small>CURRENT СЕРІЯ</small></div>
+            <div className="stat-card"><span>🏆</span><strong>{dailyБонус?.bestStreak ?? 0}</strong><small>BEST СЕРІЯ</small></div>
           </section>
 
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:6, marginBottom:18 }}>
-            {(dailyBonus?.rewards ?? []).map((reward) => {
-              const done = dailyBonus?.claimedToday && reward.day === dailyBonus?.claimedDay;
-              const active = reward.day === dailyBonus?.currentDay && !dailyBonus?.claimedToday;
+            {(dailyБонус?.rewards ?? []).map((reward) => {
+              const done = dailyБонус?.claimedСьогодні && reward.day === dailyБонус?.claimedDay;
+              const active = reward.day === dailyБонус?.currentDay && !dailyБонус?.claimedСьогодні;
               return (
                 <div key={`mini-${reward.day}`} style={{
                   textAlign:"center", padding:"8px 2px", borderRadius:12,
@@ -4365,11 +4378,11 @@ function App() {
               );
             })}
           </div>
-          {dailyBonusNotice && <div style={{ marginBottom:14, padding:"12px 14px", borderRadius:14, background:"rgba(80,220,150,.12)", fontWeight:800 }}>{dailyBonusNotice}</div>}
+          {dailyБонусNotice && <div style={{ marginBottom:14, padding:"12px 14px", borderRadius:14, background:"rgba(80,220,150,.12)", fontWeight:800 }}>{dailyБонусNotice}</div>}
           <section style={{ display:"grid", gap:10 }}>
-            {(dailyBonus?.rewards ?? []).map((reward) => {
-              const active = reward.day === dailyBonus?.currentDay && !dailyBonus?.claimedToday;
-              const claimed = reward.claimed || (dailyBonus?.claimedToday && reward.day === dailyBonus?.claimedDay);
+            {(dailyБонус?.rewards ?? []).map((reward) => {
+              const active = reward.day === dailyБонус?.currentDay && !dailyБонус?.claimedСьогодні;
+              const claimed = reward.claimed || (dailyБонус?.claimedСьогодні && reward.day === dailyБонус?.claimedDay);
               return (
                 <div key={reward.day} style={{
                   display:"flex", alignItems:"center", gap:12, padding:14, borderRadius:18,
@@ -4381,15 +4394,15 @@ function App() {
                     <div style={{ fontSize:11,fontWeight:900,opacity:.45 }}>DAY {reward.day}</div>
                     <strong>{reward.title}</strong>
                   </div>
-                  {claimed ? <span style={{ fontWeight:900,opacity:.55 }}>CLAIMED</span>
-                    : active ? <button type="button" onClick={claimDailyBonus} disabled={dailyBonusClaiming} style={{ border:0,borderRadius:12,padding:"9px 12px",fontWeight:900,background:"linear-gradient(135deg,#ffb43d,#ff5e9b)",color:"#fff" }}>{dailyBonusClaiming ? "..." : "CLAIM"}</button>
+                  {claimed ? <span style={{ fontWeight:900,opacity:.55 }}>ЗАБРАНО</span>
+                    : active ? <button type="button" onClick={claimDailyБонус} disabled={dailyБонусClaiming} style={{ border:0,borderRadius:12,padding:"9px 12px",fontWeight:900,background:"linear-gradient(135deg,#ffb43d,#ff5e9b)",color:"#fff" }}>{dailyБонусClaiming ? "..." : "ЗАБРАТИ"}</button>
                     : <span style={{ opacity:.3 }}>🔒</span>}
                 </div>
               );
             })}
           </section>
           <button className="quick-card" onClick={() => setScreen("home")} style={{ width:"100%",border:0,marginTop:14 }}>
-            <div className="quick-icon purple">⌂</div><div><strong>BACK HOME</strong><span>Return to BATTLE IQ</span></div><b>→</b>
+            <div className="quick-icon purple">⌂</div><div><strong>НАЗАД ГОЛОВНА</strong><span>Return to BATTLE IQ</span></div><b>→</b>
           </button>
         </main>
         <BottomNav />
@@ -4405,7 +4418,7 @@ function App() {
         <Header />
         <main className="content">
           <div className="section-title" style={{ marginBottom: 18 }}>
-            <h1 style={{ margin: 0 }}>Invite Friends</h1>
+            <h1 style={{ margin: 0 }}>Invite Друзі</h1>
             <button type="button" onClick={loadReferral} style={{ border: 0, borderRadius: 12, padding: "9px 12px", background: "rgba(255,255,255,0.07)", color: "inherit", fontWeight: 800 }}>↻</button>
           </div>
 
@@ -4434,7 +4447,7 @@ function App() {
 
           <button className="quick-card" onClick={() => setScreen("home")} style={{ width: "100%", border: 0 }}>
             <div className="quick-icon purple">⌂</div>
-            <div><strong>BACK HOME</strong><span>Return to BATTLE IQ</span></div>
+            <div><strong>НАЗАД ГОЛОВНА</strong><span>Return to BATTLE IQ</span></div>
             <b>→</b>
           </button>
         </main>
@@ -4465,7 +4478,7 @@ function App() {
               <div style={{ fontSize: 10, opacity: 0.5, fontWeight: 900, letterSpacing: "0.1em" }}>COMPETITIVE PROGRESSION</div>
               <h1 style={{ margin: "4px 0 0", fontSize: 26, fontWeight: 950 }}>SEASON 1</h1>
             </div>
-            <button type="button" onClick={() => void loadSeason()} disabled={seasonLoading} style={{ border: 0, borderRadius: 11, padding: "9px 11px", background: "rgba(255,255,255,0.07)", color: "inherit", fontSize: 10, fontWeight: 900 }}>
+            <button type="button" onClick={() => void loadСезон()} disabled={seasonLoading} style={{ border: 0, borderRadius: 11, padding: "9px 11px", background: "rgba(255,255,255,0.07)", color: "inherit", fontSize: 10, fontWeight: 900 }}>
               {seasonLoading ? "…" : "↻ REFRESH"}
             </button>
           </div>
@@ -4480,7 +4493,7 @@ function App() {
             <section style={{ padding: 20, borderRadius: 18, background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.07)", textAlign: "center" }}>
               <div style={{ fontSize: 42 }}>🏁</div>
               <strong style={{ display: "block", marginTop: 8, fontSize: 16 }}>No active season</strong>
-              <span style={{ display: "block", marginTop: 5, fontSize: 11, opacity: 0.55 }}>Season 1 is not active right now.</span>
+              <span style={{ display: "block", marginTop: 5, fontSize: 11, opacity: 0.55 }}>Сезон 1 is not active right now.</span>
             </section>
           )}
 
@@ -4498,7 +4511,7 @@ function App() {
 
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 11, fontWeight: 900 }}>
                   <span>⚡ {season.xp.toLocaleString()} SEASON XP</span>
-                  <span>{season.level >= season.maxLevel ? "MAX LEVEL" : `${season.currentLevelXp}/${season.xpPerLevel}`}</span>
+                  <span>{season.level >= season.maxLevel ? "МАКС. РІВЕНЬ" : `${season.currentLevelXp}/${season.xpPerLevel}`}</span>
                 </div>
                 <div style={{ marginTop: 8, height: 10, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
                   <div style={{ width: `${seasonProgress}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #7c4dff, #38bdf8)", transition: "width .3s ease" }} />
@@ -4549,7 +4562,7 @@ function App() {
                         <div style={{ fontSize: 11, fontWeight: 900 }}>{reward.title}</div>
                         <div style={{ marginTop: 2, fontSize: 9, opacity: 0.52 }}>LEVEL {reward.level} · {reward.description}</div>
                       </div>
-                      <div style={{ fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{reward.unlocked ? "✓ UNLOCKED" : "🔒"}</div>
+                      <div style={{ fontSize: 10, fontWeight: 900, whiteSpace: "nowrap" }}>{reward.unlocked ? "✓ ВІДКРИТО" : "🔒"}</div>
                     </div>
                   ))}
                 </div>
@@ -4571,9 +4584,9 @@ function App() {
                   <div style={{ padding: 13, borderRadius: 16, background: seasonPass.premiumOwned ? "rgba(255,205,70,0.09)" : "rgba(124,77,255,0.08)", border: seasonPass.premiumOwned ? "1px solid rgba(255,205,70,0.20)" : "1px solid rgba(124,77,255,0.16)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
                       <div>
-                        <strong style={{ fontSize: 13 }}>{seasonPass.premiumOwned ? "✨ PREMIUM ACTIVE" : "🎟️ PREMIUM LOCKED"}</strong>
+                        <strong style={{ fontSize: 13 }}>{seasonPass.premiumOwned ? "✨ ПРЕМІУМ АКТИВНИЙ" : "🎟️ ПРЕМІУМ ЗАБЛОКОВАНО"}</strong>
                         <div style={{ marginTop: 3, fontSize: 9, opacity: 0.55 }}>
-                          {seasonPass.premiumOwned ? "Premium rewards are available when you reach their levels." : "Unlock the premium track with the Battle Pass."}
+                          {seasonPass.premiumOwned ? "Преміальні нагороди відкриваються після досягнення відповідного рівня." : "Відкрий преміальну лінійку з Бойовим пропуском."}
                         </div>
                       </div>
                       {!seasonPass.premiumOwned && (
@@ -4603,8 +4616,8 @@ function App() {
                             <div style={{ marginTop: 2, fontSize: 11, fontWeight: 850 }}>{reward.title}</div>
                             <div style={{ marginTop: 2, fontSize: 8, opacity: 0.48 }}>{reward.description}</div>
                           </div>
-                          <button type="button" disabled={!canClaim || seasonPassClaiming === reward.code} onClick={() => void claimSeasonPassReward(reward.code)} style={{ border: 0, borderRadius: 9, padding: "7px 9px", background: reward.claimed ? "rgba(255,255,255,0.06)" : canClaim ? (reward.tier === "premium" ? "#b98900" : "#7c4dff") : "rgba(255,255,255,0.04)", color: "inherit", fontSize: 8, fontWeight: 950, whiteSpace: "nowrap", opacity: reward.claimed ? 0.55 : 1 }}>
-                            {reward.claimed ? "✓ CLAIMED" : lockedPremium ? "🎟️" : reward.unlocked ? (seasonPassClaiming === reward.code ? "…" : "CLAIM") : "🔒"}
+                          <button type="button" disabled={!canClaim || seasonPassClaiming === reward.code} onClick={() => void claimСезонPassReward(reward.code)} style={{ border: 0, borderRadius: 9, padding: "7px 9px", background: reward.claimed ? "rgba(255,255,255,0.06)" : canClaim ? (reward.tier === "premium" ? "#b98900" : "#7c4dff") : "rgba(255,255,255,0.04)", color: "inherit", fontSize: 8, fontWeight: 950, whiteSpace: "nowrap", opacity: reward.claimed ? 0.55 : 1 }}>
+                            {reward.claimed ? "✓ ЗАБРАНО" : lockedPremium ? "🎟️" : reward.unlocked ? (seasonPassClaiming === reward.code ? "…" : "ЗАБРАТИ") : "🔒"}
                           </button>
                         </div>
                       );
@@ -4623,11 +4636,11 @@ function App() {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                  {seasonPlayers.length ? seasonPlayers.map((entry, index) => (
+                  {seasonГравецьs.length ? seasonГравецьs.map((entry, index) => (
                     <div key={entry.userId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 11px", borderRadius: 13, background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.06)" }}>
                       <div style={{ width: 25, textAlign: "center", fontSize: 13, fontWeight: 950 }}>{index < 3 ? ["🥇", "🥈", "🥉"][index] : `#${index + 1}`}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.firstName || entry.username || "BATTLE IQ PLAYER"}</div>
+                        <div style={{ fontSize: 12, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.firstName || entry.username || "BATTLE IQ ГРАТИER"}</div>
                         <div style={{ marginTop: 2, fontSize: 9, opacity: 0.45 }}>LEVEL {entry.seasonLevel}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
@@ -4636,7 +4649,7 @@ function App() {
                       </div>
                     </div>
                   )) : (
-                    <div style={{ padding: 16, borderRadius: 13, background: "rgba(255,255,255,0.035)", textAlign: "center", fontSize: 11, opacity: 0.55 }}>Ще ніхто не набрав Season XP. Починай першим ⚡</div>
+                    <div style={{ padding: 16, borderRadius: 13, background: "rgba(255,255,255,0.035)", textAlign: "center", fontSize: 11, opacity: 0.55 }}>Ще ніхто не набрав Сезон XP. Починай першим ⚡</div>
                   )}
                 </div>
               </section>
@@ -4650,16 +4663,16 @@ function App() {
   }
 
   // ==========================================
-  // PROFILE
+  // ПРОФІЛЬ
   // ==========================================
 
   if (screen === "battle_stats") {
     const stats = battleStats || {
-      played: 0, totalCorrect: 0, accuracy: 0, totalXp: 0,
+      played: 0, totalCorrect: 0, точність: 0, totalXp: 0,
       averageXp: 0, bestXp: 0, bestScore: 0, averageScore: 0,
-      averageDuration: 0, streak: 0, bestCombo: 0, bestBattleXp: 0,
-      last7Days: { battles: 0, xp: 0, correct: 0 },
-      today: { battles: 0, xp: 0, correct: 0 },
+      averageDuration: 0, streak: 0, bestCombo: 0, bestБійXp: 0,
+      last7Days: { боїв: 0, xp: 0, правильних: 0 },
+      today: { боїв: 0, xp: 0, правильних: 0 },
     };
     const formatDuration = (seconds: number) => {
       const total = Math.max(0, Math.round(Number(seconds || 0)));
@@ -4683,9 +4696,9 @@ function App() {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:12, marginBottom:18 }}>
             <div>
               <div style={{ fontSize:11, letterSpacing:1.8, fontWeight:900, opacity:.5 }}>BATTLE IQ ANALYTICS</div>
-              <h1 style={{ margin:"4px 0 0", fontSize:30, lineHeight:1.05 }}>Battle Stats</h1>
+              <h1 style={{ margin:"4px 0 0", fontSize:30, lineHeight:1.05 }}>Бій Stats</h1>
             </div>
-            <button type="button" onClick={() => void loadBattleStats()} disabled={battleStatsLoading} style={{ border:0,borderRadius:12,padding:"9px 12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:900,fontSize:10 }}>{battleStatsLoading ? "…" : "↻ SYNC"}</button>
+            <button type="button" onClick={() => void loadБійStats()} disabled={battleStatsLoading} style={{ border:0,borderRadius:12,padding:"9px 12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:900,fontSize:10 }}>{battleStatsLoading ? "…" : "↻ SYNC"}</button>
           </div>
 
           <section style={{ padding:18,borderRadius:22,background:"linear-gradient(145deg,rgba(124,77,255,.18),rgba(255,255,255,.035))",border:"1px solid rgba(255,255,255,.08)" }}>
@@ -4693,11 +4706,11 @@ function App() {
             <div style={{ display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8,marginTop:12 }}>
               {[
                 ["⚔️", stats.played, "BATTLES"],
-                ["🎯", `${stats.accuracy}%`, "ACCURACY"],
-                ["⚡", Number(stats.totalXp || 0).toLocaleString(), "TOTAL XP"],
+                ["🎯", `${stats.точність}%`, "ACCURACY"],
+                ["⚡", Number(stats.totalXp || 0).toLocaleString(), "ЗАГАЛЬНИЙ XP"],
                 ["🏆", `${stats.bestScore}%`, "BEST SCORE"],
                 ["🔥", stats.bestCombo, "BEST COMBO"],
-                ["💎", stats.bestXp, "BEST BATTLE XP"],
+                ["💎", stats.bestXp, "НАЙКРАЩИЙ XP ЗА БІЙ"],
               ].map(([icon,value,label]) => (
                 <div key={String(label)} style={{ padding:"11px 7px",borderRadius:13,background:"rgba(255,255,255,.045)",textAlign:"center",border:"1px solid rgba(255,255,255,.055)" }}>
                   <div style={{ fontSize:16 }}>{icon}</div>
@@ -4717,18 +4730,18 @@ function App() {
               <span style={{ fontSize:20 }}>📈</span>
             </div>
             <div style={{ display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8,marginTop:11 }}>
-              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.battles}</strong><div style={{fontSize:8,opacity:.45}}>BATTLES</div></div>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.боїв}</strong><div style={{fontSize:8,opacity:.45}}>BATTLES</div></div>
               <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{Number(stats.last7Days.xp || 0).toLocaleString()}</strong><div style={{fontSize:8,opacity:.45}}>XP</div></div>
-              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.correct}</strong><div style={{fontSize:8,opacity:.45}}>CORRECT</div></div>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.правильних}</strong><div style={{fontSize:8,opacity:.45}}>ПРАВИЛЬНО</div></div>
             </div>
-            <div style={{ marginTop:10,fontSize:10,opacity:.52 }}>Today: {stats.today.battles} battles · +{Number(stats.today.xp || 0)} XP · {stats.today.correct} correct</div>
+            <div style={{ marginTop:10,fontSize:10,opacity:.52 }}>Сьогодні: {stats.today.боїв} боїв · +{Number(stats.today.xp || 0)} XP · {stats.today.правильних} правильних</div>
           </section>
 
           <section style={{ marginTop:12,padding:15,borderRadius:18,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.07)" }}>
             <div style={{ display:"flex",justifyContent:"space-between",gap:10,alignItems:"center" }}>
               <div>
                 <div style={{ fontSize:10,fontWeight:900,letterSpacing:1,opacity:.5 }}>AVERAGES</div>
-                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>How you usually play</strong>
+                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>Як ти зазвичай граєш</strong>
               </div>
               <div style={{ fontSize:20 }}>🧠</div>
             </div>
@@ -4736,20 +4749,20 @@ function App() {
               <div className="info-card"><strong>AVG XP</strong><span style={{fontSize:20}}>{stats.averageXp}</span></div>
               <div className="info-card"><strong>AVG SCORE</strong><span style={{fontSize:20}}>{stats.averageScore}%</span></div>
               <div className="info-card"><strong>AVG TIME</strong><span style={{fontSize:20}}>{formatDuration(stats.averageDuration)}</span></div>
-              <div className="info-card"><strong>STREAK</strong><span style={{fontSize:20}}>🔥 {stats.streak}</span></div>
+              <div className="info-card"><strong>СЕРІЯ</strong><span style={{fontSize:20}}>🔥 {stats.streak}</span></div>
             </div>
           </section>
 
           <section style={{ marginTop:12 }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
               <div>
-                <div style={{ fontSize:10,fontWeight:900,letterSpacing:1,opacity:.5 }}>BATTLE HISTORY</div>
-                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>Recent 20 battles</strong>
+                <div style={{ fontSize:10,fontWeight:900,letterSpacing:1,opacity:.5 }}>ІСТОРІЯ БОЇВ</div>
+                <strong style={{ display:"block",marginTop:4,fontSize:15 }}>Recent 20 боїв</strong>
               </div>
               <span style={{ fontSize:20 }}>🗂️</span>
             </div>
 
-            {battleStatsLoading && <div style={{ padding:18,textAlign:"center",opacity:.55 }}>Loading battle history…</div>}
+            {battleStatsLoading && <div style={{ padding:18,textAlign:"center",opacity:.55 }}>Завантаження історії боїв…</div>}
             {!battleStatsLoading && battleHistory.length === 0 && (
               <div style={{ padding:22,borderRadius:18,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)",textAlign:"center" }}>
                 <div style={{fontSize:30}}>⚔️</div>
@@ -4761,13 +4774,13 @@ function App() {
               {battleHistory.map((battle, index) => (
                 <div key={battle.id} style={{ padding:12,borderRadius:15,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.065)" }}>
                   <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-                    <div style={{ width:36,height:36,borderRadius:11,display:"grid",placeItems:"center",background:battle.correctAnswers >= 8 ? "rgba(74,222,128,.12)" : battle.correctAnswers >= 5 ? "rgba(250,204,21,.10)" : "rgba(255,255,255,.05)",fontSize:18 }}>{battle.correctAnswers >= 8 ? "🏆" : battle.correctAnswers >= 5 ? "⚡" : "🎯"}</div>
+                    <div style={{ width:36,height:36,borderRadius:11,display:"grid",placeItems:"center",background:battle.правильнихAnswers >= 8 ? "rgba(74,222,128,.12)" : battle.правильнихAnswers >= 5 ? "rgba(250,204,21,.10)" : "rgba(255,255,255,.05)",fontSize:18 }}>{battle.правильнихAnswers >= 8 ? "🏆" : battle.правильнихAnswers >= 5 ? "⚡" : "🎯"}</div>
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ display:"flex",justifyContent:"space-between",gap:8 }}>
-                        <strong style={{ fontSize:12 }}>#{battleHistory.length - index} · {battle.correctAnswers}/10 correct</strong>
+                        <strong style={{ fontSize:12 }}>#{battleHistory.length - index} · {battle.правильнихAnswers}/10 правильних</strong>
                         <strong style={{ fontSize:12 }}>+{battle.xp} XP</strong>
                       </div>
-                      <div style={{ marginTop:4,fontSize:9,opacity:.48 }}>{battle.accuracy}% accuracy · {formatDuration(battle.durationSeconds)} · {formatDate(battle.createdAt)}</div>
+                      <div style={{ marginTop:4,fontSize:9,opacity:.48 }}>{battle.точність}% точність · {formatDuration(battle.durationSeconds)} · {formatDate(battle.createdAt)}</div>
                     </div>
                   </div>
                 </div>
@@ -4775,7 +4788,7 @@ function App() {
             </div>
           </section>
 
-          <button type="button" onClick={() => setScreen("profile")} style={{ width:"100%",marginTop:14,border:0,borderRadius:14,padding:"12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:950,fontSize:11 }}>← BACK TO PROFILE</button>
+          <button type="button" onClick={() => setScreen("profile")} style={{ width:"100%",marginTop:14,border:0,borderRadius:14,padding:"12px",background:"rgba(255,255,255,.07)",color:"inherit",fontWeight:950,fontSize:11 }}>← ПОВЕРНУТИСЯ ДО ПРОФІЛЮ</button>
         </main>
         <BottomNav />
       </div>
@@ -4802,7 +4815,7 @@ function App() {
     const displayUsername =
       telegramUser?.username
         ? `@${telegramUser.username}`
-        : "BATTLE IQ PLAYER";
+        : "BATTLE IQ ГРАТИER";
 
     return (
       <div className="app">
@@ -4818,15 +4831,15 @@ function App() {
             overflowX: "hidden",
           }}
         >
-          <style>{PROFILE_ANIMATION_KEYFRAMES}</style>
-          {/* PROFILE HERO */}
+          <style>{ПРОФІЛЬ_ANIMATION_KEYFRAMES}</style>
+          {/* ПРОФІЛЬ HERO */}
           <section
             className="profile-hero"
             style={{
               padding: "24px 16px 20px",
               textAlign: "center",
               borderRadius: "20px",
-              ...(PROFILE_BACKGROUND_STYLES[player.profileBackground || ""] || {
+              ...(ПРОФІЛЬ_НАЗАДGROUND_STYLES[player.profileBackground || ""] || {
                 background: "linear-gradient(145deg, rgba(124,77,255,0.18), rgba(255,255,255,0.035))",
               }),
               border:
@@ -4850,7 +4863,7 @@ function App() {
                   "1px solid rgba(168,85,247,0.30)",
                 boxShadow:
                   "0 12px 35px rgba(124,77,255,0.18)",
-                ...(PROFILE_ANIMATION_STYLES[player.profileAnimation || ""] || {}),
+                ...(ПРОФІЛЬ_ANIMATION_STYLES[player.profileAnimation || ""] || {}),
               }}
             >
               <span style={{ display: "grid", placeItems: "center", width: "100%", height: "100%", borderRadius: "inherit", ...((equippedFrame && FRAME_STYLES[equippedFrame]) || {}) }}>😎</span>
@@ -4904,7 +4917,7 @@ function App() {
               {player.profileTitle && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>🏷️ {player.profileTitle}</span>}
               {player.victoryEffect && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>{VICTORY_EFFECT_EMOJI[player.victoryEffect] || "✨"} {VICTORY_EFFECT_LABEL[player.victoryEffect] || "EFFECT"}</span>}
               {player.profileBackground && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>🎨 {player.profileBackground.replace("_"," ").toUpperCase()}</span>}
-              {player.profileAnimation && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>{PROFILE_ANIMATION_EMOJI[player.profileAnimation] || "🎞️"} {PROFILE_ANIMATION_LABEL[player.profileAnimation] || "ANIMATION"}</span>}
+              {player.profileAnimation && <span style={{padding:"5px 8px",borderRadius:999,background:"rgba(255,255,255,.08)",fontSize:9,fontWeight:900}}>{ПРОФІЛЬ_ANIMATION_EMOJI[player.profileAnimation] || "🎞️"} {ПРОФІЛЬ_ANIMATION_LABEL[player.profileAnimation] || "ANIMATION"}</span>}
             </div>
 
             <div
@@ -5052,7 +5065,7 @@ function App() {
               }}
             >
               {nextMilestone
-                ? `🎁 ${milestoneReward} · ${nextMilestone - levelInfo.level} levels to go`
+                ? `🎁 ${milestoneReward} · ${nextMilestone - levelInfo.level} рівнів залишилось`
                 : milestoneReward}
             </div>
           </section>
@@ -5087,7 +5100,7 @@ function App() {
                       <div style={{ marginTop: 2, fontSize: 9, opacity: 0.52 }}>LEVEL {reward.level} · {reward.description}</div>
                     </div>
                     <button disabled={!unlocked || reward.claimed || rewardsLoading || rewardBusy === reward.id} onClick={() => void claimLevelReward(reward.id)} style={{ border: 0, borderRadius: 9, padding: "8px 10px", background: reward.claimed ? "rgba(255,255,255,0.07)" : unlocked ? "#7c4dff" : "rgba(255,255,255,0.05)", color: "inherit", fontSize: 9, fontWeight: 900, cursor: unlocked && !reward.claimed ? "pointer" : "default", whiteSpace: "nowrap" }}>
-                      {reward.claimed ? "✓ UNLOCKED" : unlocked ? (rewardBusy === reward.id ? "…" : "CLAIM") : "🔒"}
+                      {reward.claimed ? "✓ ВІДКРИТО" : unlocked ? (rewardBusy === reward.id ? "…" : "ЗАБРАТИ") : "🔒"}
                     </button>
                   </div>
                 );
@@ -5095,7 +5108,7 @@ function App() {
             </div>
           </section>
 
-          {/* PLAYER SNAPSHOT 2.0 */}
+          {/* ГРАТИER SNAPSHOT 2.0 */}
           <section
             style={{
               marginTop: "14px",
@@ -5108,16 +5121,16 @@ function App() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div>
-                <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>PLAYER SNAPSHOT</div>
-                <strong style={{ display: "block", marginTop: 4, fontSize: 15 }}>Your BATTLE IQ profile</strong>
+                <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>ГРАТИER SNAPSHOT</div>
+                <strong style={{ display: "block", marginTop: 4, fontSize: 15 }}>Тиr BATTLE IQ profile</strong>
               </div>
-              <div style={{ fontSize: 23 }}>{equippedFrame ? (PROFILE_FRAME_EMOJI[equippedFrame] || "✨") : "🧠"}</div>
+              <div style={{ fontSize: 23 }}>{equippedFrame ? (ПРОФІЛЬ_FRAME_EMOJI[equippedFrame] || "✨") : "🧠"}</div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginTop: 12 }}>
               {[
-                ["⚔️", player.battles.toLocaleString(), "BATTLES"],
-                ["🎯", player.battles > 0 ? `${Math.round((player.totalCorrect / (player.battles * 10)) * 100)}%` : "0%", "ACCURACY"],
+                ["⚔️", player.боїв.toLocaleString(), "BATTLES"],
+                ["🎯", player.боїв > 0 ? `${Math.round((player.totalCorrect / (player.боїв * 10)) * 100)}%` : "0%", "ACCURACY"],
                 ["🔥", player.bestCombo.toLocaleString(), "BEST COMBO"],
               ].map(([icon, value, label]) => (
                 <div key={label} style={{ padding: "11px 8px", borderRadius: 13, background: "rgba(124,77,255,0.08)", border: "1px solid rgba(124,77,255,0.12)", textAlign: "center", minWidth: 0 }}>
@@ -5159,23 +5172,23 @@ function App() {
             {[
               [
                 "⚔️",
-                player.battles.toLocaleString(),
+                player.боїв.toLocaleString(),
                 "BATTLES",
               ],
               [
                 "🔥",
                 player.streak.toLocaleString(),
-                "STREAK",
+                "СЕРІЯ",
               ],
               [
                 "⚡",
                 player.xp.toLocaleString(),
-                "TOTAL XP",
+                "ЗАГАЛЬНИЙ XP",
               ],
               [
                 "🏆",
                 globalRank != null ? `#${globalRank.toLocaleString()}` : "—",
-                "GLOBAL RANK",
+                "ГЛОБАЛЬНИЙ РЕЙТИНГ",
               ],
             ].map(
               ([icon, value, label]) => (
@@ -5291,7 +5304,7 @@ function App() {
                   opacity: 0.5,
                 }}
               >
-                BEST BATTLE XP
+                НАЙКРАЩИЙ XP ЗА БІЙ
               </span>
 
               <strong
@@ -5301,14 +5314,14 @@ function App() {
                   fontSize: "16px",
                 }}
               >
-                ⚡ {player.bestBattleXp}
+                ⚡ {player.bestБійXp}
               </strong>
             </div>
           </section>
 
           <button
             type="button"
-            onClick={() => void openBattleStats()}
+            onClick={() => void openБійStats()}
             style={{
               width: "100%",
               marginTop: "12px",
@@ -5323,9 +5336,9 @@ function App() {
           >
             <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:10 }}>
               <div>
-                <div style={{ fontSize:10,opacity:.5,fontWeight:900,letterSpacing:"0.08em" }}>BATTLE ANALYTICS</div>
+                <div style={{ fontSize:10,opacity:.5,fontWeight:900,letterSpacing:"0.08em" }}>АНАЛІТИКА БОЇВ</div>
                 <strong style={{ display:"block",marginTop:4,fontSize:15 }}>History & full statistics</strong>
-                <span style={{ display:"block",marginTop:3,fontSize:9,opacity:.48 }}>Server data from your completed battles</span>
+                <span style={{ display:"block",marginTop:3,fontSize:9,opacity:.48 }}>Server data from your completed боїв</span>
               </div>
               <span style={{ fontSize:24 }}>📊</span>
             </div>
@@ -5480,7 +5493,7 @@ function App() {
                               color: "#c4b5fd",
                             }}
                           >
-                            ✓ UNLOCKED
+                            ✓ ВІДКРИТО
                           </span>
                         )}
                       </div>
@@ -5562,7 +5575,7 @@ function App() {
                             fontWeight: 900,
                           }}
                         >
-                          ✓ CLAIMED
+                          ✓ ЗАБРАНО
                         </div>
                       ) : (
                         <button
@@ -5579,7 +5592,7 @@ function App() {
                             cursor: "pointer",
                           }}
                         >
-                          CLAIM +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} XP
+                          ЗАБРАТИ +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} XP
                         </button>
                       )
                     )}
@@ -5596,7 +5609,7 @@ function App() {
   }
 
   // ==========================================
-  // RANKING
+  // РЕЙТИНГ
   // ==========================================
 
   if (screen === "ranking") {
@@ -5604,8 +5617,8 @@ function App() {
       telegramUser?.first_name ||
       "Sergio";
 
-    const topPlayers = leaderboard.map((user, index) => [
-      user.first_name || user.username || "Player",
+    const topГравецьs = leaderboard.map((user, index) => [
+      user.first_name || user.username || "Гравець",
       Number(user.xp || 0).toLocaleString(),
       index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "",
       "—",
@@ -5617,23 +5630,23 @@ function App() {
     // If the current player is not in the top 100, append their real D1 row.
     // Never fabricate a player just to fill the leaderboard.
     const meId = String(leaderboardMe?.telegram_id ?? "");
-    const alreadyInTop = meId && topPlayers.some((row) => String(row[6]) === meId);
+    const alreadyInTop = meId && topГравецьs.some((row) => String(row[6]) === meId);
 
-    const worldPlayers = topPlayers.length
+    const worldГравецьs = topГравецьs.length
       ? (leaderboardMe && meId && !alreadyInTop
           ? [
-              ...topPlayers,
+              ...topГравецьs,
               [
                 leaderboardMe.first_name || leaderboardMe.username || currentName,
                 Number(leaderboardMe.xp || 0).toLocaleString(),
                 "",
                 "—",
                 Number(leaderboardMe.level || 1),
-                Number(leaderboardMe.globalRank || globalRank || topPlayers.length + 1),
+                Number(leaderboardMe.globalRank || globalRank || topГравецьs.length + 1),
                 meId,
               ],
             ]
-          : topPlayers)
+          : topГравецьs)
       : [
           [
             leaderboardMe?.first_name || leaderboardMe?.username || currentName,
@@ -5646,8 +5659,8 @@ function App() {
           ],
         ];
 
-    // Friends come only from D1. Current player is always included.
-    const friendPlayers = [
+    // Друзі come only from D1. Current player is always included.
+    const friendГравецьs = [
       [
         currentName,
         player.xp.toLocaleString(),
@@ -5658,7 +5671,7 @@ function App() {
         String(telegramUser?.id ?? ""),
       ],
       ...friends.map((user) => [
-        user.first_name || user.username || "Player",
+        user.first_name || user.username || "Гравець",
         Number(user.xp || 0).toLocaleString(),
         "",
         "—",
@@ -5668,15 +5681,15 @@ function App() {
       ]),
     ];
 
-    const sourcePlayers =
+    const sourceГравецьs =
       rankingTab === "world"
-        ? worldPlayers
-        : friendPlayers;
+        ? worldГравецьs
+        : friendГравецьs;
 
-    const filteredPlayers =
+    const filteredГравецьs =
       rankingSearch.trim().length === 0
-        ? sourcePlayers
-        : sourcePlayers.filter(
+        ? sourceГравецьs
+        : sourceГравецьs.filter(
             ([name]) =>
               name
                 .toLowerCase()
@@ -5692,8 +5705,8 @@ function App() {
     const topThree =
       rankingTab === "world" &&
       rankingSearch.trim().length === 0 &&
-      worldPlayers.length >= 3
-        ? worldPlayers.slice(0, 3)
+      worldГравецьs.length >= 3
+        ? worldГравецьs.slice(0, 3)
         : [];
 
     return (
@@ -5740,8 +5753,8 @@ function App() {
                 }}
               >
                 {rankingTab === "world"
-                  ? "Global Ranking"
-                  : "Friends Ranking"}
+                  ? "Глобальний рейтинг"
+                  : "Рейтинг друзів"}
               </h1>
               <p
                 style={{
@@ -5751,8 +5764,8 @@ function App() {
                 }}
               >
                 {rankingTab === "world"
-                  ? "Compete with players worldwide"
-                  : "See how you compare with your friends"}
+                  ? "Змагайся з гравцями з усього світу"
+                  : "Порівняй свій результат із друзями"}
               </p>
             </div>
 
@@ -5788,8 +5801,8 @@ function App() {
             }}
           >
             {[
-              ["world", "🌍", "World"],
-              ["friends", "👥", "Friends"],
+              ["world", "🌍", "Світ"],
+              ["friends", "👥", "Друзі"],
             ].map(([tab, icon, label]) => (
               <button
                 key={tab}
@@ -5844,7 +5857,7 @@ function App() {
               onChange={(event) =>
                 setRankingSearch(event.target.value)
               }
-              placeholder="Search player..."
+              placeholder="Знайти гравця..."
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -5889,7 +5902,7 @@ function App() {
               {topThree.map(
                 ([name, xp, medal], index) => {
                   const heights = ["126px", "150px", "114px"];
-                  const isCurrentPlayer =
+                  const isCurrentГравець =
                     name === currentName;
 
                   return (
@@ -5936,7 +5949,7 @@ function App() {
                           marginBottom: "7px",
                         }}
                       >
-                        {isCurrentPlayer ? "😎" : ["🧑", "👨", "👽"][index]}
+                        {isCurrentГравець ? "😎" : ["🧑", "👨", "👽"][index]}
                       </div>
                       <strong
                         style={{
@@ -6002,15 +6015,15 @@ function App() {
                       text: "⚔️ Приєднуйся до BATTLE IQ! Додамося в друзі та порівняємо результат.",
                       url: inviteUrl,
                     });
-                    setChallengeNotice("✅ Invite shared!");
+                    setChallengeNotice("✅ Запрошення надіслано!");
                   } else if (navigator.clipboard) {
                     await navigator.clipboard.writeText(inviteUrl);
-                    setChallengeNotice("🔗 Invite link copied!");
+                    setChallengeNotice("🔗 Посилання на запрошення скопійовано!");
                   } else {
                     setChallengeNotice(inviteUrl);
                   }
                 } catch {
-                  setChallengeNotice("⚔️ Invite cancelled.");
+                  setChallengeNotice("⚔️ Запрошення скасовано.");
                 }
 
                 tg?.HapticFeedback?.impactOccurred("medium");
@@ -6029,7 +6042,7 @@ function App() {
                 cursor: "pointer",
               }}
             >
-              ➕ INVITE A FRIEND
+              ➕ ЗАПРОСИТИ ДРУГА
             </button>
           )}
 
@@ -6040,9 +6053,9 @@ function App() {
               gap: "7px",
             }}
           >
-            {filteredPlayers.map(
+            {filteredГравецьs.map(
               ([name, xp, _medal, movement, level, rank, rowId], index) => {
-                const isCurrentPlayer =
+                const isCurrentГравець =
                   (meId && String(rowId) === meId) ||
                   (!meId && name === currentName);
 
@@ -6064,13 +6077,13 @@ function App() {
                       minWidth: 0,
                       padding: "10px 10px",
                       borderRadius: "15px",
-                      background: isCurrentPlayer
+                      background: isCurrentГравець
                         ? "linear-gradient(90deg, rgba(124,77,255,0.22), rgba(168,85,247,0.08))"
                         : "rgba(255,255,255,0.045)",
-                      border: isCurrentPlayer
+                      border: isCurrentГравець
                         ? "1px solid rgba(168,85,247,0.34)"
                         : "1px solid rgba(255,255,255,0.065)",
-                      boxShadow: isCurrentPlayer
+                      boxShadow: isCurrentГравець
                         ? "0 8px 25px rgba(76,29,149,0.16)"
                         : "none",
                     }}
@@ -6101,7 +6114,7 @@ function App() {
                         flexShrink: 0,
                       }}
                     >
-                      {isCurrentPlayer
+                      {isCurrentГравець
                         ? "😎"
                         : ["🧑", "👨", "👽", "🤠", "🦊"][index] || "👤"}
                     </div>
@@ -6130,7 +6143,7 @@ function App() {
                         >
                           {name}
                         </strong>
-                        {isCurrentPlayer && (
+                        {isCurrentГравець && (
                           <span
                             style={{
                               padding: "3px 6px",
@@ -6156,7 +6169,7 @@ function App() {
                           fontWeight: 700,
                         }}
                       >
-                        LEVEL {isCurrentPlayer ? levelInfo.level : Number(level || 1)}
+                        LEVEL {isCurrentГравець ? levelInfo.level : Number(level || 1)}
                       </span>
                     </div>
 
@@ -6205,7 +6218,7 @@ function App() {
                     </span>
 
                     {rankingTab === "friends" &&
-                      !isCurrentPlayer && (
+                      !isCurrentГравець && (
                         <button
                           onClick={() => handleChallenge(name)}
                           style={{
@@ -6228,7 +6241,7 @@ function App() {
               }
             )}
 
-            {filteredPlayers.length === 0 && (
+            {filteredГравецьs.length === 0 && (
               <div
                 style={{
                   padding: "34px 12px",
@@ -6241,8 +6254,8 @@ function App() {
                 }}
               >
                 {rankingTab === "friends"
-                  ? "👥 No friends yet. Invite someone to BATTLE IQ!"
-                  : "No players found."}
+                  ? "👥 Друзів поки немає. Запроси когось у BATTLE IQ!"
+                  : "Гравців не знайдено."}
               </div>
             )}
           </section>
@@ -6284,7 +6297,7 @@ function App() {
                   opacity: 0.5,
                 }}
               >
-                {rankingTab === "world" ? "YOUR GLOBAL RANK" : "YOUR FRIEND RANK"}
+                {rankingTab === "world" ? "ТВІЙ ГЛОБАЛЬНИЙ РЕЙТИНГ" : "ТВІЙ РЕЙТИНГ СЕРЕД ДРУЗІВ"}
               </span>
               <strong
                 style={{
@@ -6307,8 +6320,8 @@ function App() {
               }}
             >
               {rankingTab === "world"
-                ? "Keep playing to climb higher ⚡"
-                : "Challenge your friends ⚔️"}
+                ? "Грай далі, щоб піднятися вище ⚡"
+                : "Кидай виклик друзям ⚔️"}
             </span>
           </div>
         </main>
@@ -6333,16 +6346,16 @@ function App() {
     const totalQuestions =
       gameQuestions.length;
 
-    const accuracy =
+    const точність =
       totalQuestions > 0
         ? Math.round(
             (score / totalQuestions) * 100
           )
         : 0;
 
-    const correctCount =
+    const правильнихCount =
       questionResults.filter(
-        (item) => item === "correct"
+        (item) => item === "правильних"
       ).length;
 
     const wrongCount =
@@ -6378,8 +6391,8 @@ function App() {
 
           <span className="result-label">
             {leveledUp
-              ? "LEVEL UP!"
-              : "BATTLE COMPLETE"}
+              ? "НОВИЙ РІВЕНЬ!"
+              : "БІЙ ЗАВЕРШЕНО"}
           </span>
           {player.victoryEffect && (
             <div style={{
@@ -6395,18 +6408,18 @@ function App() {
           <h1>
             {leveledUp
               ? `LEVEL ${newLevelInfo.level}`
-              : accuracy >= 80
-              ? "Excellent!"
-              : accuracy >= 50
-              ? "Nice work!"
-              : "Keep practicing!"}
+              : точність >= 80
+              ? "Чудово!"
+              : точність >= 50
+              ? "Гарна робота!"
+              : "Продовжуй тренуватися!"}
           </h1>
 
           <div className="score-circle">
             <strong>
               {score}/{totalQuestions}
             </strong>
-            <span>correct</span>
+            <span>правильних</span>
           </div>
 
           <div
@@ -6417,7 +6430,7 @@ function App() {
               opacity: 0.58,
             }}
           >
-            {accuracy}% accuracy
+            {точність}% точність
           </div>
 
           <div className="result-stats">
@@ -6439,11 +6452,11 @@ function App() {
 
             <div>
               <strong>{player.streak}</strong>
-              <span>day streak</span>
+              <span>днів поспіль</span>
             </div>
           </div>
 
-          {eventBonusXp > 0 && (
+          {eventБонусXp > 0 && (
             <section
               style={{
                 width: "100%",
@@ -6455,7 +6468,7 @@ function App() {
                 textAlign: "left",
               }}
             >
-              <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>BATTLE EVENTS</div>
+              <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>ПОДІЇ БОЮ</div>
               <div style={{ marginTop: "5px", fontSize: "11px", fontWeight: 800 }}>
                 ⚡ Speed Round · 1.5× XP
               </div>
@@ -6463,7 +6476,7 @@ function App() {
                 ⚡ Double XP · Final Round
               </div>
               <div style={{ marginTop: "5px", fontSize: "10px", opacity: 0.62 }}>
-                +{eventBonusXp} XP from battle events
+                +{eventБонусXp} XP from battle events
               </div>
             </section>
           )}
@@ -6480,12 +6493,12 @@ function App() {
                 textAlign: "left",
               }}
             >
-              <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>NEW RANK</div>
+              <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>НОВИЙ РЕЙТИНГ</div>
               <strong style={{ display: "block", marginTop: "4px", fontSize: "18px" }}>
                 LEVEL {newLevelInfo.level} · {getLevelTitle(newLevelInfo.level)}
               </strong>
               <div style={{ marginTop: "6px", fontSize: "11px", opacity: 0.62 }}>
-                🎁 Next milestone: {getNextMilestone(newLevelInfo.level) ? `Level ${getNextMilestone(newLevelInfo.level)}` : "All major milestones reached"}
+                🎁 Наступна ціль: {getNextMilestone(newLevelInfo.level) ? `Level ${getNextMilestone(newLevelInfo.level)}` : "Усі основні етапи досягнуті"}
               </div>
             </section>
           )}
@@ -6503,8 +6516,8 @@ function App() {
             {[
               ["⏱️", `${elapsedSeconds}s`, "TIME"],
               ["❤️", `${livesLost}`, "LIVES LOST"],
-              ["✅", `${correctCount}`, "CORRECT"],
-              ["❌", `${wrongCount}`, "WRONG"],
+              ["✅", `${правильнихCount}`, "ПРАВИЛЬНО"],
+              ["❌", `${wrongCount}`, "НЕПРАВИЛЬНО"],
               ["⌛", `${timeoutCount}`, "TIMEOUT"],
               ["🎯", `${totalQuestions}`, "QUESTIONS"],
             ].map(([icon, value, label]) => (
@@ -6594,7 +6607,7 @@ function App() {
                   questionResults[index];
 
                 const isCorrect =
-                  outcome === "correct";
+                  outcome === "правильних";
                 const isWrong =
                   outcome === "wrong";
 
@@ -6643,9 +6656,9 @@ function App() {
                       }}
                     >
                       {isCorrect
-                        ? "Correct answer"
+                        ? "Правильна відповідь"
                         : isWrong
-                        ? "Wrong answer"
+                        ? "Неправильна відповідь"
                         : "Time's up"}
                     </span>
 
@@ -6664,10 +6677,10 @@ function App() {
 
           <button
             className="play-button"
-            onClick={startBattle}
+            onClick={startБій}
             style={{ marginTop: "16px" }}
           >
-            ⚔️ PLAY AGAIN
+            ⚔️ ГРАТИ ЩЕ РАЗ
             <span className="arrow">→</span>
           </button>
 
@@ -6675,7 +6688,7 @@ function App() {
             className="secondary-button"
             onClick={() => setScreen("home")}
           >
-            ← BACK TO HOME
+            ← НА ГОЛОВНУ
           </button>
         </main>
       </div>
@@ -6694,7 +6707,7 @@ function App() {
       {
         id: "second_chance",
         icon: "❤️",
-        title: "Second Chance",
+        title: "Другий шанс",
         text: "Відновить 1 життя після критичної помилки.",
         selected: selectedSecondChance,
         setSelected: setSelectedSecondChance,
@@ -6702,7 +6715,7 @@ function App() {
       {
         id: "combo_shield",
         icon: "🛡️",
-        title: "Combo Shield",
+        title: "Щит серії",
         text: "Одна помилка не скине твоє комбо.",
         selected: selectedComboShield,
         setSelected: setSelectedComboShield,
@@ -6710,7 +6723,7 @@ function App() {
       {
         id: "xp_boost",
         icon: "⚡",
-        title: "XP Boost",
+        title: "Буст XP",
         text: "+50% XP за цей бій.",
         selected: selectedXpBoost,
         setSelected: setSelectedXpBoost,
@@ -6724,7 +6737,7 @@ function App() {
         <Header />
         <main className="content">
           <section style={{ padding: 20, borderRadius: 24, background: "linear-gradient(135deg, rgba(124,77,255,0.22), rgba(255,94,168,0.10))", border: "1px solid rgba(157,122,255,0.24)", marginBottom: 18 }}>
-            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>BEFORE BATTLE</div>
+            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.5, opacity: 0.65 }}>ПЕРЕД БОЄМ</div>
             <h1 style={{ margin: "6px 0 7px", fontSize: 28 }}>⚡ Boosters</h1>
             <div style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.62 }}>Обери предмети, які хочеш активувати на цей бій.</div>
           </section>
@@ -6768,10 +6781,10 @@ function App() {
 
           <button
             className="play-button"
-            onClick={() => void launchBattle()}
+            onClick={() => void launchБій()}
             style={{ marginTop: 16 }}
           >
-            ⚔️ START BATTLE
+            ⚔️ ПОЧАТИ БІЙ
             <span className="arrow">→</span>
           </button>
 
@@ -6779,7 +6792,7 @@ function App() {
             className="secondary-button"
             onClick={() => setBoosterPickerOpen(false)}
           >
-            ← BACK
+            ← НАЗАД
           </button>
         </main>
       </div>
@@ -6829,7 +6842,7 @@ function App() {
           100% { transform: scale(1); opacity: 1; }
         }
 
-        @keyframes biqXpPulse {
+        @keyframes biqXpПульс {
           0%, 100% { transform: scale(1); }
           45% { transform: scale(1.06); }
         }
@@ -6887,7 +6900,7 @@ function App() {
 
           <div className="battle-title">
             <strong>
-              DAILY BATTLE
+              ЩОДЕННИЙ БІЙ
             </strong>
 
             <span>
@@ -6980,7 +6993,7 @@ function App() {
                 opacity: 0.5,
               }}
             >
-              CORRECT
+              ПРАВИЛЬНО
             </span>
           </div>
 
@@ -7068,7 +7081,7 @@ function App() {
                 "rgba(124,77,255,0.10)",
               animation:
                 battleXp > 0
-                  ? "biqXpPulse 1.8s ease-in-out infinite"
+                  ? "biqXpПульс 1.8s ease-in-out infinite"
                   : undefined,
               border:
                 "1px solid rgba(124,77,255,0.20)",
@@ -7145,7 +7158,7 @@ function App() {
           }}
         >
           <span>❤️ SECOND CHANCE</span>
-          <span>{secondChanceAvailable ? "READY" : "—"}</span>
+          <span>{secondChanceAvailable ? "ГОТОВО" : "—"}</span>
         </div>
 
         <div
@@ -7164,7 +7177,7 @@ function App() {
           }}
         >
           <span>🛡️ COMBO SHIELD</span>
-          <span>{comboShieldAvailable ? "READY" : "—"}</span>
+          <span>{comboShieldAvailable ? "ГОТОВО" : "—"}</span>
         </div>
 
         {xpBoostActive && (
@@ -7303,7 +7316,7 @@ function App() {
           </h1>
 
           <p>
-            Choose the correct
+            Choose the правильних
             answer
           </p>
         </section>
@@ -7319,10 +7332,10 @@ function App() {
                 null
               ) {
                 if (
-                  answer.correct
+                  answer.правильних
                 ) {
                   className +=
-                    " correct";
+                    " правильних";
                 } else if (
                   index ===
                   selectedAnswer
@@ -7343,9 +7356,9 @@ function App() {
                       selectedAnswer !== null &&
                       (
                         index === selectedAnswer ||
-                        (answer.correct && selectedAnswer !== index)
+                        (answer.правильних && selectedAnswer !== index)
                       )
-                        ? answer.correct
+                        ? answer.правильних
                           ? "biqAnswerCorrect 0.6s ease-out"
                           : "biqAnswerWrong 0.55s ease-out"
                         : undefined,
@@ -7372,7 +7385,7 @@ function App() {
 
                   {selectedAnswer !==
                     null &&
-                    answer.correct && (
+                    answer.правильних && (
                       <span className="answer-result">
                         ✓
                       </span>
@@ -7382,7 +7395,7 @@ function App() {
                     null &&
                     index ===
                       selectedAnswer &&
-                    !answer.correct && (
+                    !answer.правильних && (
                       <span className="answer-result">
                         ×
                       </span>
@@ -7403,8 +7416,8 @@ function App() {
             {selectedAnswer === -1
               ? "⏱ Time's up!"
               : selectedAnswer !== null
-              ? "Next question..."
-              : "Choose an answer"}
+              ? "Наступне питання..."
+              : "Обери відповідь"}
           </span>
 
           <span>
