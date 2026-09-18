@@ -211,7 +211,7 @@ const SHOP_FALLBACK: ShopProduct[] = [
   { id: "legendary_frame", icon: "👑", title: "Legendary Frame", description: "Premium profile frame", price_stars: 100, category: "PROFILE" },
   { id: "second_chance", icon: "❤️", title: "Second Chance", description: "One extra life in a battle", price_stars: 15, price_coins: 300, category: "BATTLE" },
   { id: "combo_shield", icon: "🛡️", title: "Combo Shield", description: "Protect your combo from one mistake", price_stars: 30, price_coins: 1000, category: "BATTLE" },
-  { id: "xp_boost", icon: "⚡", title: "ДОСВІД Boost", description: "Boost your battle progression", price_stars: 25, price_coins: 2000, category: "BATTLE" },
+  { id: "xp_boost", icon: "⚡", title: "XP Boost", description: "Boost your battle progression", price_stars: 25, price_coins: 2000, category: "BATTLE" },
   { id: "battle_pass", icon: "🎟️", title: "Battle Pass", description: "Unlock exclusive season rewards", price_stars: 299, category: "PASS", featured: true },
   { id: "aurora_frame", icon: "🌈", title: "Aurora Frame", description: "Northern-light inspired profile frame", price_stars: 65, category: "COSMETICS" },
   { id: "cyber_frame", icon: "🧬", title: "Cyber Frame", description: "Neon cyber profile frame", price_stars: 85, category: "COSMETICS" },
@@ -464,7 +464,7 @@ const ACHIEVEMENTS = [
     id: "speed_demon",
     icon: "⚡",
     title: "Speed Demon",
-    text: "Earn 300 ДОСВІД in a single battle",
+    text: "Earn 300 XP in a single battle",
     getProgress: (
       player: PlayerData,
       _missions: DailyMissionStats,
@@ -483,7 +483,7 @@ const ACHIEVEMENTS = [
     id: "iq_legend",
     icon: "👑",
     title: "IQ Legend",
-    text: "Earn 5,000 total ДОСВІД",
+    text: "Earn 5,000 total XP",
     getProgress: (
       player: PlayerData,
       _missions: DailyMissionStats,
@@ -629,7 +629,7 @@ function getMilestoneReward(level: number) {
   const rewards: Record<number, string> = {
     5: "🎖️ Learner Badge",
     10: "🟣 Special Profile Frame",
-    15: "⚡ ДОСВІД Boost",
+    15: "⚡ XP Boost",
     20: "🔥 Exclusive Badge",
     30: "👑 Elite Profile Badge",
     50: "💎 Mastermind Badge",
@@ -659,14 +659,14 @@ const DAILY_МІСІЇ = [
   { id: "battle_1", icon: "⚔️", title: "Warm Up", description: "Complete 1 battle today", target: 1, reward: 50, getProgress: (s: DailyMissionStats) => s.battles },
   { id: "correct_15", icon: "🧠", title: "Sharp Mind", description: "Answer 15 questions correctly", target: 15, reward: 75, getProgress: (s: DailyMissionStats) => s.correct },
   { id: "combo_5", icon: "🔥", title: "On Fire", description: "Reach a 5-answer combo", target: 5, reward: 75, getProgress: (s: DailyMissionStats) => s.bestCombo },
-  { id: "xp_300", icon: "⚡", title: "ДОСВІД Hunter", description: "Earn 300 ДОСВІД from battles", target: 300, reward: 100, getProgress: (s: DailyMissionStats) => s.xpEarned },
+  { id: "xp_300", icon: "⚡", title: "XP Hunter", description: "Earn 300 XP from battles", target: 300, reward: 100, getProgress: (s: DailyMissionStats) => s.xpEarned },
 ];
 
 const WEEKLY_МІСІЇ = [
   { id: "battle_7", icon: "🏹", title: "Weekly Warrior", description: "Complete 7 battles this week", target: 7, reward: 250, getProgress: (s: WeeklyMissionStats) => s.battles },
   { id: "correct_60", icon: "🧠", title: "Deep Thinker", description: "Answer 60 questions correctly", target: 60, reward: 300, getProgress: (s: WeeklyMissionStats) => s.correct },
   { id: "combo_8", icon: "🔥", title: "Combo Master", description: "Reach an 8-answer combo", target: 8, reward: 300, getProgress: (s: WeeklyMissionStats) => s.bestCombo },
-  { id: "xp_1500", icon: "⚡", title: "ДОСВІД Machine", description: "Earn 1,500 ДОСВІД from battles", target: 1500, reward: 400, getProgress: (s: WeeklyMissionStats) => s.xpEarned },
+  { id: "xp_1500", icon: "⚡", title: "XP Machine", description: "Earn 1,500 XP from battles", target: 1500, reward: 400, getProgress: (s: WeeklyMissionStats) => s.xpEarned },
 ];
 
 function emptyDailyMissionStats(): DailyMissionStats {
@@ -1174,7 +1174,7 @@ function App() {
     } | null>(null);
 
   // D1 is the source of truth for player progression.
-  // localStorage is intentionally not used for ДОСВІД/level/battles.
+  // localStorage is intentionally not used for XP/level/battles.
   const [player, setPlayer] =
     useState<PlayerData>({
       xp: 0,
@@ -1666,7 +1666,7 @@ function App() {
           xp: Number(data.profile.xp ?? prev.xp),
         }));
       }
-      setAchievementToast({ icon: "🎁", title: `+${Number(data.reward?.amount || 0)} ДОСВІД Reward` });
+      setAchievementToast({ icon: "🎁", title: `+${Number(data.reward?.amount || 0)} XP Reward` });
       getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
       window.setTimeout(() => setAchievementToast(null), 3500);
       // Refresh achievements so the claim button becomes completed.
@@ -1815,7 +1815,7 @@ function App() {
   ]);
 
   // ==========================================
-  // PER-ПИТАННЯ TIMER / ЖИТТЯ
+  // PER-QUESTION TIMER / LIVES
   // ==========================================
 
   useEffect(() => {
@@ -1964,7 +1964,7 @@ function App() {
       const consumed = await consumeІнвентарItem("xp_boost");
       if (consumed) {
         setXpBoostActive(true);
-        setChallengeNotice("⚡ ДОСВІД BOOST активовано: +50% ДОСВІД");
+        setChallengeNotice("⚡ XP BOOST активовано: +50% XP");
         window.setTimeout(() => setChallengeNotice(""), 1800);
       }
     }
@@ -2110,7 +2110,7 @@ function App() {
   };
 
   // ==========================================
-  // ПИТАННЯ TIMEOUT
+  // QUESTION TIMEOUT
   // ==========================================
 
   const handleПитанняTimeout = async () => {
@@ -2133,7 +2133,7 @@ function App() {
         if (restored) {
           setSecondChanceAvailable(false);
           setBattleLives(1);
-          setChallengeNotice("❤️ ДРУГИЙ ШАНС! +1 life");
+          setChallengeNotice("❤️ SECOND CHANCE! +1 life");
           window.setTimeout(() => setChallengeNotice(""), 1500);
 
           window.setTimeout(() => {
@@ -2250,7 +2250,7 @@ function App() {
       if (nextCombo === 3) {
         showBattleMilestone(
           "🔥",
-          "КОМБО x3",
+          "COMBO x3",
           "Multiplier activated"
         );
       } else if (nextCombo === 5) {
@@ -2268,7 +2268,7 @@ function App() {
       } else if (nextCombo === 10) {
         showBattleMilestone(
           "👑",
-          "PERFECT КОМБО x10",
+          "PERFECT COMBO x10",
           "10 correct answers in a row"
         );
       }
@@ -2281,7 +2281,7 @@ function App() {
         showBattleMilestone(
           "🔴",
           "HARD CLEAR",
-          `+${earnedXp} ДОСВІД`
+          `+${earnedXp} XP`
         );
       }
     } else {
@@ -2299,7 +2299,7 @@ function App() {
         const protectedCombo = await consumeІнвентарItem("combo_shield");
         if (protectedCombo) {
           setComboShieldAvailable(false);
-          setChallengeNotice("🛡️ КОМБО SHIELD! Комбо збережено");
+          setChallengeNotice("🛡️ COMBO SHIELD! Комбо збережено");
           window.setTimeout(() => setChallengeNotice(""), 1500);
         } else {
           setBattleCombo(0);
@@ -2318,7 +2318,7 @@ function App() {
           if (restored) {
             setSecondChanceAvailable(false);
             setBattleLives(1);
-            setChallengeNotice("❤️ ДРУГИЙ ШАНС! +1 life");
+            setChallengeNotice("❤️ SECOND CHANCE! +1 life");
             window.setTimeout(() => setChallengeNotice(""), 1500);
           } else {
             setSecondChanceAvailable(false);
@@ -2947,12 +2947,12 @@ function App() {
               <div className="xp-row">
                 <span>
                   {levelInfo.currentXp.toLocaleString()}{" "}
-                  ДОСВІД
+                  XP
                 </span>
 
                 <span>
                   {levelInfo.requiredXp.toLocaleString()}{" "}
-                  ДОСВІД
+                  XP
                 </span>
               </div>
 
@@ -3180,7 +3180,7 @@ function App() {
               </div>
               <div>
                 <strong>SEASON</strong>
-                <span>{season ? `Level ${season.level} · ${season.xp} ДОСВІД` : "Season 1 progression"}</span>
+                <span>{season ? `Level ${season.level} · ${season.xp} XP` : "Season 1 progression"}</span>
               </div>
               <b>→</b>
             </button>
@@ -3427,7 +3427,7 @@ function App() {
               <span>{lead > 0 ? `🔥 +${lead} AHEAD` : lead < 0 ? `⚡ ${Math.abs(lead)} BEHIND` : "⚖️ TIED"}</span>
               {opponentFinished && <span>• OPPONENT FINISHED</span>}
             </div>
-            <div style={{ fontSize: 13, opacity: .7, marginBottom: 8 }}>ПИТАННЯ {Math.min(pvpПитанняIndex + 1, 10)} / 10</div>
+            <div style={{ fontSize: 13, opacity: .7, marginBottom: 8 }}>QUESTION {Math.min(pvpПитанняIndex + 1, 10)} / 10</div>
             <div style={{ fontSize: 30, fontWeight: 900, marginBottom: 16 }}>{pvpПитанняTimeLeft}s</div>
             {opponentFinished && !pvpMyFinished && (
               <div style={{ marginBottom: 14, padding: "10px 12px", borderRadius: 12, background: "rgba(122,72,255,.12)", border: "1px solid rgba(145,105,255,.25)", fontSize: 13 }}>
@@ -4134,7 +4134,7 @@ function App() {
         }
         await loadMissions();
         tg.HapticFeedback?.notificationOccurred("success");
-        setMissionNotice(`+${Number(data.reward ?? reward)} ДОСВІД claimed!`);
+        setMissionNotice(`+${Number(data.reward ?? reward)} XP claimed!`);
         window.setTimeout(() => setMissionNotice(""), 2500);
       } catch (error) {
         console.warn("BATTLE IQ: mission claim failed", error);
@@ -4165,7 +4165,7 @@ function App() {
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
               <strong style={{ display: "block", fontSize: "13px" }}>+{mission.reward}</strong>
-              <small style={{ opacity: 0.55 }}>ДОСВІД</small>
+              <small style={{ opacity: 0.55 }}>XP</small>
             </div>
           </div>
           <div style={{ marginTop: "14px", height: "7px", borderRadius: "999px", overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
@@ -4174,7 +4174,7 @@ function App() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginTop: "9px" }}>
             <span style={{ fontSize: "11px", opacity: 0.6 }}>{progress}/{mission.target}</span>
             <button disabled={!completed || claimed || missionsLoading} onClick={() => void claimMission(periodType, mission.id, mission.target, mission.reward, progress)} style={{ border: 0, borderRadius: "10px", padding: "8px 12px", background: claimed ? "rgba(255,255,255,0.08)" : completed ? "#7c4dff" : "rgba(255,255,255,0.06)", color: "inherit", fontSize: "11px", fontWeight: 800, cursor: completed && !claimed ? "pointer" : "default", opacity: !completed || claimed ? 0.55 : 1 }}>
-              {claimed ? "✓ ЗАБРАНО" : completed ? "CLAIM ДОСВІД" : "LOCKED"}
+              {claimed ? "✓ ЗАБРАНО" : completed ? "CLAIM XP" : "LOCKED"}
             </button>
           </div>
         </div>
@@ -4194,7 +4194,7 @@ function App() {
             <div className="profile-big-avatar">🎯</div>
             <h1>МІСІЇ</h1>
             <div className="profile-level">{dailyCompleted}/{DAILY_МІСІЇ.length} DAILY · {weeklyCompleted}/{WEEKLY_МІСІЇ.length} WEEKLY</div>
-            <p style={{ marginTop: "8px", opacity: 0.65, fontSize: "13px" }}>Complete missions and claim bonus ДОСВІД.</p>
+            <p style={{ marginTop: "8px", opacity: 0.65, fontSize: "13px" }}>Complete missions and claim bonus XP.</p>
           </section>
 
           {missionNotice && <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 14, background: "rgba(124,77,255,0.16)", border: "1px solid rgba(124,77,255,0.3)", textAlign: "center", fontSize: 12, fontWeight: 800 }}>{missionNotice}</div>}
@@ -4254,8 +4254,8 @@ function App() {
             <div style={{ fontSize:11,fontWeight:900,letterSpacing:1,opacity:.5 }}>ТВОЯ СТАТИСТИКА</div>
             <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginTop:12 }}>
               <div><strong style={{fontSize:18}}>{currentStats.level}</strong><div style={{fontSize:9,opacity:.45}}>LEVEL</div></div>
-              <div><strong style={{fontSize:18}}>{currentStats.xp.toLocaleString()}</strong><div style={{fontSize:9,opacity:.45}}>ДОСВІД</div></div>
-              <div><strong style={{fontSize:18}}>{currentStats.bestCombo}</strong><div style={{fontSize:9,opacity:.45}}>КОМБО</div></div>
+              <div><strong style={{fontSize:18}}>{currentStats.xp.toLocaleString()}</strong><div style={{fontSize:9,opacity:.45}}>XP</div></div>
+              <div><strong style={{fontSize:18}}>{currentStats.bestCombo}</strong><div style={{fontSize:9,opacity:.45}}>COMBO</div></div>
               <div><strong style={{fontSize:18}}>{currentStats.battles}</strong><div style={{fontSize:9,opacity:.45}}>BATTLES</div></div>
             </div>
           </section>
@@ -4280,7 +4280,7 @@ function App() {
               <section style={{ padding:22,borderRadius:18,background:"rgba(255,255,255,.045)",textAlign:"center" }}>
                 <div style={{fontSize:34}}>👥</div>
                 <strong>No friends yet</strong>
-                <p style={{margin:"7px 0 0",opacity:.55,fontSize:12}}>Invite a friend and compare ДОСВІД, level, battles and combo.</p>
+                <p style={{margin:"7px 0 0",opacity:.55,fontSize:12}}>Invite a friend and compare XP, level, battles and combo.</p>
               </section>
             ) : friends.map((friend:any) => {
               const friendXp = Number(friend.xp || 0);
@@ -4312,10 +4312,10 @@ function App() {
                   </div>
 
                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7,marginTop:14}}>
-                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendXp.toLocaleString()}</strong><div style={{fontSize:8,opacity:.4}}>ДОСВІД</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendXp.toLocaleString()}</strong><div style={{fontSize:8,opacity:.4}}>XP</div></div>
                     <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBattles}</strong><div style={{fontSize:8,opacity:.4}}>BATTLES</div></div>
-                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendCombo}</strong><div style={{fontSize:8,opacity:.4}}>BEST КОМБО</div></div>
-                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBestXp}</strong><div style={{fontSize:8,opacity:.4}}>BEST ДОСВІД</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendCombo}</strong><div style={{fontSize:8,opacity:.4}}>BEST COMBO</div></div>
+                    <div style={{padding:"9px 5px",borderRadius:12,background:"rgba(255,255,255,.04)",textAlign:"center"}}><strong>{friendBestXp}</strong><div style={{fontSize:8,opacity:.4}}>BEST XP</div></div>
                   </div>
 
                   <div style={{marginTop:10,fontSize:11,opacity:.5}}>
@@ -4510,7 +4510,7 @@ function App() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 11, fontWeight: 900 }}>
-                  <span>⚡ {season.xp.toLocaleString()} SEASON ДОСВІД</span>
+                  <span>⚡ {season.xp.toLocaleString()} SEASON XP</span>
                   <span>{season.level >= season.maxLevel ? "MAX LEVEL" : `${season.currentLevelXp}/${season.xpPerLevel}`}</span>
                 </div>
                 <div style={{ marginTop: 8, height: 10, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
@@ -4645,11 +4645,11 @@ function App() {
                       </div>
                       <div style={{ textAlign: "right" }}>
                         <strong style={{ display: "block", fontSize: 12 }}>{entry.seasonXp.toLocaleString()}</strong>
-                        <span style={{ fontSize: 8, opacity: 0.45 }}>SEASON ДОСВІД</span>
+                        <span style={{ fontSize: 8, opacity: 0.45 }}>SEASON XP</span>
                       </div>
                     </div>
                   )) : (
-                    <div style={{ padding: 16, borderRadius: 13, background: "rgba(255,255,255,0.035)", textAlign: "center", fontSize: 11, opacity: 0.55 }}>Ще ніхто не набрав Season ДОСВІД. Починай першим ⚡</div>
+                    <div style={{ padding: 16, borderRadius: 13, background: "rgba(255,255,255,0.035)", textAlign: "center", fontSize: 11, opacity: 0.55 }}>Ще ніхто не набрав Season XP. Починай першим ⚡</div>
                   )}
                 </div>
               </section>
@@ -4707,10 +4707,10 @@ function App() {
               {[
                 ["⚔️", stats.played, "BATTLES"],
                 ["🎯", `${stats.accuracy}%`, "ACCURACY"],
-                ["⚡", Number(stats.totalXp || 0).toLocaleString(), "TOTAL ДОСВІД"],
+                ["⚡", Number(stats.totalXp || 0).toLocaleString(), "TOTAL XP"],
                 ["🏆", `${stats.bestScore}%`, "BEST SCORE"],
-                ["🔥", stats.bestCombo, "BEST КОМБО"],
-                ["💎", stats.bestXp, "BEST BATTLE ДОСВІД"],
+                ["🔥", stats.bestCombo, "BEST COMBO"],
+                ["💎", stats.bestXp, "BEST BATTLE XP"],
               ].map(([icon,value,label]) => (
                 <div key={String(label)} style={{ padding:"11px 7px",borderRadius:13,background:"rgba(255,255,255,.045)",textAlign:"center",border:"1px solid rgba(255,255,255,.055)" }}>
                   <div style={{ fontSize:16 }}>{icon}</div>
@@ -4731,10 +4731,10 @@ function App() {
             </div>
             <div style={{ display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8,marginTop:11 }}>
               <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.battles}</strong><div style={{fontSize:8,opacity:.45}}>BATTLES</div></div>
-              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{Number(stats.last7Days.xp || 0).toLocaleString()}</strong><div style={{fontSize:8,opacity:.45}}>ДОСВІД</div></div>
-              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.correct}</strong><div style={{fontSize:8,opacity:.45}}>ПРАВИЛЬНО</div></div>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{Number(stats.last7Days.xp || 0).toLocaleString()}</strong><div style={{fontSize:8,opacity:.45}}>XP</div></div>
+              <div style={{ padding:"10px 7px",borderRadius:12,background:"rgba(255,255,255,.035)",textAlign:"center" }}><strong>{stats.last7Days.correct}</strong><div style={{fontSize:8,opacity:.45}}>CORRECT</div></div>
             </div>
-            <div style={{ marginTop:10,fontSize:10,opacity:.52 }}>Today: {stats.today.battles} battles · +{Number(stats.today.xp || 0)} ДОСВІД · {stats.today.correct} correct</div>
+            <div style={{ marginTop:10,fontSize:10,opacity:.52 }}>Today: {stats.today.battles} battles · +{Number(stats.today.xp || 0)} XP · {stats.today.correct} correct</div>
           </section>
 
           <section style={{ marginTop:12,padding:15,borderRadius:18,background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.07)" }}>
@@ -4746,7 +4746,7 @@ function App() {
               <div style={{ fontSize:20 }}>🧠</div>
             </div>
             <div style={{ display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:8,marginTop:11 }}>
-              <div className="info-card"><strong>AVG ДОСВІД</strong><span style={{fontSize:20}}>{stats.averageXp}</span></div>
+              <div className="info-card"><strong>AVG XP</strong><span style={{fontSize:20}}>{stats.averageXp}</span></div>
               <div className="info-card"><strong>AVG SCORE</strong><span style={{fontSize:20}}>{stats.averageScore}%</span></div>
               <div className="info-card"><strong>AVG TIME</strong><span style={{fontSize:20}}>{formatDuration(stats.averageDuration)}</span></div>
               <div className="info-card"><strong>STREAK</strong><span style={{fontSize:20}}>🔥 {stats.streak}</span></div>
@@ -4778,7 +4778,7 @@ function App() {
                     <div style={{ flex:1,minWidth:0 }}>
                       <div style={{ display:"flex",justifyContent:"space-between",gap:8 }}>
                         <strong style={{ fontSize:12 }}>#{battleHistory.length - index} · {battle.correctAnswers}/10 correct</strong>
-                        <strong style={{ fontSize:12 }}>+{battle.xp} ДОСВІД</strong>
+                        <strong style={{ fontSize:12 }}>+{battle.xp} XP</strong>
                       </div>
                       <div style={{ marginTop:4,fontSize:9,opacity:.48 }}>{battle.accuracy}% accuracy · {formatDuration(battle.durationSeconds)} · {formatDate(battle.createdAt)}</div>
                     </div>
@@ -4944,7 +4944,7 @@ function App() {
                     opacity: 0.6,
                   }}
                 >
-                  ДОСВІД PROGRESS
+                  XP PROGRESS
                 </span>
 
                 <span
@@ -5131,7 +5131,7 @@ function App() {
               {[
                 ["⚔️", player.battles.toLocaleString(), "BATTLES"],
                 ["🎯", player.battles > 0 ? `${Math.round((player.totalCorrect / (player.battles * 10)) * 100)}%` : "0%", "ACCURACY"],
-                ["🔥", player.bestCombo.toLocaleString(), "BEST КОМБО"],
+                ["🔥", player.bestCombo.toLocaleString(), "BEST COMBO"],
               ].map(([icon, value, label]) => (
                 <div key={label} style={{ padding: "11px 8px", borderRadius: 13, background: "rgba(124,77,255,0.08)", border: "1px solid rgba(124,77,255,0.12)", textAlign: "center", minWidth: 0 }}>
                   <div style={{ fontSize: 16 }}>{icon}</div>
@@ -5183,7 +5183,7 @@ function App() {
               [
                 "⚡",
                 player.xp.toLocaleString(),
-                "TOTAL ДОСВІД",
+                "TOTAL XP",
               ],
               [
                 "🏆",
@@ -5273,7 +5273,7 @@ function App() {
                   opacity: 0.5,
                 }}
               >
-                BEST КОМБО
+                BEST COMBO
               </span>
 
               <strong
@@ -5304,7 +5304,7 @@ function App() {
                   opacity: 0.5,
                 }}
               >
-                BEST BATTLE ДОСВІД
+                BEST BATTLE XP
               </span>
 
               <strong
@@ -5520,7 +5520,7 @@ function App() {
                           color: achievement.unlocked ? "#c4b5fd" : "rgba(255,255,255,0.42)",
                         }}
                       >
-                        🎁 Reward: +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} ДОСВІД
+                        🎁 Reward: +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} XP
                       </span>
 
                       {!achievement.unlocked && (
@@ -5592,7 +5592,7 @@ function App() {
                             cursor: "pointer",
                           }}
                         >
-                          CLAIM +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} ДОСВІД
+                          CLAIM +{achievement.reward?.amount ?? achievement.rewardXp ?? 0} XP
                         </button>
                       )
                     )}
@@ -5970,7 +5970,7 @@ function App() {
                           opacity: 0.78,
                         }}
                       >
-                        {xp} ДОСВІД
+                        {xp} XP
                       </span>
                       {index === 1 && (
                         <span
@@ -6195,7 +6195,7 @@ function App() {
                           fontWeight: 800,
                         }}
                       >
-                        ДОСВІД
+                        XP
                       </span>
                     </div>
 
@@ -6436,7 +6436,7 @@ function App() {
           <div className="result-stats">
             <div>
               <strong>+{battleXp}</strong>
-              <span>ДОСВІД earned</span>
+              <span>XP earned</span>
             </div>
 
             <div>
@@ -6470,13 +6470,13 @@ function App() {
             >
               <div style={{ fontSize: "10px", opacity: 0.5, fontWeight: 900, letterSpacing: "0.08em" }}>BATTLE EVENTS</div>
               <div style={{ marginTop: "5px", fontSize: "11px", fontWeight: 800 }}>
-                ⚡ Speed Round · 1.5× ДОСВІД
+                ⚡ Speed Round · 1.5× XP
               </div>
               <div style={{ marginTop: "3px", fontSize: "11px", fontWeight: 800 }}>
-                ⚡ Double ДОСВІД · Final Round
+                ⚡ Double XP · Final Round
               </div>
               <div style={{ marginTop: "5px", fontSize: "10px", opacity: 0.62 }}>
-                +{eventBonusXp} ДОСВІД from battle events
+                +{eventBonusXp} XP from battle events
               </div>
             </section>
           )}
@@ -6515,8 +6515,8 @@ function App() {
           >
             {[
               ["⏱️", `${elapsedSeconds}s`, "TIME"],
-              ["❤️", `${livesLost}`, "ЖИТТЯ LOST"],
-              ["✅", `${correctCount}`, "ПРАВИЛЬНО"],
+              ["❤️", `${livesLost}`, "LIVES LOST"],
+              ["✅", `${correctCount}`, "CORRECT"],
               ["❌", `${wrongCount}`, "WRONG"],
               ["⌛", `${timeoutCount}`, "TIMEOUT"],
               ["🎯", `${totalПитанняs}`, "QUESTIONS"],
@@ -6583,7 +6583,7 @@ function App() {
               }}
             >
               <strong style={{ fontSize: "13px" }}>
-                📊 ПИТАННЯ REVIEW
+                📊 QUESTION REVIEW
               </strong>
               <span
                 style={{
@@ -6723,8 +6723,8 @@ function App() {
       {
         id: "xp_boost",
         icon: "⚡",
-        title: "ДОСВІД Boost",
-        text: "+50% ДОСВІД за цей бій.",
+        title: "XP Boost",
+        text: "+50% XP за цей бій.",
         selected: selectedXpBoost,
         setSelected: setSelectedXpBoost,
       },
@@ -6807,8 +6807,11 @@ function App() {
     return null;
   }
 
+  const questionTimeLimit = getПитанняTimeLimit(questionIndex);
+  const timerProgress = Math.max(0, Math.min(1, questionTimeLeft / Math.max(1, questionTimeLimit)));
+
   return (
-    <div className="app">
+    <div className="app battle-app">
       <style>{`
         @keyframes biqAnswerCorrect {
           0% { transform: scale(1); }
@@ -6828,154 +6831,6 @@ function App() {
         @keyframes biqTimerDanger {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.08); opacity: 0.72; }
-        }
-
-        .biqBattleMeta {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr);
-          align-items: center;
-          gap: 8px;
-          margin: 8px 0 10px;
-        }
-
-        .biqMetaCard {
-          min-width: 0;
-          min-height: 74px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 8px;
-          border-radius: 15px;
-          background: linear-gradient(145deg, rgba(124,77,255,0.08), rgba(255,255,255,0.025));
-          border: 1px solid rgba(124,77,255,0.18);
-          box-sizing: border-box;
-        }
-
-        .biqMetaDifficulty {
-          border-color: rgba(255,181,46,0.18);
-          background: linear-gradient(145deg, rgba(255,181,46,0.07), rgba(255,255,255,0.025));
-        }
-
-        .biqMetaIcon {
-          width: 34px;
-          height: 34px;
-          flex: 0 0 34px;
-          display: grid;
-          place-items: center;
-          border-radius: 50%;
-          background: rgba(124,77,255,0.13);
-          font-size: 17px;
-        }
-
-        .biqMetaDifficulty .biqMetaIcon {
-          background: rgba(255,181,46,0.12);
-        }
-
-        .biqMetaCard small {
-          display: block;
-          font-size: 8px;
-          font-weight: 800;
-          opacity: 0.52;
-          margin-bottom: 3px;
-        }
-
-        .biqMetaCard strong {
-          display: block;
-          font-size: 10px;
-          line-height: 1.15;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .biqMetaDifficulty strong {
-          color: #ffd166;
-        }
-
-        .biqTimerHero {
-          position: relative;
-          width: 92px;
-          min-height: 92px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto;
-        }
-
-        .biqTimerHeroGlow {
-          position: absolute;
-          width: 94px;
-          height: 94px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(255,181,46,0.14) 0%, rgba(124,77,255,0.05) 42%, transparent 72%);
-          filter: blur(3px);
-          pointer-events: none;
-        }
-
-        .biqTimerHeroCircle {
-          position: relative;
-          width: 82px;
-          height: 82px;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          padding: 5px;
-          box-sizing: border-box;
-          transition: background 0.25s ease, box-shadow 0.25s ease;
-          z-index: 1;
-        }
-
-        .biqTimerHeroCircle::before {
-          content: "";
-          position: absolute;
-          inset: 6px;
-          border-radius: 50%;
-          background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.07), rgba(7,6,20,0.99) 67%);
-          box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        .biqTimerHeroInner {
-          position: relative;
-          z-index: 2;
-          width: 68px;
-          height: 68px;
-          border-radius: 50%;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-        }
-
-        .biqTimerHeroInner strong {
-          font-size: 31px;
-          font-weight: 950;
-          letter-spacing: -2px;
-          text-shadow: 0 0 14px currentColor;
-        }
-
-        .biqTimerHeroInner span {
-          margin-top: 3px;
-          font-size: 7px;
-          font-weight: 950;
-          letter-spacing: 1px;
-          opacity: 0.85;
-        }
-
-        .biqTotalTimerHero {
-          position: absolute;
-          right: -4px;
-          bottom: -2px;
-          z-index: 3;
-          padding: 3px 6px;
-          border: 1px solid rgba(255,255,255,0.10);
-          border-radius: 7px;
-          background: rgba(10,8,24,0.96);
-          color: rgba(255,255,255,0.52);
-          font-size: 7px;
-          font-weight: 900;
-          white-space: nowrap;
         }
 
         @keyframes biqLifeShake {
@@ -7057,43 +6912,19 @@ function App() {
             </span>
           </div>
 
-        </div>
-
-        <div className="biqBattleMeta">
-          <div className="biqMetaCard biqMetaCategory">
-            <span className="biqMetaIcon">🧠</span>
-            <div>
-              <small>Категорія</small>
-              <strong>{currentПитання.category || "Загальні знання"}</strong>
-            </div>
-          </div>
-
-          <div className="biqTimerHero" aria-label={`Залишилось ${questionTimeLeft} секунд`}>
-            <div className="biqTimerHeroGlow" />
+          <div className="battle-timer-wrap">
             <div
-              className="biqTimerHeroCircle"
+              className={`battle-timer ${questionTimeLeft <= 3 ? "danger" : ""}`}
               style={{
-                background: `conic-gradient(${questionTimeLeft <= 3 ? "#ff5475" : "#ffb52e"} ${Math.max(0, Math.min(100, (questionTimeLeft / 8) * 100))}%, rgba(255,255,255,0.08) 0)`,
-                animation: questionTimeLeft <= 3 ? "biqTimerDanger 0.65s ease-in-out infinite" : undefined,
-                boxShadow: questionTimeLeft <= 3
-                  ? "0 0 28px rgba(255,84,117,0.42), inset 0 0 18px rgba(255,84,117,0.12)"
-                  : "0 0 26px rgba(255,181,46,0.26), inset 0 0 18px rgba(255,181,46,0.08)",
+                ["--timer-progress" as any]: `${timerProgress * 360}deg`,
               }}
             >
-              <div className="biqTimerHeroInner" style={{ color: questionTimeLeft <= 3 ? "#ff7187" : "#ffd166" }}>
+              <div className="battle-timer-inner">
                 <strong>{questionTimeLeft}</strong>
-                <span>СЕКУНД</span>
+                <span>сек</span>
               </div>
             </div>
-            <div className="biqTotalTimerHero">⏱ {timeLeft} с</div>
-          </div>
-
-          <div className="biqMetaCard biqMetaDifficulty">
-            <span className="biqMetaIcon">📊</span>
-            <div>
-              <small>Складність</small>
-              <strong>{String(currentПитання.difficulty || "easy").toLowerCase().includes("hard") ? "Складна" : String(currentПитання.difficulty || "").toLowerCase().includes("medium") ? "Середня" : "Легка"}</strong>
-            </div>
+            <div className="battle-total-time">⏱ {timeLeft}s</div>
           </div>
         </div>
 
@@ -7146,7 +6977,7 @@ function App() {
                 opacity: 0.5,
               }}
             >
-              ПРАВИЛЬНО
+              CORRECT
             </span>
           </div>
 
@@ -7182,7 +7013,7 @@ function App() {
                 opacity: 0.5,
               }}
             >
-              КОМБО
+              COMBO
             </span>
           </div>
 
@@ -7222,7 +7053,7 @@ function App() {
                 opacity: 0.5,
               }}
             >
-              ЖИТТЯ
+              LIVES
             </span>
           </div>
 
@@ -7258,7 +7089,7 @@ function App() {
                 opacity: 0.5,
               }}
             >
-              ДОСВІД
+              XP
             </span>
           </div>
         </div>
@@ -7280,7 +7111,7 @@ function App() {
               fontWeight: 800,
             }}
           >
-            🔥 КОМБО x
+            🔥 COMBO x
             {Math.min(
               3,
               1 +
@@ -7289,11 +7120,12 @@ function App() {
                 )
             )}
             {" — "}
-            Продовжуй серію!
+            Keep the streak going!
           </div>
         )}
 
         <div
+          className="battle-status-row"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -7310,11 +7142,12 @@ function App() {
             opacity: 0.75,
           }}
         >
-          <span>❤️ ДРУГИЙ ШАНС</span>
+          <span>❤️ SECOND CHANCE</span>
           <span>{secondChanceAvailable ? "ГОТОВО" : "—"}</span>
         </div>
 
         <div
+          className="battle-status-row"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -7329,7 +7162,7 @@ function App() {
             opacity: 0.75,
           }}
         >
-          <span>🛡️ КОМБО SHIELD</span>
+          <span>🛡️ COMBO SHIELD</span>
           <span>{comboShieldAvailable ? "ГОТОВО" : "—"}</span>
         </div>
 
@@ -7346,7 +7179,7 @@ function App() {
               fontWeight: 900,
             }}
           >
-            ⚡ ДОСВІД BOOST АКТИВНО · +50% ДОСВІД
+            ⚡ XP BOOST АКТИВНО · +50% XP
           </div>
         )}
 
@@ -7379,9 +7212,9 @@ function App() {
               animation: "biqComboBurst 0.45s ease-out",
             }}
           >
-            <div style={{ fontSize: "15px" }}>⚡ ШВИДКИЙ РАУНД</div>
+            <div style={{ fontSize: "15px" }}>⚡ SPEED ROUND</div>
             <div style={{ marginTop: "3px", fontSize: "10px", opacity: 0.68 }}>
-              10 seconds · 1.5× ДОСВІД
+              10 seconds · 1.5× XP
             </div>
           </div>
         )}
@@ -7398,9 +7231,9 @@ function App() {
               animation: "biqComboBurst 0.45s ease-out",
             }}
           >
-            <div style={{ fontSize: "15px" }}>⚡ DOUBLE ДОСВІД</div>
+            <div style={{ fontSize: "15px" }}>⚡ DOUBLE XP</div>
             <div style={{ marginTop: "3px", fontSize: "10px", opacity: 0.68 }}>
-              Final round · 2× ДОСВІД
+              Final round · 2× XP
             </div>
           </div>
         )}
@@ -7574,7 +7407,7 @@ function App() {
           </span>
 
           <span>
-            +{battleXp} ДОСВІД
+            +{battleXp} XP
           </span>
         </div>
       </main>
