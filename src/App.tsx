@@ -6807,11 +6807,8 @@ function App() {
     return null;
   }
 
-  const questionTimeLimit = getПитанняTimeLimit(questionIndex);
-  const timerProgress = Math.max(0, Math.min(1, questionTimeLeft / Math.max(1, questionTimeLimit)));
-
   return (
-    <div className="app battle-app">
+    <div className="app">
       <style>{`
         @keyframes biqAnswerCorrect {
           0% { transform: scale(1); }
@@ -6912,19 +6909,18 @@ function App() {
             </span>
           </div>
 
-          <div className="battle-timer-wrap">
-            <div
-              className={`battle-timer ${questionTimeLeft <= 3 ? "danger" : ""}`}
-              style={{
-                ["--timer-progress" as any]: `${timerProgress * 360}deg`,
-              }}
-            >
-              <div className="battle-timer-inner">
-                <strong>{questionTimeLeft}</strong>
-                <span>сек</span>
-              </div>
-            </div>
-            <div className="battle-total-time">⏱ {timeLeft}s</div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "8px",
+              fontWeight: 800,
+              opacity: 0.48,
+              whiteSpace: "nowrap",
+            }}
+          >
+            ⏱ {timeLeft}s
           </div>
         </div>
 
@@ -6938,6 +6934,36 @@ function App() {
               }%`,
             }}
           />
+        </div>
+
+        <div className="battle-info-row">
+          <div className="battle-info-card battle-info-purple">
+            <span>Категорія</span>
+            <strong>{currentПитання.category || "Загальні"}</strong>
+          </div>
+
+          <div
+            className={`battle-timer-ring ${questionTimeLeft <= 3 ? "danger" : ""}`}
+            style={{
+              "--timer-progress": `${Math.max(0, Math.min(100, (questionTimeLeft / Math.max(1, getПитанняTimeLimit(questionIndex))) * 100))}%`,
+            } as CSSProperties}
+          >
+            <div className="battle-timer-ring-inner">
+              <strong>{questionTimeLeft}</strong>
+              <span>СЕК</span>
+            </div>
+          </div>
+
+          <div className="battle-info-card battle-info-gold">
+            <span>Складність</span>
+            <strong>
+              {String(currentПитання.difficulty || "easy").toLowerCase().includes("hard")
+                ? "Висока"
+                : String(currentПитання.difficulty || "easy").toLowerCase().includes("medium")
+                ? "Середня"
+                : "Легка"}
+            </strong>
+          </div>
         </div>
 
         <div
@@ -7125,7 +7151,6 @@ function App() {
         )}
 
         <div
-          className="battle-status-row"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -7147,7 +7172,6 @@ function App() {
         </div>
 
         <div
-          className="battle-status-row"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -7247,54 +7271,6 @@ function App() {
           <div className="question-number">
             QUESTION{" "}
             {questionIndex + 1}
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "6px",
-              flexWrap: "wrap",
-              margin: "7px 0 10px",
-            }}
-          >
-            {currentПитання.category && (
-              <span
-                style={{
-                  padding: "5px 8px",
-                  borderRadius: "999px",
-                  background: "rgba(124,77,255,0.10)",
-                  border: "1px solid rgba(124,77,255,0.18)",
-                  fontSize: "9px",
-                  fontWeight: 900,
-                  opacity: 0.75,
-                }}
-              >
-                {currentПитання.category}
-              </span>
-            )}
-
-            <span
-              style={{
-                padding: "5px 8px",
-                borderRadius: "999px",
-                background:
-                  String(currentПитання.difficulty || "").toLowerCase().includes("hard")
-                    ? "rgba(248,113,113,0.10)"
-                    : String(currentПитання.difficulty || "").toLowerCase().includes("medium")
-                    ? "rgba(251,191,36,0.10)"
-                    : "rgba(74,222,128,0.10)",
-                border:
-                  String(currentПитання.difficulty || "").toLowerCase().includes("hard")
-                    ? "1px solid rgba(248,113,113,0.18)"
-                    : String(currentПитання.difficulty || "").toLowerCase().includes("medium")
-                    ? "1px solid rgba(251,191,36,0.18)"
-                    : "1px solid rgba(74,222,128,0.18)",
-                fontSize: "9px",
-                fontWeight: 900,
-              }}
-            >
-              {String(currentПитання.difficulty || "easy").toUpperCase()}
-            </span>
           </div>
 
           <h1>
