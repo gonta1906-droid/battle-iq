@@ -6830,41 +6830,54 @@ function App() {
           50% { transform: scale(1.08); opacity: 0.72; }
         }
 
-        .biqTimerWrap {
+        .biqTimerHero {
           position: relative;
-          width: 76px;
-          height: 76px;
-          display: grid;
-          place-items: center;
-          flex: 0 0 76px;
+          width: 100%;
+          min-height: 136px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          margin: 4px 0 8px;
         }
 
-        .biqTimerCircle {
-          width: 70px;
-          height: 70px;
+        .biqTimerHeroGlow {
+          position: absolute;
+          width: 150px;
+          height: 150px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,181,46,0.16) 0%, rgba(124,77,255,0.07) 38%, transparent 72%);
+          filter: blur(4px);
+          pointer-events: none;
+        }
+
+        .biqTimerHeroCircle {
+          position: relative;
+          width: 116px;
+          height: 116px;
           border-radius: 50%;
           display: grid;
           place-items: center;
-          padding: 4px;
+          padding: 6px;
           box-sizing: border-box;
           transition: background 0.25s ease, box-shadow 0.25s ease;
+          z-index: 1;
         }
 
-        .biqTimerCircle::before {
+        .biqTimerHeroCircle::before {
           content: "";
           position: absolute;
-          width: 62px;
-          height: 62px;
+          inset: 7px;
           border-radius: 50%;
-          background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.055), rgba(7,6,20,0.98) 68%);
-          box-shadow: inset 0 0 20px rgba(0,0,0,0.34);
+          background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.07), rgba(7,6,20,0.99) 67%);
+          box-shadow: inset 0 0 28px rgba(0,0,0,0.5);
         }
 
-        .biqTimerInner {
+        .biqTimerHeroInner {
           position: relative;
-          z-index: 1;
-          width: 62px;
-          height: 62px;
+          z-index: 2;
+          width: 96px;
+          height: 96px;
           border-radius: 50%;
           display: flex;
           flex-direction: column;
@@ -6873,33 +6886,32 @@ function App() {
           line-height: 1;
         }
 
-        .biqTimerInner strong {
-          font-size: 30px;
+        .biqTimerHeroInner strong {
+          font-size: 48px;
           font-weight: 950;
-          letter-spacing: -1.5px;
-          text-shadow: 0 0 14px currentColor;
+          letter-spacing: -3px;
+          text-shadow: 0 0 18px currentColor;
         }
 
-        .biqTimerInner span {
-          margin-top: 3px;
-          font-size: 7px;
-          font-weight: 900;
-          letter-spacing: 1.2px;
-          opacity: 0.8;
+        .biqTimerHeroInner span {
+          margin-top: 6px;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 1.5px;
+          opacity: 0.85;
         }
 
-        .biqTotalTimer {
-          position: absolute;
-          right: -3px;
-          bottom: -2px;
-          padding: 3px 6px;
+        .biqTotalTimerHero {
+          position: relative;
+          z-index: 3;
+          margin-top: -5px;
+          padding: 4px 9px;
           border: 1px solid rgba(255,255,255,0.10);
-          border-radius: 8px;
-          background: rgba(10,8,24,0.88);
-          color: rgba(255,255,255,0.55);
-          font-size: 7px;
+          border-radius: 9px;
+          background: rgba(10,8,24,0.94);
+          color: rgba(255,255,255,0.52);
+          font-size: 8px;
           font-weight: 900;
-          letter-spacing: 0.2px;
           backdrop-filter: blur(8px);
         }
 
@@ -6982,36 +6994,26 @@ function App() {
             </span>
           </div>
 
+        </div>
+
+        <div className="biqTimerHero" aria-label={`Залишилось ${questionTimeLeft} секунд`}>
+          <div className="biqTimerHeroGlow" />
           <div
-            className="biqTimerWrap"
-            aria-label={`Залишилось ${questionTimeLeft} секунд`}
+            className="biqTimerHeroCircle"
+            style={{
+              background: `conic-gradient(${questionTimeLeft <= 3 ? "#ff5475" : "#ffb52e"} ${Math.max(0, Math.min(100, (questionTimeLeft / 8) * 100))}%, rgba(255,255,255,0.08) 0)`,
+              animation: questionTimeLeft <= 3 ? "biqTimerDanger 0.65s ease-in-out infinite" : undefined,
+              boxShadow: questionTimeLeft <= 3
+                ? "0 0 38px rgba(255,84,117,0.42), inset 0 0 24px rgba(255,84,117,0.12)"
+                : "0 0 34px rgba(255,181,46,0.26), inset 0 0 24px rgba(255,181,46,0.08)",
+            }}
           >
-            <div
-              className="biqTimerCircle"
-              style={{
-                background: `conic-gradient(${questionTimeLeft <= 3 ? "#ff5475" : "#ffb52e"} ${Math.max(0, Math.min(100, (questionTimeLeft / 8) * 100))}%, rgba(255,255,255,0.10) 0)`,
-                animation:
-                  questionTimeLeft <= 3
-                    ? "biqTimerDanger 0.65s ease-in-out infinite"
-                    : undefined,
-                boxShadow:
-                  questionTimeLeft <= 3
-                    ? "0 0 26px rgba(255,84,117,0.34), inset 0 0 18px rgba(255,84,117,0.10)"
-                    : "0 0 24px rgba(255,181,46,0.18), inset 0 0 18px rgba(255,181,46,0.07)",
-              }}
-            >
-              <div
-                className="biqTimerInner"
-                style={{
-                  color: questionTimeLeft <= 3 ? "#ff7187" : "#ffd166",
-                }}
-              >
-                <strong>{questionTimeLeft}</strong>
-                <span>СЕК</span>
-              </div>
+            <div className="biqTimerHeroInner" style={{ color: questionTimeLeft <= 3 ? "#ff7187" : "#ffd166" }}>
+              <strong>{questionTimeLeft}</strong>
+              <span>СЕКУНД</span>
             </div>
-            <div className="biqTotalTimer">⏱ {timeLeft} с</div>
           </div>
+          <div className="biqTotalTimerHero">⏱ Загальний час: {timeLeft} с</div>
         </div>
 
         <div className="question-progress">
