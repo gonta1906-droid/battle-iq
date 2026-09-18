@@ -6830,6 +6830,79 @@ function App() {
           50% { transform: scale(1.08); opacity: 0.72; }
         }
 
+        .biqTimerWrap {
+          position: relative;
+          width: 76px;
+          height: 76px;
+          display: grid;
+          place-items: center;
+          flex: 0 0 76px;
+        }
+
+        .biqTimerCircle {
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          padding: 4px;
+          box-sizing: border-box;
+          transition: background 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .biqTimerCircle::before {
+          content: "";
+          position: absolute;
+          width: 62px;
+          height: 62px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.055), rgba(7,6,20,0.98) 68%);
+          box-shadow: inset 0 0 20px rgba(0,0,0,0.34);
+        }
+
+        .biqTimerInner {
+          position: relative;
+          z-index: 1;
+          width: 62px;
+          height: 62px;
+          border-radius: 50%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+        }
+
+        .biqTimerInner strong {
+          font-size: 30px;
+          font-weight: 950;
+          letter-spacing: -1.5px;
+          text-shadow: 0 0 14px currentColor;
+        }
+
+        .biqTimerInner span {
+          margin-top: 3px;
+          font-size: 7px;
+          font-weight: 900;
+          letter-spacing: 1.2px;
+          opacity: 0.8;
+        }
+
+        .biqTotalTimer {
+          position: absolute;
+          right: -3px;
+          bottom: -2px;
+          padding: 3px 6px;
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 8px;
+          background: rgba(10,8,24,0.88);
+          color: rgba(255,255,255,0.55);
+          font-size: 7px;
+          font-weight: 900;
+          letter-spacing: 0.2px;
+          backdrop-filter: blur(8px);
+        }
+
         @keyframes biqLifeShake {
           0%, 100% { transform: scale(1); }
           30% { transform: scale(1.08) rotate(-3deg); }
@@ -6909,38 +6982,35 @@ function App() {
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+          <div
+            className="biqTimerWrap"
+            aria-label={`Залишилось ${questionTimeLeft} секунд`}
+          >
             <div
+              className="biqTimerCircle"
               style={{
-                fontSize: "9px",
-                fontWeight: 800,
-                opacity: 0.48,
-                whiteSpace: "nowrap",
-              }}
-            >
-              ⏱ {timeLeft}s
-            </div>
-            <div
-              className="timer"
-              style={{
-                color:
-                  questionTimeLeft <= 3
-                    ? "#ff7187"
-                    : undefined,
+                background: `conic-gradient(${questionTimeLeft <= 3 ? "#ff5475" : "#ffb52e"} ${Math.max(0, Math.min(100, (questionTimeLeft / 8) * 100))}%, rgba(255,255,255,0.10) 0)`,
                 animation:
                   questionTimeLeft <= 3
                     ? "biqTimerDanger 0.65s ease-in-out infinite"
                     : undefined,
-
-                background:
+                boxShadow:
                   questionTimeLeft <= 3
-                    ? "rgba(255,90,115,0.12)"
-                    : undefined,
-                minWidth: "42px",
+                    ? "0 0 26px rgba(255,84,117,0.34), inset 0 0 18px rgba(255,84,117,0.10)"
+                    : "0 0 24px rgba(255,181,46,0.18), inset 0 0 18px rgba(255,181,46,0.07)",
               }}
             >
-              {questionTimeLeft}
+              <div
+                className="biqTimerInner"
+                style={{
+                  color: questionTimeLeft <= 3 ? "#ff7187" : "#ffd166",
+                }}
+              >
+                <strong>{questionTimeLeft}</strong>
+                <span>СЕК</span>
+              </div>
             </div>
+            <div className="biqTotalTimer">⏱ {timeLeft} с</div>
           </div>
         </div>
 
